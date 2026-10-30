@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FashionStyle</title>
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var repo = '/FashionStyleDist';
+        var subpath = path.startsWith(repo) ? path.slice(repo.length) : path;
+        if (!subpath || subpath === '/' || subpath === '/index.html') {
+          window.location.replace(repo + '/#/');
+          return;
+        }
+        var search = window.location.search || '';
+        var hash = window.location.hash || '';
+        window.location.replace(repo + '/#' + subpath + search + hash);
+      })();
+    </script>
+  </head>
+  <body>
+    <p style="font-family: sans-serif; text-align: center; margin-top: 50px;">Cargando FashionStyle...</p>
+  </body>
+</html>
