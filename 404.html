@@ -8,8 +8,11 @@
       (function() {
         var path = window.location.pathname;
         var repo = '/FashionStyleDist';
-        var subpath = path.startsWith(repo) ? path.slice(repo.length) : path;
-        if (!subpath || subpath === '/' || subpath === '/index.html') {
+        var subpath = path;
+        if (subpath.indexOf(repo) === 0) {
+          subpath = subpath.substring(repo.length);
+        }
+        if (!subpath || subpath === '/' || subpath === '/index.html' || subpath === '/404.html') {
           window.location.replace(repo + '/#/');
           return;
         }
