@@ -1,0 +1,58 @@
+name: Build Fashion Style Flutter Mobile
+
+on:
+  push:
+    branches: ['main', 'develop']
+    paths:
+      - 'mobile/**'
+      - '.github/workflows/build-flutter-mobile.yml'
+  workflow_dispatch:
+
+jobs:
+  build-mobile:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./mobile
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v4
+
+      - name: Configurar Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Configurar Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Generar plataformas nativas
+        run: flutter create . --project-name fashion_style_mobile --org com.fashionstyle
+
+      - name: Instalar dependencias Dart
+        run: flutter pub get
+
+      - name: Análisis estático de código
+        run: flutter analyze
+
+      - name: Compilar APK de Producción (Android)
+        run: flutter build apk --release --dart-define=API_BASE_URL=https://fashionstyle.api.adsocidm.com/public/api
+
+      - name: Compilar versión Web Móvil de Flutter
+        run: flutter build web --release --base-href /FashionStyleDist/mobile/ --dart-define=API_BASE_URL=https://fashionstyle.api.adsocidm.com/public/api
+
+      - name: Subir APK a Artifacts de GitHub Actions
+        uses: actions/upload-artifact@v4
+        with:
+          name: fashion-style-mobile-release-apk
+          path: mobile/build/app/outputs/flutter-apk/app-release.apk
+
+      - name: Subir Flutter Web Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: fashion-style-flutter-web
+          path: mobile/build/web

@@ -1,0 +1,109 @@
+  @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap');
+
+  @tailwind base;
+  @tailwind components;
+  @tailwind utilities;
+
+  @layer base {
+    :root {
+      --color-primario: #e60067;
+      --color-primario-oscuro: #be185d;
+      --color-primario-sombra: rgba(230, 0, 103, 0.25);
+      --color-superficie: #ffffff;
+      --color-fondo: #fbf9f9;
+      --color-texto: #111827;
+      --color-texto-secundario: #374151;
+      --color-texto-suave: #6b7280;
+      --color-texto-claro: #9ca3af;
+      --color-borde: #e5e7eb;
+      --color-borde-suave: #f3f4f6;
+      --color-borde-fuerte: #d1d5db;
+      --radio-sm: 6px;
+      --radio-md: 10px;
+      --radio-lg: 14px;
+      --radio-redondo: 9999px;
+      --transicion-rapida: 0.15s ease;
+      --sombra-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+      --sombra-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
+
+    html {
+      font-family: 'Montserrat', Inter, sans-serif;
+      color: var(--color-texto);
+      background: var(--color-fondo);
+    }
+
+    body {
+      min-width: 320px;
+      min-height: 100vh;
+      margin: 0;
+      background: var(--color-fondo);
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    button:not(:disabled),
+    [role='button']:not([aria-disabled='true']) {
+      cursor: pointer;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+      @apply font-titulos;
+    }
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #f1f5f9;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+  }
+
+  @layer components {
+    .auth-etiqueta {
+      @apply block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1;
+    }
+    .auth-campo {
+      @apply w-full px-3.5 py-2.5 border border-gray-300 rounded-xl text-sm text-gray-900 placeholder-gray-400 transition
+        focus:outline-none focus:border-corporativo-rosa focus:ring-2 focus:ring-corporativo-rosa/20;
+    }
+    .auth-boton {
+      @apply w-full py-3 rounded-xl bg-corporativo-rosa hover:bg-corporativo-rosa-hover text-white text-sm font-semibold transition
+        disabled:opacity-60 disabled:cursor-not-allowed;
+    }
+    .auth-separador {
+      @apply flex items-center gap-3 my-4 text-xs text-gray-400;
+    }
+    .auth-separador::before,
+    .auth-separador::after {
+      content: '';
+      @apply flex-1 h-px bg-gray-200;
+    }
+  }

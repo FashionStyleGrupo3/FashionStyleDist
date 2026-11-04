@@ -1,0 +1,43 @@
+# Dependencias y compilación de Node / Vite (web/)
+node_modules/
+dist/
+dist-ssr/
+.vite/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Dependencias y compilación de Flutter / Dart (mobile/)
+.dart_tool/
+.packages
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+mobile/.dart_tool/
+mobile/.packages
+mobile/build/
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+
+# Archivos de entorno y credenciales (NUNCA subir a Git)
+.env
+.env.local
+.env.*.local
+*.jks
+*.keystore
+key.properties
+
+# Editores y Sistema Operativo
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.iml
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.DS_Store
+Thumbs.db

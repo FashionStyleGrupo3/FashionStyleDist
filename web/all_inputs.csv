@@ -1,0 +1,431 @@
+﻿"File","Line","Element"
+"src\components\admin\ConmutadorEstado.vue","14","<input
+      v-model=""publicado""
+      type=""checkbox""
+      class=""conmutado"
+"src\components\admin\FormularioEmpleado.vue","72","<input v-model=""formulario.nombre"" maxlength=""100"" class=""w-full rounded-lg bord"
+"src\components\admin\FormularioEmpleado.vue","79","<input v-model=""formulario.correo"" type=""email"" maxlength=""254"" class=""w-full ro"
+"src\components\admin\FormularioEmpleado.vue","84","<input v-model=""formulario.telefono"" type=""tel"" inputmode=""tel"" maxlength=""20"" c"
+"src\components\admin\FormularioEmpleado.vue","93","<input v-model=""formulario.password"" :type=""verPassword ? 'text' : 'password'"" m"
+"src\components\admin\FormularioEmpleado.vue","102","<input v-model=""formulario.password_confirmation"" :type=""verPassword ? 'text' : "
+"src\components\admin\FormularioEmpleado.vue","108","<input v-model=""formulario.activo"" type=""checkbox"" class=""h-4 w-4 rounded border"
+"src\components\admin\ModalPromociones.vue","205","<input v-model=""form.nombre"" type=""text"" maxlength=""100"" placeholder=""Nombre (ej"
+"src\components\admin\ModalPromociones.vue","210","<textarea v-model=""form.descripcion"" rows=""2"" maxlength=""500"" placeholder=""Descr"
+"src\components\admin\ModalPromociones.vue","229","<select v-model=""form.idProducto""
+              class=""w-full rounded-xl border"
+"src\components\admin\ModalPromociones.vue","240","<select v-model=""form.tipo""
+              class=""rounded-xl border border-gray-"
+"src\components\admin\ModalPromociones.vue","245","<input :value=""form.valor"" type=""text"" inputmode=""numeric"" maxlength=""9"" @input="
+"src\components\admin\ModalPromociones.vue","252","<input v-model=""form.fechaInicio"" type=""date""
+                class=""mt-1 w-ful"
+"src\components\admin\ModalPromociones.vue","256","<input v-model=""form.fechaFin"" type=""date""
+                class=""mt-1 w-full r"
+"src\components\admin\ModalPromociones.vue","263","<input v-model=""form.activa"" type=""checkbox"" class=""rounded text-corporativo-ros"
+"src\components\admin\TablaClientes.vue","26","<input v-model=""formulario.nombre_completo"" maxlength=""100"" class=""mb-2 w-full r"
+"src\components\admin\TablaClientes.vue","26","<input v-model=""formulario.tipo_documento"" maxlength=""4"" class=""w-20 rounded-lg "
+"src\components\admin\TablaClientes.vue","26","<input v-model=""formulario.numero_documento"" maxlength=""20"" inputmode=""numeric"" "
+"src\components\admin\TablaClientes.vue","27","<input v-model=""formulario.correo"" type=""email"" maxlength=""254"" class=""mb-2 w-fu"
+"src\components\admin\TablaClientes.vue","27","<input v-model=""formulario.telefono"" type=""tel"" inputmode=""tel"" maxlength=""20"" c"
+"src\components\admin\TablaClientes.vue","28","<input v-model=""formulario.ciudad"" maxlength=""80"" class=""mb-2 w-full rounded-lg "
+"src\components\admin\TablaClientes.vue","28","<input v-model=""formulario.direccion"" maxlength=""180"" class=""w-full rounded-lg b"
+"src\components\admin\TablaConstructorVariantes.vue","74","<input
+                :value=""variante.talla""
+                maxlength=""20"""
+"src\components\admin\TablaConstructorVariantes.vue","83","<input
+                :value=""variante.sku""
+                maxlength=""24""
+ "
+"src\components\admin\TablaConstructorVariantes.vue","92","<input
+                :value=""variante.precio""
+                type=""text""
+ "
+"src\components\admin\TablaConstructorVariantes.vue","103","<input
+                :value=""variante.stockInicial""
+                type=""te"
+"src\components\admin\TablaUsuariosRoles.vue","60","<input v-model=""formulario.nombre"" maxlength=""100"" class=""w-full rounded-lg bord"
+"src\components\admin\TablaUsuariosRoles.vue","61","<input v-model=""formulario.correo"" type=""email"" maxlength=""254"" class=""w-full ro"
+"src\components\admin\TablaUsuariosRoles.vue","67","<input v-if=""editando === usuario.id_usuario"" v-model=""formulario.telefono"" type"
+"src\components\admin\TablaUsuariosRoles.vue","71","<select v-if=""puedeAdministrar"" :value=""nombreRol(usuario)"" class=""rounded-lg bo"
+"src\components\admin\ZonaCargaImagenes.vue","113","<input
+      ref=""inputArchivos""
+      type=""file""
+      accept=""image/jpeg,i"
+"src\components\escaparate\SelectorCantidad.vue","52","<input
+        id=""cantidad-prenda""
+        :value=""modelValue""
+        type="
+"src\components\facturas\ModalCargaMasivaFacturas.vue","133","<input type=""file"" accept="".xlsx,.csv"" class=""hidden"" @change=""seleccionarArchiv"
+"src\components\facturas\ModalCrearFactura.vue","237","<select
+                :value=""formulario.referenciaId""
+                :disa"
+"src\components\facturas\ModalCrearFactura.vue","264","<input
+              v-model=""formulario.referenciaId""
+              type=""num"
+"src\components\facturas\ModalCrearFactura.vue","283","<input
+              v-model=""formulario.fechaEmision""
+              type=""dat"
+"src\components\facturas\ModalCrearFactura.vue","294","<input
+              v-model=""formulario.clienteDocumento""
+              type="
+"src\components\facturas\ModalCrearFactura.vue","309","<textarea
+            v-model=""formulario.notas""
+            rows=""2""
+       "
+"src\components\gestionPrendas\ModalFormularioPrenda.vue","216","<input
+              ref=""inputArchivos""
+              type=""file""
+          "
+"src\components\gestionPrendas\ModalFormularioPrenda.vue","303","<input
+              id=""eNombre""
+              :value=""formulario.nombre""
+  "
+"src\components\gestionPrendas\ModalFormularioPrenda.vue","323","<textarea
+              id=""eDescripcion""
+              :value=""formulario.des"
+"src\components\gestionPrendas\ModalFormularioPrenda.vue","343","<input
+                id=""eColor""
+                :value=""formulario.color""
+"
+"src\components\gestionPrendas\ModalFormularioPrenda.vue","362","<select
+                id=""eCategoria""
+                :value=""formulario.cat"
+"src\components\gestionPrendas\ModalFormularioPrenda.vue","384","<input
+                  :value=""nombreOpcionNueva""
+                  type=""te"
+"src\components\gestionPrendas\ModalFormularioPrenda.vue","429","<select
+              id=""eColeccion""
+              :value=""formulario.catalog"
+"src\components\gestionPrendas\ModalFormularioPrenda.vue","451","<input
+                :value=""nombreOpcionNueva""
+                type=""text"""
+"src\components\gestionPrendas\ModalFormularioPrenda.vue","516","<input
+                        :value=""variante.talla""
+                       "
+"src\components\gestionPrendas\ModalFormularioPrenda.vue","529","<input
+                        :value=""variante.sku""
+                        m"
+"src\components\gestionPrendas\ModalFormularioPrenda.vue","542","<input
+                        :value=""variante.precio""
+                      "
+"src\components\gestionPrendas\ModalFormularioPrenda.vue","556","<input
+                        :value=""variante.stockInicial""
+                "
+"src\components\gestionPrendas\ModalPromociones.vue","190","<input v-model=""form.nombre"" type=""text"" maxlength=""100"" placeholder=""Nombre (ej"
+"src\components\gestionPrendas\ModalPromociones.vue","195","<textarea v-model=""form.descripcion"" rows=""2"" maxlength=""500"" placeholder=""Descr"
+"src\components\gestionPrendas\ModalPromociones.vue","214","<select v-model=""form.idProducto""
+              class=""w-full rounded-xl border"
+"src\components\gestionPrendas\ModalPromociones.vue","225","<select v-model=""form.tipo""
+              class=""rounded-xl border border-gray-"
+"src\components\gestionPrendas\ModalPromociones.vue","230","<input v-model.number=""form.valor"" type=""number"" min=""1"" :max=""form.tipo === 'po"
+"src\components\gestionPrendas\ModalPromociones.vue","237","<input v-model=""form.fechaInicio"" type=""date""
+                class=""mt-1 w-ful"
+"src\components\gestionPrendas\ModalPromociones.vue","241","<input v-model=""form.fechaFin"" type=""date""
+                class=""mt-1 w-full r"
+"src\components\gestionPrendas\ModalPromociones.vue","248","<input v-model=""form.activa"" type=""checkbox"" class=""rounded text-corporativo-ros"
+"src\components\gestionPrendas\ProductoCard.vue","49","<input :checked=""esActivo(producto)"" type=""checkbox""
+            :aria-label=""e"
+"src\components\gestionPrendas\ResumenEstadisticas.vue","41","<input
+        :value=""busqueda""
+        type=""text""
+        maxlength=""100"""
+"src\components\Inventario\FiltrosInventario.vue","13","<input :value=""busqueda"" maxlength=""100"" placeholder=""Buscar concepto, producto "
+"src\components\Inventario\FiltrosInventario.vue","14","<select :value=""tipo"" @change=""$emit('update:tipo', $event.target.value); $emit("
+"src\components\Inventario\FiltrosInventario.vue","20","<select :value=""estado"" @change=""$emit('update:estado', $event.target.value); $e"
+"src\components\Inventario\ModalInventario.vue","91","<select
+            v-model=""form.variante_id""
+            required
+         "
+"src\components\Inventario\ModalInventario.vue","113","<select
+              v-model=""form.tipo_movimiento""
+            >"
+"src\components\Inventario\ModalInventario.vue","133","<input
+              v-model=""form.cantidad""
+              type=""number""
+    "
+"src\components\Inventario\ModalInventario.vue","158","<input
+          v-model=""form.concepto""
+          type=""text""
+          maxl"
+"src\components\Inventario\ModalInventario.vue","171","<textarea
+          v-model=""form.observaciones""
+          rows=""3""
+         "
+"src\components\Inventario\PanelAlertasStock.vue","84","<input v-model.number=""umbral"" type=""number"" min=""1"" max=""1000"" step=""1"" inputmo"
+"src\components\pedidos\ModalGestionDespacho.vue","162","<select
+              v-model=""formulario.estado""
+              class=""w-full "
+"src\components\pedidos\ModalGestionDespacho.vue","176","<input
+              v-model=""formulario.empresaTransportadora""
+              "
+"src\components\pedidos\ModalGestionDespacho.vue","193","<input
+              v-model=""formulario.numeroGuia""
+              type=""text"""
+"src\components\perfil\SelectorFotoPerfil.vue","82","<input type=""file"" accept=""image/jpeg,image/png,image/webp"" class=""hidden"" @chan"
+"src\components\produccion\CalculadoraProduccion.vue","542","<select
+                :value=""formulaSeleccionada?.id ?? formulaSeleccionada?"
+"src\components\produccion\CalculadoraProduccion.vue","586","<input
+                :value=""cantidadAProducir""
+                type=""number"
+"src\components\produccion\CalculadoraProduccion.vue","611","<input
+              :value=""costoManoObra""
+              type=""number""
+     "
+"src\components\produccion\CalculadoraProduccion.vue","628","<input
+              :value=""precioVenta""
+              type=""number""
+       "
+"src\components\produccion\CalculadoraProduccion.vue","664","<input
+                :value=""telaUsadaManual ?? ''""
+                type=""nu"
+"src\components\produccion\CalculadoraProduccion.vue","754","<input
+                          :value=""consumo.cantidad""
+                   "
+"src\components\produccion\CalculadoraProduccion.vue","810","<input
+                    :value=""consumo.cantidad""
+                    type="
+"src\components\produccion\CalculadoraProduccion.vue","1041","<input
+                v-model.number=""margenObjetivo""
+                type=""r"
+"src\components\produccion\FilaMateriaPrima.vue","31","<input
+        :value=""consumo.cantidad""
+        @input=""actualizarCantidad""
+"
+"src\components\produccion\Gestorformulasproduccion.vue","122","<select
+          v-model=""productoId""
+          class=""w-full rounded-xl bord"
+"src\components\produccion\Gestormateriasprimas.vue","157","<input
+          v-model=""busqueda""
+          type=""text""
+          maxlength"
+"src\components\produccion\Gestormateriasprimas.vue","201","<input
+              v-model=""unidadEditando.nombre""
+              maxlength="""
+"src\components\produccion\Gestormateriasprimas.vue","209","<input
+              v-model=""unidadEditando.abreviatura""
+              maxlen"
+"src\components\produccion\Gestormateriasprimas.vue","234","<input
+          v-model=""nuevaUnidad.nombre""
+          type=""text""
+         "
+"src\components\produccion\Gestormateriasprimas.vue","243","<input
+          v-model=""nuevaUnidad.abreviatura""
+          type=""text""
+    "
+"src\components\produccion\GestorOrdenesProduccion.vue","199","<input
+          v-model=""busqueda""
+          type=""text""
+          maxlength"
+"src\components\produccion\GestorOrdenesProduccion.vue","357","<input
+              v-model.number=""formEdicion.cantidad""
+              type="
+"src\components\produccion\GestorOrdenesProduccion.vue","369","<textarea
+              v-model=""formEdicion.notas""
+              rows=""3""
+  "
+"src\components\produccion\Gestorproveedores.vue","62","<input
+          v-model=""busqueda""
+          type=""text""
+          maxlength"
+"src\components\produccion\Modalformulaproduccion.vue","124","<select v-model=""form.materia_prima_id"" :class=""claseInput"">"
+"src\components\produccion\Modalformulaproduccion.vue","138","<input :value=""form.cantidad"" type=""text"" inputmode=""decimal"" maxlength=""9"" :cla"
+"src\components\produccion\Modalformulaproduccion.vue","151","<select v-model=""form.proveedor_id"" :class=""claseInput"">"
+"src\components\produccion\Modalmateriaprima.vue","126","<input v-model=""form.codigo"" type=""text"" maxlength=""30"" placeholder=""Ej. TEL-001"
+"src\components\produccion\Modalmateriaprima.vue","131","<input v-model=""form.nombre"" type=""text"" maxlength=""100"" placeholder=""Ej. Tela a"
+"src\components\produccion\Modalmateriaprima.vue","136","<select v-model=""form.unidad_medida_id"" :class=""claseInput"">"
+"src\components\produccion\Modalmateriaprima.vue","148","<input :value=""form.stock"" type=""text"" inputmode=""numeric"" maxlength=""7"" :class="
+"src\components\produccion\Modalmateriaprima.vue","152","<input :value=""form.stock_min"" type=""text"" inputmode=""numeric"" maxlength=""7"" :cl"
+"src\components\produccion\Modalmateriaprima.vue","156","<input :value=""form.costo_unitario"" type=""text"" inputmode=""decimal"" maxlength=""1"
+"src\components\produccion\ModalNuevaFormula.vue","161","<select
+            v-model=""productoId""
+            class=""w-full rounded-lg "
+"src\components\produccion\ModalNuevaFormula.vue","177","<textarea
+          v-model=""notas""
+          rows=""2""
+          maxlength=""5"
+"src\components\produccion\ModalNuevaFormula.vue","216","<select
+                    v-model=""consumo.materia_prima_id""
+               "
+"src\components\produccion\ModalNuevaFormula.vue","228","<input
+                    :value=""consumo.cantidad""
+                    type="
+"src\components\produccion\ModalNuevaFormula.vue","238","<select
+                    v-model=""consumo.unidad_medida_id""
+               "
+"src\components\produccion\Modalproveedor.vue","94","<input v-model=""form.nombre"" type=""text"" maxlength=""150"" :class=""claseInput"" @in"
+"src\components\produccion\Modalproveedor.vue","100","<input v-model=""form.nit"" type=""text"" maxlength=""20"" :class=""claseInput"" @input="
+"src\components\produccion\Modalproveedor.vue","104","<input v-model=""form.contacto"" type=""text"" maxlength=""100"" :class=""claseInput"" @"
+"src\components\produccion\Modalproveedor.vue","108","<input v-model=""form.telefono"" type=""tel"" inputmode=""tel"" maxlength=""20"" :class="
+"src\components\produccion\Modalproveedor.vue","112","<input v-model=""form.email"" type=""email"" maxlength=""254"" :class=""claseInput"" />"
+"src\components\produccion\Modalproveedor.vue","118","<input v-model=""form.direccion"" type=""text"" maxlength=""180"" :class=""claseInput"" "
+"src\components\produccion\PanelResumenCostos.vue","126","<input
+          :value=""margenObjetivo""
+          @input=""(e) =>"
+"src\layouts\DisenoPublico.vue","90","<input
+            v-model=""filtrosStore.busqueda""
+            type=""text""
+  "
+"src\views\admin\VistaAuditoria.vue","25","<input v-model=""filtros.modelo"" maxlength=""80"" class=""mt-1 w-full rounded-xl bor"
+"src\views\admin\VistaAuditoria.vue","25","<input v-model=""filtros.usuario_id"" type=""number"" min=""1"" max=""2147483647"" step="
+"src\views\admin\VistaConfiguracionPagos.vue","204","<input
+                    v-model=""cuenta.concepto""
+                    type="
+"src\views\admin\VistaConfiguracionPagos.vue","216","<input type=""checkbox"" v-model=""cuenta.activa"" class=""rounded text-corporativo-r"
+"src\views\admin\VistaConfiguracionPagos.vue","235","<select
+                    v-model=""cuenta.banco""
+                    class="""
+"src\views\admin\VistaConfiguracionPagos.vue","246","<select
+                    v-model=""cuenta.tipo_cuenta""
+                    c"
+"src\views\admin\VistaConfiguracionPagos.vue","258","<input
+                    v-model=""cuenta.numero_cuenta""
+                    "
+"src\views\admin\VistaConfiguracionPagos.vue","273","<input
+                      v-model.number=""cuenta.porcentaje""
+              "
+"src\views\admin\VistaConfiguracionPagos.vue","289","<input
+                  v-model=""cuenta.titular""
+                  type=""text"
+"src\views\admin\VistaConfiguracionPagos.vue","325","<select
+              v-model=""configuracion.plataforma""
+              class="""
+"src\views\admin\VistaConfiguracionPagos.vue","357","<input
+              v-model=""configuracion.llave_publica""
+              type="
+"src\views\admin\VistaEditarCuenta.vue","289","<input
+                    v-model=""formularioPerfil.nombre""
+                 "
+"src\views\admin\VistaEditarCuenta.vue","310","<input
+                    v-model=""formularioPerfil.correo""
+                 "
+"src\views\admin\VistaEditarCuenta.vue","330","<input
+                    v-model=""formularioPerfil.telefono""
+               "
+"src\views\admin\VistaEditarCuenta.vue","351","<input
+                    v-model=""formularioPerfil.ciudad""
+                 "
+"src\views\admin\VistaEditarCuenta.vue","371","<input
+                    v-model=""formularioPerfil.direccion""
+              "
+"src\views\admin\VistaEditarCuenta.vue","439","<input
+                  v-model=""formularioPassword.password_actual""
+        "
+"src\views\admin\VistaEditarCuenta.vue","459","<input
+                    v-model=""formularioPassword.password""
+             "
+"src\views\admin\VistaEditarCuenta.vue","479","<input
+                    v-model=""formularioPassword.password_confirmation""
+"
+"src\views\admin\VistaInventario.vue","474","<input
+            v-model=""busquedaExistencias""
+            type=""text""
+    "
+"src\views\admin\VistaPedidosyFacturas.vue","327","<input
+            v-model=""busquedaPedido""
+            type=""search""
+       "
+"src\views\admin\VistaPedidosyFacturas.vue","339","<input
+            v-model=""busquedaFactura""
+            type=""search""
+      "
+"src\views\admin\VistaVentasPOS.vue","347","<input
+              v-model=""busquedaPrenda""
+              type=""search""
+   "
+"src\views\admin\VistaVentasPOS.vue","470","<select
+                v-model=""medioPago""
+                class=""w-full roun"
+"src\views\admin\VistaVentasPOS.vue","482","<input
+                v-model=""clienteMostrador""
+                type=""text"""
+"src\views\admin\VistaVentasPOS.vue","494","<input
+                v-model=""notasVenta""
+                type=""text""
+     "
+"src\views\autenticacion\VistaInicioSesion.vue","163","<input
+            id=""correo""
+            v-model=""correo""
+            type="
+"src\views\autenticacion\VistaInicioSesion.vue","178","<input
+            id=""password""
+            v-model=""password""
+            :"
+"src\views\autenticacion\VistaInicioSesion.vue","244","<input
+          v-model=""aceptaTerminosGoogle""
+          type=""checkbox""
+   "
+"src\views\autenticacion\VistaRecuperarContrasena.vue","56","<input id=""email"" v-model=""email"" type=""email"" required placeholder=""Tu correo e"
+"src\views\autenticacion\VistaRegistro.vue","116","<input
+            id=""nombre""
+            v-model=""nombre""
+            type="
+"src\views\autenticacion\VistaRegistro.vue","133","<input
+              id=""correo""
+              v-model=""correo""
+             "
+"src\views\autenticacion\VistaRegistro.vue","148","<input
+              id=""telefono""
+              v-model=""telefono""
+         "
+"src\views\autenticacion\VistaRegistro.vue","166","<input
+              id=""password""
+              v-model=""password""
+         "
+"src\views\autenticacion\VistaRegistro.vue","194","<input
+              id=""confirmacion""
+              v-model=""confirmacion""
+ "
+"src\views\autenticacion\VistaRegistro.vue","212","<input v-model=""aceptaTerminos"" type=""checkbox"" />"
+"src\views\autenticacion\VistaRestablecerContrasena.vue","69","<input 
+          id=""email"" 
+          v-model=""formulario.correo"" 
+        "
+"src\views\autenticacion\VistaRestablecerContrasena.vue","86","<input
+    id=""codigo""
+    v-model=""formulario.codigo""
+    type=""text""
+    i"
+"src\views\autenticacion\VistaRestablecerContrasena.vue","101","<input 
+          id=""nueva_password"" 
+          v-model=""formulario.nueva_pas"
+"src\views\autenticacion\VistaRestablecerContrasena.vue","117","<input 
+          id=""nueva_password_confirmation"" 
+          v-model=""formula"
+"src\views\autenticacion\VistaVerificarCorreo.vue","79","<input id=""correo"" v-model=""correo"" type=""email"" required autocomplete=""email"" c"
+"src\views\autenticacion\VistaVerificarCorreo.vue","84","<input
+          id=""codigo""
+          v-model=""codigo""
+          type=""text"""
+"src\views\publico\VistaCarrito.vue","406","<input
+                :value=""item.cantidad""
+                @input=""(e) =>"
+"src\views\publico\VistaCarrito.vue","477","<input
+                v-model=""datosCliente.nombre""
+                type=""tex"
+"src\views\publico\VistaCarrito.vue","485","<input
+                v-model=""datosCliente.telefono""
+                type=""t"
+"src\views\publico\VistaCarrito.vue","494","<input
+                v-model=""datosCliente.ciudad""
+                type=""tex"
+"src\views\publico\VistaCarrito.vue","502","<input
+                v-model=""datosCliente.departamento""
+                typ"
+"src\views\publico\VistaCarrito.vue","510","<input
+                v-model=""datosCliente.direccion""
+                type="""
+"src\views\publico\Vistacatalogo.vue","109","<select
+          class=""fs-select""
+          :value=""filtrosStore.orden""
+   "
+"src\views\publico\VistaMiPerfil.vue","284","<input v-model=""formulario.nombre"" type=""text"" required maxlength=""100"" placehol"
+"src\views\publico\VistaMiPerfil.vue","294","<input :value=""formulario.correo"" type=""email"" readonly
+                    :cl"
+"src\views\publico\VistaMiPerfil.vue","311","<input v-model=""correoNuevo"" type=""email"" maxlength=""254"" :disabled=""codigoEnvia"
+"src\views\publico\VistaMiPerfil.vue","322","<input v-model=""codigoCorreo"" type=""text"" inputmode=""numeric"" maxlength=""6""
+   "
+"src\views\publico\VistaMiPerfil.vue","363","<input v-model=""formulario.telefono"" type=""tel"" inputmode=""tel"" maxlength=""20"" p"
+"src\views\publico\VistaMiPerfil.vue","373","<input v-model=""formulario.ciudad"" type=""text"" maxlength=""80"" placeholder=""Ej. B"
+"src\views\publico\VistaMiPerfil.vue","383","<input v-model=""formulario.direccion"" type=""text"" maxlength=""180"" placeholder=""C"
+"src\views\publico\VistaMiPerfil.vue","428","<input v-model=""password.password_actual"" type=""password"" required maxlength=""12"
+"src\views\publico\VistaMiPerfil.vue","440","<input v-model=""password.password"" type=""password"" required minlength=""8"" maxlen"
+"src\views\publico\VistaMiPerfil.vue","450","<input v-model=""password.password_confirmation"" type=""password"" required minleng"
