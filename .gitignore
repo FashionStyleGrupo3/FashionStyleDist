@@ -41,3 +41,12 @@ key.properties
 *.sw?
 .DS_Store
 Thumbs.db
+
+# Archivos de contexto y documentacion que residen en repositorios dedicados
+contexto_proyecto/
+GEMINI.md
+AGENTS.md
+REGISTRO_DESARROLLO_FASHION_STYLE.md
+DOCUMENTACION_TECNICA_FASHION_STYLE.md
+MANUAL_USUARIO_FASHION_STYLE.md
+
