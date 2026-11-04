@@ -267,6 +267,8 @@ class CartNotifier extends StateNotifier<CartState> {
     _sincronizarStorage(const []);
   }
 
+  void limpiarCarrito() => vaciarCarrito();
+
   void actualizarStockDisponible(List<ProductVariant> variantes) {
     final Map<int, int> stockPorVariante = {
       for (final v in variantes) v.idVariante: v.stock < 0 ? 0 : v.stock,

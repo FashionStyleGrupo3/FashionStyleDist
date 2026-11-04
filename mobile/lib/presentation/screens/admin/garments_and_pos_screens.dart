@@ -844,7 +844,7 @@ class _AdminPosSalesScreenState extends ConsumerState<AdminPosSalesScreen> {
                         child: Row(
                           children: [
                             _chipMedio('', 'Todos'),
-                            ...mediosPagoPos.map((m) => _chipMedio(m, m.toUpperCase())),
+                            ...mediosPagoPos.entries.map((e) => _chipMedio(e.key, e.value)),
                           ],
                         ),
                       ),
@@ -1074,7 +1074,12 @@ class _ModalNuevaVentaPosState extends State<_ModalNuevaVentaPos> {
         }).toList(),
       };
 
-      final venta = await PosSaleService.instance.registrarVenta(payload);
+      final venta = await PosSaleService.instance.registrarVenta(
+        items: (payload['items'] as List).cast<Map<String, dynamic>>(),
+        medioPago: _medioPago,
+        clienteNombre: _nombreCtrl.text.trim(),
+        clienteDocumento: _docCtrl.text.trim(),
+      );
       widget.onCobrada();
 
       if (mounted) {
@@ -1230,7 +1235,7 @@ class _ModalNuevaVentaPosState extends State<_ModalNuevaVentaPos> {
                 child: DropdownButtonFormField<String>(
                   value: _medioPago,
                   decoration: const InputDecoration(labelText: 'Medio de pago', border: OutlineInputBorder()),
-                  items: mediosPagoPos.map((m) => DropdownMenuItem(value: m, child: Text(m.toUpperCase(), style: const TextStyle(fontSize: 12)))).toList(),
+                  items: mediosPagoPos.entries.map((e) => DropdownMenuItem(value: e.key, child: Text(e.value, style: const TextStyle(fontSize: 12)))).toList(),
                   onChanged: (v) => setState(() => _medioPago = v ?? 'efectivo'),
                 ),
               ),

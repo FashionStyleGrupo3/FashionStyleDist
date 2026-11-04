@@ -25,6 +25,7 @@ dependencies:
   google_fonts: ^6.2.1
   cached_network_image: ^3.4.1
   lucide_icons: ^0.257.0
+  cupertino_icons: ^1.0.8
   intl: ^0.20.2
 
   # Media, File Picking & Webview

@@ -168,7 +168,7 @@ String filtrarCampoPrenda(String campo, String? valor) {
     final skuLimpio = texto
         .toUpperCase()
         .replaceAll(FieldPatterns.patronesPrenda['sku']!, '');
-    const limite = FieldPatterns.limitesCampo['sku']!;
+    final limite = FieldPatterns.limitesCampo['sku']!;
     return skuLimpio.length > limite ? skuLimpio.substring(0, limite) : skuLimpio;
   }
 

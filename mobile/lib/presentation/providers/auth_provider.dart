@@ -54,6 +54,14 @@ class AuthState {
 
   bool get esPersonal => esAdmin || esEmpleado;
 
+  bool get tieneAccesoAdmin => esAdmin || esEmpleado || esPersonal;
+
+  String get nombreUsuario => (usuario?['nombre'] ?? usuario?['name'] ?? 'Usuario').toString();
+
+  String get correoUsuario => (usuario?['email'] ?? usuario?['correo'] ?? '').toString();
+
+  String? get fotoUsuario => usuario?['foto_perfil']?.toString() ?? usuario?['foto']?.toString();
+
   String get rolUsuario {
     if (esAdmin) return 'admin';
     if (esEmpleado) return 'empleado';

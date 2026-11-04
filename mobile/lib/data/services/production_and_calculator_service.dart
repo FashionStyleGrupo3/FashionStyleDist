@@ -175,6 +175,13 @@ class CalculatorDataset {
     required this.materiasPrimas,
     required this.formulas,
   });
+
+  RawMaterialModel? buscarMateriaPorId(int id) {
+    for (final m in materiasPrimas) {
+      if (m.id == id) return m;
+    }
+    return null;
+  }
 }
 
 // --- UTILIDADES ---

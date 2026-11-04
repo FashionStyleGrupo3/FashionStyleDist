@@ -94,12 +94,14 @@ class Category {
   final String nombre;
   final String descripcion;
   final bool activo;
+  final Map<String, dynamic> original;
 
   const Category({
     required this.idCategoria,
     required this.nombre,
     required this.descripcion,
     required this.activo,
+    this.original = const {},
   });
 
   factory Category.fromJson(Map<String, dynamic> map) {
@@ -108,6 +110,7 @@ class Category {
       nombre: JsonParser.toStr(map['nombre']),
       descripcion: JsonParser.toStr(map['descripcion']),
       activo: map['activo'] == null ? true : JsonParser.toBool(map['activo']),
+      original: map,
     );
   }
 
@@ -126,12 +129,14 @@ class Catalog {
   final String nombre;
   final String descripcion;
   final bool activo;
+  final Map<String, dynamic> original;
 
   const Catalog({
     required this.idCatalogo,
     required this.nombre,
     required this.descripcion,
     required this.activo,
+    this.original = const {},
   });
 
   factory Catalog.fromJson(Map<String, dynamic> map) {
@@ -140,6 +145,7 @@ class Catalog {
       nombre: JsonParser.toStr(map['nombre']),
       descripcion: JsonParser.toStr(map['descripcion']),
       activo: map['activo'] == null ? true : JsonParser.toBool(map['activo']),
+      original: map,
     );
   }
 

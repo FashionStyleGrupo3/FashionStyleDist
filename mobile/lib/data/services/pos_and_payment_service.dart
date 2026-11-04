@@ -267,6 +267,8 @@ class BankAccountConfig {
   final bool activa;
   final double? montoAsignado;
 
+  String get tipo => tipoCuenta;
+
   const BankAccountConfig({
     required this.id,
     required this.banco,
@@ -435,6 +437,22 @@ class PaymentConfigService {
       'cuentas_bancarias': cuentasBancarias.map((c) => c.toJson()).toList(),
     };
     await prefs.setString(claveStorageConfig, jsonEncode(map));
+  }
+
+  Future<List<BankAccountConfig>> obtenerCuentasDispersion() async {
+    final conf = await obtenerConfiguracionPasarela();
+    return (conf['cuentas_bancarias'] as List<BankAccountConfig>?) ?? [];
+  }
+
+  Map<String, dynamic> validarPorcentajesDispersion(List<BankAccountConfig> cuentas) {
+    final total = cuentas.where((c) => c.activa).fold<double>(0.0, (acc, c) => acc + c.porcentaje);
+    final valido = (total - 100.0).abs() < 0.01;
+    return {
+      'valido': valido,
+      'mensaje': valido
+          ? 'Válido'
+          : 'La suma de porcentajes de cuentas activas debe ser exactamente 100% (actual: ${total.toStringAsFixed(1)}%)',
+    };
   }
 
   List<BankAccountConfig> calcularDispersionFondos(

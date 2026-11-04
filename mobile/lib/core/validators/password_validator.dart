@@ -28,12 +28,12 @@ const List<String> palabrasComunesProhibidas = [
 String _normalizarParaComparacion(String texto) {
   return texto
       .toLowerCase()
-      .replaceAll(RegExp(r'[áàäâã]', unicode: true), 'a')
-      .replaceAll(RegExp(r'[éèëê]', unicode: true), 'e')
-      .replaceAll(RegExp(r'[íìïî]', unicode: true), 'i')
-      .replaceAll(RegExp(r'[óòöôõ]', unicode: true), 'o')
-      .replaceAll(RegExp(r'[úùüû]', unicode: true), 'u')
-      .replaceAll(RegExp(r'[ñ]', unicode: true), 'n')
+      .replaceAll(RegExp(r'[áàäâã]', caseSensitive: false), 'a')
+      .replaceAll(RegExp(r'[éèëê]', caseSensitive: false), 'e')
+      .replaceAll(RegExp(r'[íìïî]', caseSensitive: false), 'i')
+      .replaceAll(RegExp(r'[óòöôõ]', caseSensitive: false), 'o')
+      .replaceAll(RegExp(r'[úùüû]', caseSensitive: false), 'u')
+      .replaceAll(RegExp(r'[ñ]', caseSensitive: false), 'n')
       .replaceAll(RegExp(r'[^a-z]'), '');
 }
 
@@ -46,12 +46,12 @@ final List<PasswordRequirement> requisitosPassword = [
   PasswordRequirement(
     id: 'mayus',
     texto: 'Una mayúscula',
-    cumple: (p) => RegExp(r'\p{Lu}', unicode: true).hasMatch(p),
+    cumple: (p) => RegExp(r'[A-Z]').hasMatch(p),
   ),
   PasswordRequirement(
     id: 'minus',
     texto: 'Una minúscula',
-    cumple: (p) => RegExp(r'\p{Ll}', unicode: true).hasMatch(p),
+    cumple: (p) => RegExp(r'[a-z]').hasMatch(p),
   ),
   PasswordRequirement(
     id: 'numero',
@@ -60,8 +60,8 @@ final List<PasswordRequirement> requisitosPassword = [
   ),
   PasswordRequirement(
     id: 'simbolo',
-    texto: 'Un símbolo (! @ # $ %)',
-    cumple: (p) => RegExp(r'[^\p{L}\p{N}\s]', unicode: true).hasMatch(p),
+    texto: r'Un símbolo (! @ # $ %)',
+    cumple: (p) => RegExp(r'[^a-zA-Z0-9\s]').hasMatch(p),
   ),
   PasswordRequirement(
     id: 'comun',

@@ -16,6 +16,20 @@ class FashionColors {
   static const Color rosaCorporativo = Color(0xFFE60067);
   static const Color blanco = Color(0xFFFFFFFF);
   static const Color verdeExito = Color(0xFF2E7D32);
+
+  // Aliases compatibles con las pantallas
+  static const Color fondoClaro = crema;
+  static const Color textoOscuro = texto;
+  static const Color textoMuted = gris;
+  static const Color grisBorde = borde;
+  static const Color negroElegante = negro;
+  static const Color peligro = rojo;
+  static const Color aviso = Color(0xFFE65100);
+  static const Color rosaSuave = Color(0xFFFCE4EC);
+  static const Color rosaOscuro = rosaCorporativo;
+  static const Color exito = verdeExito;
+  static const Color cremaSuave = arenaSuave;
+  static const Color azulInfo = pizarra;
 }
 
 class FashionTheme {

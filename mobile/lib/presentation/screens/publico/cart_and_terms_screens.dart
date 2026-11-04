@@ -1,5 +1,6 @@
 // @source-mirror: src/views/publico/VistaCarrito.vue, src/views/publico/VistaTerminos.vue
 import 'dart:convert';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -167,8 +168,8 @@ class _CartCheckoutScreenState extends ConsumerState<CartCheckoutScreen> {
       setState(() => _cargandoPago = false);
 
       String mensaje = 'No fue posible preparar tu pedido. Intenta de nuevo.';
-      if (err is dynamic && err.response != null) {
-        final cuerpo = err.response.data;
+      if (err is DioException && err.response != null) {
+        final cuerpo = err.response?.data;
         final datosError = cuerpo is Map ? (cuerpo['data'] ?? cuerpo) : {};
         final listaSinStock = datosError['sin_stock'] ?? (cuerpo is Map ? cuerpo['sin_stock'] : null);
 

@@ -226,6 +226,27 @@ class OrderService {
   static final OrderService _instance = OrderService._internal();
   static OrderService get instance => _instance;
 
+  static const Map<String, String> estadosPedido = {
+    'Pendiente_Pago': 'Pendiente de pago',
+    'Pagado': 'Pagado',
+    'En_Preparacion': 'En preparación',
+    'Enviado': 'Enviado',
+    'Entregado': 'Entregado',
+    'Cancelado': 'Cancelado',
+    'Revision_Pago': 'Pago en revisión',
+    'Expirado': 'Expirado',
+    'Rechazado': 'Pago rechazado',
+  };
+
+  static const List<String> transportadorasSugeridas = [
+    'Coordinadora Mercantil',
+    'Envia',
+    'Servientrega',
+    'Interrapidísimo',
+    'TCC',
+    'Deprisa',
+  ];
+
   OrderService._internal();
 
   static const String ruta = '/pedidos';
@@ -260,23 +281,40 @@ class OrderService {
     int id, {
     required String estado,
     String? empresaTransportadora,
+    String? transportadora,
     String? numeroGuia,
+    String? notas,
   }) async {
+    final carrier = transportadora ?? empresaTransportadora;
     final response = await ApiClient.instance.dio.put(
       '$ruta/$id',
       data: {
         'estado': estado,
-        'empresa_transportadora': empresaTransportadora != null && empresaTransportadora.trim().isNotEmpty
-            ? empresaTransportadora.trim()
+        'empresa_transportadora': carrier != null && carrier.trim().isNotEmpty
+            ? carrier.trim()
             : null,
         'numero_guia': numeroGuia != null && numeroGuia.trim().isNotEmpty
             ? numeroGuia.trim()
             : null,
+        if (notas != null && notas.trim().isNotEmpty) 'notas': notas.trim(),
       },
     );
     final data = ApiResponseParser.extractData(response);
     return OrderModel.fromJson(data is Map<String, dynamic> ? data : {});
   }
+
+  Future<OrderModel> actualizarEnvio(
+    int id, {
+    required String estado,
+    String? transportadora,
+    String? numeroGuia,
+    String? notas,
+  }) async => actualizarDespacho(
+    id,
+    estado: estado,
+    empresaTransportadora: transportadora,
+    numeroGuia: numeroGuia,
+  );
 }
 
 // --- FACTURAS (InvoiceService) ---
@@ -429,6 +467,8 @@ class InvoiceService {
   static final InvoiceService _instance = InvoiceService._internal();
   static InvoiceService get instance => _instance;
 
+  static const String plantillaCsvContenido = 'numero_factura,cliente,fecha,total,estado\n';
+
   InvoiceService._internal();
 
   static const String ruta = '/facturas';
@@ -463,6 +503,7 @@ class InvoiceService {
     String? fechaEmision,
     String? clienteDocumento,
     String? notas,
+    String? metodoPago,
   }) async {
     final payload = {
       'pedido_id': origen == 'pedido' ? referenciaId : null,
@@ -550,6 +591,7 @@ class InvoiceService {
     required String filePath,
     required String fileName,
     void Function(int porcentaje)? alProgresar,
+    void Function(int sent, int total)? onSendProgress,
   }) async {
     final formData = FormData.fromMap({
       'archivo': await MultipartFile.fromFile(filePath, filename: fileName),

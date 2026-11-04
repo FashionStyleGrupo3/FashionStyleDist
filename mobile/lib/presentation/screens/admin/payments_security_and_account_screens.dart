@@ -88,11 +88,12 @@ class _AdminPaymentsConfigScreenState extends ConsumerState<AdminPaymentsConfigS
               onPressed: () {
                 final porc = double.tryParse(porcCtrl.text) ?? 0;
                 final nueva = BankAccountConfig(
-                  id: cuentaEditar?.id,
+                  id: cuentaEditar?.id ?? (_cuentas.isEmpty ? 1 : (_cuentas.map((c) => c.id).reduce((a, b) => a > b ? a : b) + 1)),
                   banco: bancoCtrl.text.trim(),
-                  tipo: tipo,
+                  tipoCuenta: tipo,
                   numeroCuenta: numCtrl.text.trim(),
                   titular: titularCtrl.text.trim(),
+                  concepto: 'Dispersión de fondos',
                   porcentaje: porc,
                   activa: cuentaEditar?.activa ?? true,
                 );
@@ -126,9 +127,9 @@ class _AdminPaymentsConfigScreenState extends ConsumerState<AdminPaymentsConfigS
 
     setState(() => _guardando = true);
     try {
-      await PaymentConfigService.instance.guardarConfiguracionPasarela({
-        'cuentas': _cuentas.map((c) => c.toJson()).toList(),
-      });
+      await PaymentConfigService.instance.guardarConfiguracionPasarela(
+        cuentasBancarias: _cuentas,
+      );
       _cargarDatos();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Configuración de dispersión guardada exitosamente')));
@@ -147,7 +148,7 @@ class _AdminPaymentsConfigScreenState extends ConsumerState<AdminPaymentsConfigS
   @override
   Widget build(BuildContext context) {
     final totalConsolidado = _control?.recaudoTotalConsolidado ?? 0;
-    final dispersion = PaymentConfigService.instance.calcularDispersionFondos(_cuentas, totalConsolidado);
+    final dispersion = PaymentConfigService.instance.calcularDispersionFondos(totalConsolidado, _cuentas);
 
     return AdminShellLayout(
       currentPath: '/admin/pagos',
@@ -187,7 +188,8 @@ class _AdminPaymentsConfigScreenState extends ConsumerState<AdminPaymentsConfigS
                 const SizedBox(height: 10),
 
                 ..._cuentas.map((c) {
-                  final asignado = dispersion.firstWhere((d) => d['cuenta'] == c.numeroCuenta, orElse: () => {'monto': 0.0});
+                  final asignado = dispersion.where((d) => d.id == c.id).firstOrNull;
+                  final montoDispersion = asignado?.montoAsignado ?? 0.0;
                   return Card(
                     elevation: 0.5,
                     margin: const EdgeInsets.only(bottom: 8),
@@ -195,7 +197,7 @@ class _AdminPaymentsConfigScreenState extends ConsumerState<AdminPaymentsConfigS
                     child: ListTile(
                       leading: const Icon(Icons.account_balance, color: FashionColors.pizarra),
                       title: Text('${c.banco} · ${c.titular}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                      subtitle: Text('Cuenta ${c.numeroCuenta} (${c.tipo}) · ${c.porcentaje}% activo\nAsignado: ${CurrencyFormatter.formatearCOP(JsonParser.toDouble(asignado['monto']))}', style: const TextStyle(fontSize: 11)),
+                      subtitle: Text('Cuenta ${c.numeroCuenta} (${c.tipoCuenta}) · ${c.porcentaje}% activo\nAsignado: ${CurrencyFormatter.formatearCOP(montoDispersion)}', style: const TextStyle(fontSize: 11)),
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -553,7 +555,7 @@ class _AdminAuditScreenState extends ConsumerState<AdminAuditScreen> {
                             margin: const EdgeInsets.only(bottom: 8),
                             child: ListTile(
                               leading: const Icon(Icons.history, color: FashionColors.pizarra),
-                              title: Text(desc, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                              title: Text(desc.toString(), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                               subtitle: Text('$dia · $relativo · Usuario: ${a['user']?['nombre'] ?? a['usuario'] ?? "Sistema"}', style: const TextStyle(fontSize: 11, color: FashionColors.textoMuted)),
                             ),
                           );
@@ -667,8 +669,8 @@ class _AdminAccountScreenState extends ConsumerState<AdminAccountScreen> {
                 CircleAvatar(
                   radius: 40,
                   backgroundColor: FashionColors.pizarra,
-                  backgroundImage: authState.fotoUsuario.isNotEmpty ? NetworkImage(authState.fotoUsuario) : null,
-                  child: authState.fotoUsuario.isEmpty ? const Icon(Icons.person, size: 40, color: Colors.white) : null,
+                  backgroundImage: (authState.fotoUsuario != null && authState.fotoUsuario!.isNotEmpty) ? NetworkImage(authState.fotoUsuario!) : null,
+                  child: (authState.fotoUsuario == null || authState.fotoUsuario!.isEmpty) ? const Icon(Icons.person, size: 40, color: Colors.white) : null,
                 ),
                 Positioned(
                   bottom: 0,

@@ -15,6 +15,8 @@ class PaginatedResponse<T> {
   });
 
   bool get hasMorePages => currentPage < lastPage;
+  List<T> get lista => items;
+  int get totalPaginas => lastPage;
 }
 
 class JsonParser {

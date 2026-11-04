@@ -76,10 +76,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
                     CircleAvatar(
                       radius: 32,
                       backgroundColor: FashionColors.rosaSuave,
-                      backgroundImage: authState.fotoUsuario.isNotEmpty
-                          ? NetworkImage(authState.fotoUsuario)
+                      backgroundImage: (authState.fotoUsuario != null && authState.fotoUsuario!.isNotEmpty)
+                          ? NetworkImage(authState.fotoUsuario!)
                           : null,
-                      child: authState.fotoUsuario.isEmpty
+                      child: (authState.fotoUsuario == null || authState.fotoUsuario!.isEmpty)
                           ? Text(
                               authState.nombreUsuario.isNotEmpty ? authState.nombreUsuario[0].toUpperCase() : 'U',
                               style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: FashionColors.rosaOscuro),
