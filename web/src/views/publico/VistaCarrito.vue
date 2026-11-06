@@ -1,4 +1,4 @@
-﻿<script setup>
+<script setup>
 import { computed, ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import {
@@ -19,6 +19,7 @@ import { useAutenticacionStore } from '@/stores/autenticacion';
 import { useFormatoMoneda } from '@/composables/useFormatoMoneda';
 import { useImagenStorage } from '@/composables/useImagenStorage';
 import { crearCheckout, iniciarPagoWompi, cargarScriptWompi } from '@/services/wompiServicio';
+import { obtenerPromocionesVigentes, calcularPrecioPromocional } from '@/services/promocionServicio';
 import clienteApi from '@/services/clienteApi';
 
 const router = useRouter();
@@ -188,13 +189,18 @@ const relacionados = computed(() => {
 async function cargarRelacionados() {
   cargandoRelacionados.value = true;
   try {
-    const res = await clienteApi.get('/productos');
+    const [res, promos] = await Promise.all([
+      clienteApi.get('/productos'),
+      obtenerPromocionesVigentes()
+    ]);
     const datos = res.data?.data ?? res.data ?? [];
     const lista = Array.isArray(datos) ? datos : datos.data || [];
 
     productosTodos.value = lista.map(p => {
       const variantes = Array.isArray(p.variantes) ? p.variantes : [];
       const varianteS = variantes.find(v => v.talla === 'S') || variantes[0] || {};
+      const precioBase = Number(varianteS.precio_venta ?? p.precio_venta ?? p.precio_base ?? 0);
+      const calc = calcularPrecioPromocional(p, precioBase, promos);
 
       return {
         id: p.id_producto ?? p.id,
@@ -202,7 +208,11 @@ async function cargarRelacionados() {
         categoriaId: p.categoria_id ?? p.categoria?.id_categoria ?? p.categoria?.id ?? null,
         catalogoId: p.catalogo_id ?? p.catalogo?.id_catalogo ?? p.catalogo?.id ?? null,
         imagen: resolverImagenProducto(p),
-        precio: Number(varianteS.precio_venta ?? p.precio_venta ?? p.precio_base ?? 0),
+        precio: calc.precioFinal,
+        precioOriginal: calc.precioOriginal,
+        tieneDescuento: calc.ahorro > 0,
+        porcentajeDescuento: calc.porcentaje,
+        promocion: calc.promocion
       };
     });
   } catch (e) {
@@ -389,9 +399,17 @@ onMounted(() => {
               Talla: <span class="font-semibold text-gray-700">{{ item.talla }}</span>
             </p>
             <p v-if="item.sku" class="text-xs text-gray-400">SKU: {{ item.sku }}</p>
-            <p class="mt-2 text-sm font-bold text-corporativo-rosa">
-              {{ formatearCOP(item.precio) }} <span class="text-xs font-normal text-gray-500">/ unidad</span>
-            </p>
+            <div class="mt-2 flex flex-wrap items-center gap-2">
+              <p class="text-sm font-bold text-corporativo-rosa">
+                {{ formatearCOP(item.precio) }} <span class="text-xs font-normal text-gray-500">/ unidad</span>
+              </p>
+              <s v-if="item.precioOriginal && Number(item.precioOriginal) > Number(item.precio)" class="text-xs text-gray-400">
+                {{ formatearCOP(item.precioOriginal) }}
+              </s>
+              <span v-if="item.precioOriginal && Number(item.precioOriginal) > Number(item.precio)" class="rounded bg-rose-100 px-1.5 py-0.5 text-[10px] font-bold text-rose-700">
+                Ahorras {{ formatearCOP(item.precioOriginal - item.precio) }}
+              </span>
+            </div>
             <p class="mt-1 text-xs text-gray-400">
               Stock disponible: {{ item.stockMaximo }}
             </p>
@@ -572,6 +590,9 @@ onMounted(() => {
           @click="verProducto(producto.id)"
         >
           <div class="relative aspect-[4/5] overflow-hidden bg-gray-100">
+            <span v-if="producto.tieneDescuento" class="absolute top-2 left-2 z-10 rounded bg-rose-600 px-1.5 py-0.5 text-[10px] font-bold text-white shadow-sm">
+              -{{ producto.porcentajeDescuento }}%
+            </span>
             <img
               v-if="producto.imagen"
               :src="producto.imagen"
@@ -589,9 +610,14 @@ onMounted(() => {
             <h3 class="text-sm font-bold text-gray-900 line-clamp-2 min-h-[2.5rem]">
               {{ producto.nombre }}
             </h3>
-            <p class="mt-2 text-base font-extrabold text-corporativo-rosa">
-              {{ formatearCOP(producto.precio) }}
-            </p>
+            <div class="mt-2 flex items-center gap-2">
+              <p class="text-base font-extrabold text-corporativo-rosa">
+                {{ formatearCOP(producto.precio) }}
+              </p>
+              <s v-if="producto.tieneDescuento" class="text-xs text-gray-400">
+                {{ formatearCOP(producto.precioOriginal) }}
+              </s>
+            </div>
             <span class="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-gray-400 group-hover:text-corporativo-rosa transition">
               Ver producto <ArrowRight class="h-3 w-3" />
             </span>

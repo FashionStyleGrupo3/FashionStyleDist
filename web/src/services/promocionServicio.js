@@ -1,4 +1,4 @@
-﻿import api from '@/services/clienteApi';
+import api from '@/services/clienteApi';
 import { useAutenticacionStore } from '@/stores/autenticacion';
 
 const RUTA = '/promociones';
@@ -96,8 +96,20 @@ export async function eliminarPromocion(id) {
 
 /* Vigencia */
 
+const oyentesInvalidacion = new Set();
+
+export function alInvalidarPromociones(callback) {
+  if (typeof callback === 'function') {
+    oyentesInvalidacion.add(callback);
+    return () => oyentesInvalidacion.delete(callback);
+  }
+  return () => {};
+}
+
 function aFecha(valor) {
-  const d = new Date(valor);
+  if (!valor) return null;
+  const str = String(valor).trim().replace(' ', 'T');
+  const d = new Date(str);
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
@@ -105,8 +117,19 @@ export function estaVigente(promo, ahora = new Date()) {
   if (!promo?.activa || promo.valor <= 0) return false;
   const inicio = promo.fechaInicio ? aFecha(promo.fechaInicio) : null;
   const fin = promo.fechaFin ? aFecha(promo.fechaFin) : null;
-  // Si la fecha fin viene sin hora (YYYY-MM-DD), la promo dura todo ese dá
-  if (fin && String(promo.fechaFin).length <= 10) fin.setHours(23, 59, 59, 999);
+
+  // Si la fecha fin viene sin hora (YYYY-MM-DD) o a medianoche (00:00:00), la promo dura todo ese día
+  if (fin) {
+    const rawFin = String(promo.fechaFin).trim();
+    const esSoloFecha = rawFin.length <= 10;
+    const esMedianoche =
+      rawFin.includes('00:00:00') ||
+      (fin.getHours() === 0 && fin.getMinutes() === 0 && fin.getSeconds() === 0);
+    if (esSoloFecha || esMedianoche) {
+      fin.setHours(23, 59, 59, 999);
+    }
+  }
+
   if (inicio && ahora < inicio) return false;
   if (fin && ahora > fin) return false;
   return true;
@@ -115,6 +138,13 @@ export function estaVigente(promo, ahora = new Date()) {
 export function invalidarCachePromociones() {
   cacheVigentes = null;
   cacheMarca = 0;
+  for (const cb of oyentesInvalidacion) {
+    try {
+      cb();
+    } catch (e) {
+      console.warn('Error en oyente de invalidación de promociones:', e);
+    }
+  }
 }
 
 /** Promociones vigentes con caché de 1 minuto compartida por toda la tienda. */
@@ -181,6 +211,7 @@ export default {
   eliminarPromocion,
   obtenerPromocionesVigentes,
   invalidarCachePromociones,
+  alInvalidarPromociones,
   calcularPrecioPromocional,
   normalizarPromocion,
   aPayloadBackend,

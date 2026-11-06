@@ -1,4 +1,4 @@
-﻿// Composable para resolver rutas de almacenamiento e imágenes
+// Composable para resolver rutas de almacenamiento e imágenes
 const IMAGEN_RESPALDO = '/img/prenda-respaldo.svg';
 
 export function resolverUrlAlmacenamiento(valor, { development = false, baseUrl = '/storage' } = {}) {
@@ -36,7 +36,7 @@ export function useImagenStorage() {
   const resolverUrlImagen = (ruta) => {
     const baseUrl = import.meta.env.DEV
       ? '/storage'
-      : (import.meta.env.VITE_STORAGE_BASE_URL || 'https://fashionstyle.api.adsocidm.com/storage');
+      : (import.meta.env.VITE_STORAGE_BASE_URL || 'https://fashionstyle.api.adsocidm.com/public/storage');
     return resolverUrlAlmacenamiento(ruta, {
       development: import.meta.env.DEV,
       baseUrl

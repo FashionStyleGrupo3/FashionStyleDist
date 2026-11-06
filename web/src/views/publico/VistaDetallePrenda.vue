@@ -4,6 +4,7 @@ import { ref, onMounted, watch } from 'vue';
 import { useRecargaAutomatica } from '@/composables/useRecargaAutomatica';
 import { useRoute, useRouter } from 'vue-router';
 import { obtenerProducto } from '@/services/productoServicio';
+import { recargarPromociones } from '@/composables/usePromociones';
 import VisorDetalleProducto from '@/components/escaparate/VisorDetalleProducto.vue';
 
 const route = useRoute();
@@ -47,7 +48,10 @@ async function refrescarProducto() {
   const id = route.params.id;
   if (!id || cargando.value) return;
   try {
-    const dato = await obtenerProducto(id);
+    const [dato] = await Promise.all([
+      obtenerProducto(id),
+      recargarPromociones()
+    ]);
     if (dato) producto.value = dato;
   } catch (e) {
     console.warn('No se pudo refrescar la prenda:', e);

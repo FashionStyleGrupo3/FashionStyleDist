@@ -7,6 +7,7 @@ import { obtenerProductos } from '@/services/productoServicio';
 import { obtenerCategorias, obtenerCatalogos } from '@/services/clasificacionServicio';
 import { useImagenStorage } from '@/composables/useImagenStorage';
 import TarjetaProducto from '@/components/escaparate/TarjetaProducto.vue';
+import { recargarPromociones } from '@/composables/usePromociones';
 const router = useRouter();
 const { resolverUrlImagen } = useImagenStorage();
 
@@ -136,7 +137,8 @@ async function cargarDatosTienda() {
     const [prods, cats, cols] = await Promise.all([
       obtenerProductos(),
       obtenerCategorias(),
-      obtenerCatalogos()
+      obtenerCatalogos(),
+      recargarPromociones()
     ]);
     productos.value = prods;
     categorias.value = Array.isArray(cats) ? cats : [];
