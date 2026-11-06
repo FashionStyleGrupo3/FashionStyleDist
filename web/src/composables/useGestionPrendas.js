@@ -1,4 +1,4 @@
-﻿  import { computed, onMounted, ref } from 'vue';
+  import { computed, onMounted, ref } from 'vue';
   import { useRecargaAutomatica } from '@/composables/useRecargaAutomatica';
   import clienteApi from '@/services/clienteApi';
   import { useAutenticacionStore } from '@/stores/autenticacion';
@@ -548,6 +548,7 @@
           const respuesta = await clienteApi.post(BASE, {
             ...datosProducto(),
             activo: true,
+            publicado: false,
             variantes: variantes.value.map(variante => ({
               talla: String(variante.talla).trim(),
               sku: String(variante.sku).trim(),
