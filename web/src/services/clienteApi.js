@@ -4,6 +4,7 @@ import { idSocket } from '@/services/tiempoReal';
 
 const URL_PRIMARIO = 'https://fashionstyle.api.adsocidm.com/public/api';
 const URL_RESPALDO = 'https://fashionstylebackend-o3hx.onrender.com/api';
+const HABILITAR_RESPALDO = import.meta.env.VITE_HABILITAR_RESPALDO === 'true';
 
 const clienteApi = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || URL_PRIMARIO,
@@ -113,7 +114,7 @@ clienteApi.interceptors.response.use(
 
       const usaAdsocidm = baseActual.includes('fashionstyle.api.adsocidm.com') || urlActual.includes('fashionstyle.api.adsocidm.com');
 
-      if (usaAdsocidm) {
+      if (usaAdsocidm && HABILITAR_RESPALDO) {
         console.warn(
           `[clienteApi] Error en backend principal Adsocidm (${error.message || error.response?.status}). Conmutando automáticamente al backend de respaldo Render...`
         );
