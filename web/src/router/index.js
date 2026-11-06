@@ -1,4 +1,3 @@
-﻿
 import { createRouter, createWebHashHistory, createWebHistory } from 'vue-router';
 import { useAutenticacionStore } from '@/stores/autenticacion';
 
@@ -42,6 +41,11 @@ const routes = [
           path: '/catalogo',
           query: to.query,
         }),
+      },
+      {
+        path: 'contacto',
+        name: 'contacto',
+        component: () => import('@/views/publico/VistaContacto.vue'),
       },
       {
         path: 'terminos',
@@ -119,7 +123,7 @@ const routes = [
     component: () => import('@/layouts/DisenoAdmin.vue'),
     meta: {
       requiereAutenticacion: true,
-      rolesPermitidos: ['admin', 'administrador', 'super-admin', 'empleado', 'staff'],
+      rolesPermitidos: ['admin', 'administrador', 'empleado', 'staff'],
     },
     children: [
       {
@@ -153,6 +157,16 @@ const routes = [
         component: () => import('@/views/admin/VistaGestionPrendas.vue'),
       },
       {
+        path: 'ayuda',
+        name: 'admin-ayuda',
+        component: () => import('@/views/admin/VistaAyudaAdmin.vue'),
+      },
+      {
+        path: 'mensajes',
+        name: 'admin-mensajes',
+        component: () => import('@/views/admin/VistaMensajesContacto.vue'),
+      },
+      {
         path: 'cuenta',
         name: 'admin-cuenta',
         component: () => import('@/views/admin/VistaEditarCuenta.vue'),
@@ -166,15 +180,13 @@ const routes = [
         path: 'seguridad',
         name: 'admin-seguridad',
         component: () => import('@/views/admin/VistaUsuariosYClientes.vue'),
-        // Hereda los roles del padre (admin y empleado). Las pestañas de
-        // empleados y usuarios/roles ya se ocultan con esAdmin en la vista.
       },
       {
         path: 'seguridad/auditoria',
         name: 'admin-auditoria',
         component: () => import('@/views/admin/VistaAuditoria.vue'),
         meta: {
-          rolesPermitidos: ['admin', 'administrador', 'super-admin'],
+          rolesPermitidos: ['admin', 'administrador'],
         },
       },
     ],
@@ -254,7 +266,6 @@ router.beforeEach(async (to) => {
     (ruta) => ruta.meta.requiereAutenticacion
   );
 
-  // Si hay una sesión guardada, verificarla con el servidor.
   if (authStore.estaAutenticado && !authStore.sesionHidratada) {
     try {
       await authStore.hidratarSesion();
@@ -277,8 +288,6 @@ router.beforeEach(async (to) => {
     };
   }
 
-  // Validar los permisos de cada ruta coincidente,
-  // incluidas las rutas hijas con restricciones mís especficas.
   if (requiereAutenticacion) {
     const rutasConRoles = to.matched.filter(
       (ruta) => ruta.meta.rolesPermitidos?.length
@@ -314,12 +323,17 @@ router.beforeEach(async (to) => {
   return true;
 });
 
-router.onError((error, to) => {
-  if (
-    error.message?.includes('Failed to fetch dynamically imported module')
-  ) {
-    window.location.href = to.fullPath;
+router.onError((error) => {
+  if (error.message?.includes('Failed to fetch dynamically imported module')) {
+    if (!sessionStorage.getItem('fs_chunk_reload')) {
+      sessionStorage.setItem('fs_chunk_reload', '1');
+      window.location.reload();
+    }
   }
+});
+
+router.afterEach(() => {
+  sessionStorage.removeItem('fs_chunk_reload');
 });
 
 export default router;
