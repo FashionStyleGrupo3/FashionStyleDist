@@ -23,11 +23,11 @@ const ultimaPagina = ref(1);
 const total = ref(0);
 
 function mostrarError(e) { return Object.values(e.response?.data?.errors || {}).flat()[0] || e.response?.data?.message || 'No se pudo consultar la Bitácora.'; }
-async function cargar() { cargando.value = true; error.value = ''; try { const resultado = await obtenerAuditorias({ ...filtros.value, page: pagina.value }); auditorias.value = resultado.items; pagina.value = resultado.currentPage; ultimaPagina.value = resultado.lastPage; total.value = resultado.total; } catch (e) { error.value = mostrarError(e); } finally { cargando.value = false; } }
+async function cargar({ silencioso = false } = {}) { if (!silencioso) { cargando.value = true; error.value = ''; } try { const resultado = await obtenerAuditorias({ ...filtros.value, page: pagina.value }); auditorias.value = resultado.items; pagina.value = resultado.currentPage; ultimaPagina.value = resultado.lastPage; total.value = resultado.total; } catch (e) { if (!silencioso) error.value = mostrarError(e); } finally { if (!silencioso) cargando.value = false; } }
 function buscar() { pagina.value = 1; cargar(); }
 function mover(delta) { const nueva = pagina.value + delta; if (nueva >= 1 && nueva <= ultimaPagina.value) { pagina.value = nueva; cargar(); } }
 onMounted(cargar);
-useRecargaAutomatica(cargar);
+useRecargaAutomatica(() => cargar({ silencioso: true }), { intervaloSondeo: 60000 });
 </script>
 
 <template>
@@ -37,7 +37,7 @@ useRecargaAutomatica(cargar);
         <p class="text-xs font-semibold uppercase tracking-[0.2em] text-corporativo-rosa">CONTROL Y TRAZABILIDAD</p>
         <h1 class="mt-1 text-2xl font-extrabold font-titulos text-gray-900">Bitácora de actividad</h1>
         <p class="mt-1 text-sm text-gray-500">
-          Consulta quién hizo cada cambio en la tienda, cuándo lo hizo y qué datos se modificaron.
+          Consulta quien hizo cada cambio en la tienda, cuandodo lo hizo y qué datos se modificaron.
         </p>
       </div>
 

@@ -1,4 +1,4 @@
-﻿import api from '@/services/clienteApi';
+import api from '@/services/clienteApi';
 import { useAutenticacionStore } from '@/stores/autenticacion';
 
 const RUTA = '/promociones';
@@ -27,7 +27,7 @@ export function normalizarPromocion(p = {}) {
   const tipoCrudo = String(p.tipo_descuento ?? p.tipo ?? 'porcentaje').toLowerCase();
   return {
     id: p.id_promocion ?? p.id ?? null,
-    nombre: p.nombre ?? p.titulo ?? 'Promoción',
+    nombre: p.nombre ?? p.titulo ?? 'Promocion',
     descripcion: p.descripcion ?? '',
     tipo: ['monto', 'valor', 'fijo'].includes(tipoCrudo) ? 'monto' : 'porcentaje',
     valor: Number(p.valor ?? p.porcentaje_descuento ?? p.descuento ?? 0) || 0,
@@ -96,25 +96,49 @@ export async function eliminarPromocion(id) {
 
 /* Vigencia */
 
+const oyentesInvalidacion = new Set();
+
+export function alInvalidarPromociones(callback) {
+  if (typeof callback === 'function') {
+    oyentesInvalidacion.add(callback);
+    return () => oyentesInvalidacion.delete(callback);
+  }
+  return () => {};
+}
+
 function aFecha(valor) {
-  const d = new Date(valor);
+  if (!valor) return null;
+  const str = String(valor).trim().replace(' ', 'T');
+  const d = new Date(str);
   return Number.isNaN(d.getTime()) ? null : d;
+}
+
+function diaLocal(fecha) {
+  return `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}-${String(fecha.getDate()).padStart(2, '0')}`;
 }
 
 export function estaVigente(promo, ahora = new Date()) {
   if (!promo?.activa || promo.valor <= 0) return false;
-  const inicio = promo.fechaInicio ? aFecha(promo.fechaInicio) : null;
-  const fin = promo.fechaFin ? aFecha(promo.fechaFin) : null;
-  // Si la fecha fin viene sin hora (YYYY-MM-DD), la promo dura todo ese dá
-  if (fin && String(promo.fechaFin).length <= 10) fin.setHours(23, 59, 59, 999);
-  if (inicio && ahora < inicio) return false;
-  if (fin && ahora > fin) return false;
+  // Se comparan días calendario (YYYY-MM-DD): el backend manda "2026-11-05 00:00:00" y,
+  // comparando horas, una promoción de un solo día quedaba vencida desde las 00:00:01.
+  const hoy = diaLocal(ahora);
+  const inicio = promo.fechaInicio ? String(promo.fechaInicio).slice(0, 10) : '';
+  const fin = promo.fechaFin ? String(promo.fechaFin).slice(0, 10) : '';
+  if (inicio && hoy < inicio) return false;
+  if (fin && hoy > fin) return false;
   return true;
 }
 
 export function invalidarCachePromociones() {
   cacheVigentes = null;
   cacheMarca = 0;
+  for (const cb of oyentesInvalidacion) {
+    try {
+      cb();
+    } catch (e) {
+      console.warn('Error en oyente de invalidación de promociones:', e);
+    }
+  }
 }
 
 /** Promociones vigentes con caché de 1 minuto compartida por toda la tienda. */
@@ -181,6 +205,7 @@ export default {
   eliminarPromocion,
   obtenerPromocionesVigentes,
   invalidarCachePromociones,
+  alInvalidarPromociones,
   calcularPrecioPromocional,
   normalizarPromocion,
   aPayloadBackend,

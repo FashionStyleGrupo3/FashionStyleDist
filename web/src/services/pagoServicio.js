@@ -23,7 +23,7 @@ const configuracionPredeterminada = {
       tipo_cuenta: 'Corriente',
       numero_cuenta: '031-458920-55',
       titular: 'FashionStyle S.A.S.',
-      concepto: 'Comercialización y Operación',
+      concepto: 'Comercializacion y Operacion',
       porcentaje: 25,
       activa: true
     },
@@ -33,7 +33,7 @@ const configuracionPredeterminada = {
       tipo_cuenta: 'Ahorros',
       numero_cuenta: '008-921478-03',
       titular: 'Fondo de Materia Prima e Insumos',
-      concepto: 'reposición de Telas y Fornituras',
+      concepto: 'Reposición de Telas y Fornituras',
       porcentaje: 15,
       activa: true
     }
@@ -76,6 +76,84 @@ export function calcularDispersionFondos(montoTotal, cuentas) {
   });
 }
 
+// ---------- Reparto (dispersión) por pago ----------
+// Por ahora el registro de cada reparto vive en este navegador (localStorage).
+// Cuando exista el endpoint en el backend, solo hay que cambiar estas funciones.
+const CLAVE_STORAGE_DISPERSIONES = 'fs_dispersiones_pagos';
+
+export function obtenerDispersiones() {
+  try {
+    const guardado = JSON.parse(localStorage.getItem(CLAVE_STORAGE_DISPERSIONES) || '{}');
+    return guardado && typeof guardado === 'object' ? guardado : {};
+  } catch {
+    return {};
+  }
+}
+
+/** Devuelve la lista de cosas que impiden repartir con estas cuentas (vacía = listo). */
+export function validarCuentasParaReparto(cuentas) {
+  const activas = (cuentas || []).filter((c) => c.activa);
+  const problemas = [];
+  if (!activas.length) {
+    problemas.push('No hay cuentas activas para recibir el dinero.');
+    return problemas;
+  }
+  const total = Math.round(activas.reduce((a, c) => a + (Number(c.porcentaje) || 0), 0) * 100) / 100;
+  if (total !== 100) problemas.push(`Los porcentajes suman ${total}% y deben sumar 100%.`);
+  const incompleta = activas.some(
+    (c) =>
+      !c.banco ||
+      String(c.numero_cuenta || '').replace(/-/g, '').length < 6 ||
+      !String(c.titular || '').trim()
+  );
+  if (incompleta) problemas.push('Hay cuentas sin banco, número o titular.');
+  return problemas;
+}
+
+/** Calcula cuánto recibe cada cuenta. La última se lleva el resto para que la suma sea exacta. */
+export function calcularReparto(monto, cuentas) {
+  const activas = (cuentas || []).filter((c) => c.activa);
+  const total = Math.round(Number(monto) || 0);
+  let acumulado = 0;
+  return activas.map((c, i) => {
+    const esUltima = i === activas.length - 1;
+    const valor = esUltima ? total - acumulado : Math.round((total * (Number(c.porcentaje) || 0)) / 100);
+    acumulado += valor;
+    return {
+      id: c.id,
+      concepto: c.concepto || `Cuenta ${i + 1}`,
+      banco: c.banco,
+      tipo_cuenta: c.tipo_cuenta,
+      numero_cuenta: c.numero_cuenta,
+      titular: c.titular,
+      porcentaje: Number(c.porcentaje) || 0,
+      monto_asignado: valor
+    };
+  });
+}
+
+/** Guarda el reparto de un pago con una "foto" de las cuentas de ese momento y le da un número de comprobante. */
+export function registrarDispersion(tx, cuentas) {
+  const problemas = validarCuentasParaReparto(cuentas);
+  if (problemas.length) throw new Error(problemas[0]);
+
+  const todas = obtenerDispersiones();
+  const clave = String(tx.id);
+  if (todas[clave]) return todas[clave];
+
+  const consecutivo = Object.keys(todas).length + 1;
+  const registro = {
+    comprobante: `REP-${String(consecutivo).padStart(6, '0')}`,
+    pago_id: tx.id,
+    fecha_reparto: new Date().toISOString(),
+    monto: Math.round(Number(tx.monto) || 0),
+    cuentas: calcularReparto(tx.monto, cuentas)
+  };
+  todas[clave] = registro;
+  localStorage.setItem(CLAVE_STORAGE_DISPERSIONES, JSON.stringify(todas));
+  return registro;
+}
+
 /**
  * Consulta en el backend el recaudo real en paralelo (Pedidos Online Wompi + Ventas POS)
  * y asegura que todas las operaciones confirmadas tengan su factura emitida automáticamente.
@@ -98,5 +176,9 @@ export default {
   obtenerConfiguracionPasarela,
   guardarConfiguracionPasarela,
   calcularDispersionFondos,
-  obtenerControlParaleloPagos
+  obtenerControlParaleloPagos,
+  obtenerDispersiones,
+  validarCuentasParaReparto,
+  calcularReparto,
+  registrarDispersion
 };

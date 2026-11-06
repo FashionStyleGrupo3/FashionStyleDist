@@ -1,3 +1,4 @@
+﻿
 <script setup>
 import { reactive, ref } from 'vue';
 import { X, UserPlus, Eye, EyeOff } from 'lucide-vue-next';
@@ -35,8 +36,8 @@ function validar() {
   if (!formulario.nombre.trim()) errores.nombre = 'El nombre es obligatorio.';
   if (!/^\S+@\S+\.\S+$/.test(formulario.correo)) errores.correo = 'Ingresa un correo válido.';
   if (formulario.telefono && formulario.telefono.length > 20) errores.telefono = 'Máximo 20 caracteres.';
-  if (!passwordEsSegura(formulario.password)) errores.password = 'Mínimo 10 caracteres, con mayúscula, minúscula, número y símbolo.';
-  if (formulario.password !== formulario.password_confirmation) errores.password_confirmation = 'Las contraseñas no coinciden.';
+  if (!passwordEsSegura(formulario.password)) errores.password = 'Mñimo 10 caracteres, con mayúscula, minúscula, número y símbolo.';
+  if (formulario.password !== formulario.password_confirmation) errores.password_confirmation = 'Las contraseñaas no coinciden.';
   return Object.keys(errores).length === 0;
 }
 
@@ -94,7 +95,7 @@ function enviar() {
         <div>
           <label class="mb-1 block text-sm font-semibold text-gray-700">contraseña</label>
           <div class="relative">
-            <input v-model="formulario.password" :type="verPassword ? 'text' : 'password'" maxlength="128" minlength="8" class="w-full rounded-lg border border-gray-300 px-3 py-2 pr-10 text-sm" placeholder="Mínimo 8 caracteres" />
+            <input v-model="formulario.password" :type="verPassword ? 'text' : 'password'" maxlength="128" minlength="8" class="w-full rounded-lg border border-gray-300 px-3 py-2 pr-10 text-sm" placeholder="Mñimo 8 caracteres" />
             <button type="button" class="absolute inset-y-0 right-2 text-gray-400" @click="verPassword = !verPassword">
               <EyeOff v-if="verPassword" class="h-4 w-4" /><Eye v-else class="h-4 w-4" />
             </button>

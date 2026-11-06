@@ -92,7 +92,7 @@ async function cargarDatosUsuario() {
 
       const usuarioActualizado = { ...authStore.usuario, ...datosRemotos };
       authStore.usuario = usuarioActualizado;
-      localStorage.setItem('fs_user', JSON.stringify(usuarioActualizado));
+      sessionStorage.setItem('fs_user', JSON.stringify(usuarioActualizado));
     }
   } catch (error) {
     mensajePerfilError.value = error.response?.data?.message
@@ -112,7 +112,7 @@ async function guardarCambiosPerfil() {
   }
 
   if (!formularioPerfil.value.correo.trim()) {
-    mensajePerfilError.value = 'El correo Electrónico es obligatorio.';
+    mensajePerfilError.value = 'El correo electrónico es obligatorio.';
     return;
   }
 
@@ -134,7 +134,7 @@ async function guardarCambiosPerfil() {
     };
 
     authStore.usuario = usuarioActualizado;
-    localStorage.setItem('fs_user', JSON.stringify(usuarioActualizado));
+    sessionStorage.setItem('fs_user', JSON.stringify(usuarioActualizado));
 
     mensajePerfilExito.value = 'Los datos del perfil se actualizaron correctamente.';
   } catch (error) {
@@ -171,7 +171,7 @@ async function guardarNuevaContrasena() {
   }
 
   if (formularioPassword.value.password !== formularioPassword.value.password_confirmation) {
-    mensajePasswordError.value = 'La confirmación de la contraseña no coincide.';
+    mensajePasswordError.value = 'La confirmacion de la contraseña no coincide.';
     return;
   }
 
@@ -215,7 +215,7 @@ onMounted(() => {
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-2 border-b border-gray-200">
       <div>
         <h1 class="text-2xl sm:text-3xl font-extrabold font-titulos text-gray-900 tracking-tight">
-          Configuración de Cuenta
+          Configuración de cuenta
         </h1>
         <p class="text-xs sm:text-sm text-gray-500 mt-0.5">
           Administra tu información personal, datos de contacto y credenciales de acceso.
@@ -251,7 +251,7 @@ onMounted(() => {
                   Datos de Perfil
                 </h2>
                 <p class="text-xs text-gray-500">
-                  Actualiza tus datos de identificación y contacto en el sistema.
+                  Actualiza tus datos de identificacion y contacto en el sistema.
                 </p>
               </div>
             </div>
@@ -301,10 +301,10 @@ onMounted(() => {
                 </div>
               </div>
 
-              <!-- Correo Electronico -->
+              <!-- Correo electrónico -->
               <div>
                 <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
-                  Correo Electrónico
+                  Correo electrónico
                 </label>
                 <div class="relative">
                   <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
@@ -366,7 +366,7 @@ onMounted(() => {
               <!-- Direccion -->
               <div>
                 <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
-                  Dirección
+                  Direccion
                 </label>
                 <div class="relative">
                   <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
@@ -466,7 +466,7 @@ onMounted(() => {
                     required
                     minlength="8"
                     maxlength="128"
-                    placeholder="Mínimo 8 caracteres"
+                    placeholder="Minimoimo 8 caracteres"
                     class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm text-gray-900 focus:bg-white focus:border-corporativo-rosa focus:ring-2 focus:ring-pink-100 focus:outline-none transition-all"
                   />
                 </div>

@@ -74,7 +74,10 @@ async function refrescarProducto() {
   const id = route.params.id;
   if (!id || cargando.value) return;
   try {
-    const dato = await obtenerProducto(id);
+    const [dato] = await Promise.all([
+      obtenerProducto(id),
+      recargarPromociones()
+    ]);
     if (dato) producto.value = dato;
   } catch (e) {
     console.warn('No se pudo refrescar la prenda:', e);

@@ -11,6 +11,9 @@ const foto = `${import.meta.env.BASE_URL}img/login-modelo.jpg`;
 <template>
   <div class="fs-auth">
     <aside class="fs-auth__foto">
+
+
+      
       <img :src="foto" alt="Modelo FashionStyle" />
       <RouterLink to="/" class="fs-auth__marca">FashionStyle</RouterLink>
       <h1 class="fs-auth__frase">Moda que se ajusta a ti</h1>

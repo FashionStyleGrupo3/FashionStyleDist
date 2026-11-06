@@ -7,6 +7,9 @@ export function useRecargaAutomatica(cargar, opciones = {}) {
     alVolverPestana = true,
     intervaloMinimoVisibilidad = 5000,
     retardo = 300,
+    // Respaldo cuando el tiempo real (Reverb) no avisa: recarga cada N ms mientras
+    // la pestaña esté visible. Usa 0 para desactivarlo en una vista concreta.
+    intervaloSondeo = 20000,
   } = opciones;
 
   let activo = true;
@@ -15,6 +18,7 @@ export function useRecargaAutomatica(cargar, opciones = {}) {
   let temporizador = null;
   let ultimaRecarga = Date.now();
   let desuscribir = null;
+  let sondeo = null;
 
   const leInteresa = (cambio) => {
     if (!recursos.length) return true;
@@ -55,6 +59,11 @@ export function useRecargaAutomatica(cargar, opciones = {}) {
   if (getCurrentInstance()) {
     onMounted(() => {
       desuscribir = suscribirCambios(alCambio);
+      if (intervaloSondeo > 0) {
+        sondeo = setInterval(() => {
+          if (activo && document.visibilityState === 'visible') programar();
+        }, intervaloSondeo);
+      }
       document.addEventListener('visibilitychange', alVisibilidad);
       window.addEventListener('focus', alVisibilidad);
     });
@@ -62,6 +71,7 @@ export function useRecargaAutomatica(cargar, opciones = {}) {
     onBeforeUnmount(() => {
       desuscribir?.();
       clearTimeout(temporizador);
+      clearInterval(sondeo);
       document.removeEventListener('visibilitychange', alVisibilidad);
       window.removeEventListener('focus', alVisibilidad);
     });

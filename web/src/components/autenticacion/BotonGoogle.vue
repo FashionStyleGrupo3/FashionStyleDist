@@ -50,7 +50,7 @@ function cargarGoogle() {
   script.addEventListener('load', () => nextTick(renderizarBoton), { once: true });
   script.addEventListener(
     'error',
-    () => emit('error', new Error('No se pudo cargar el inicio de sesión con Google.')),
+    () => emit('error', new Error('No se pudo cargar el inicio de sesion con Google.')),
     { once: true }
   );
 }

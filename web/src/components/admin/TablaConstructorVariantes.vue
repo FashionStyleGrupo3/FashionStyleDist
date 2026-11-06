@@ -63,7 +63,7 @@ function actualizarNumero(variante, campo, evento) {
             <th scope="col">SKU / Referencia</th>
             <th scope="col">Precio Venta (COP)</th>
             <th scope="col">{{ modo === 'crear' ? 'Stock Inicial' : 'Stock Actual' }}</th>
-            <th scope="col" class="th-accion">acción</th>
+            <th scope="col" class="th-accion">accion</th>
           </tr>
         </thead>
 
@@ -122,7 +122,7 @@ function actualizarNumero(variante, campo, evento) {
             </td>
           </tr>
 
-          <!-- Mensaje si no hay variantes aádidas -->
+          <!-- Mensaje si no hay variantes añadidas -->
           <tr v-if="!variantes.length">
             <td colspan="5" class="tabla-vacia">
               No hay variantes agregadas. Haz clic en el botón inferior para añadir una talla.

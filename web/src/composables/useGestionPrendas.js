@@ -1,4 +1,4 @@
-﻿  import { computed, onMounted, ref } from 'vue';
+  import { computed, onMounted, ref } from 'vue';
   import { useRecargaAutomatica } from '@/composables/useRecargaAutomatica';
   import clienteApi from '@/services/clienteApi';
   import { useAutenticacionStore } from '@/stores/autenticacion';
@@ -13,11 +13,11 @@
 
   const mensajesPorEstado = {
     400: 'La solicitud no es válida. Revisa los datos de la prenda e inténtalo de nuevo.',
-    401: 'Tu sesión terminó. Inicia sesión de nuevo para continuar.',
+    401: 'Tu sesión termin. Inicia sesión de nuevo para continuar.',
     403: 'No tienes permiso para realizar este cambio. Contacta al administrador si necesitas acceso.',
-    404: 'No se encontró la prenda o el recurso solicitado. Actualiza la lista e inténtalo de nuevo.',
+    404: 'No se encontr la prenda o el recurso solicitado. Actualiza la lista e inténtalo de nuevo.',
     409: 'No se pudo completar el cambio porque la prenda está relacionada con otros registros.',
-    413: 'Las imágenes seleccionadas superan el tamaño permitido.',
+    413: 'Las imgenes seleccionadas superan el tamaó permitido.',
     422: 'No se pudo guardar porque uno o más datos no tienen el formato esperado. Revísalos e inténtalo de nuevo.',
     500: 'El servidor tuvo un problema al procesar la solicitud. Inténtalo de nuevo más tarde.'
   };
@@ -27,9 +27,9 @@
     if (mensajesPorEstado[status]) return mensajesPorEstado[status];
     if (status >= 500) return mensajesPorEstado[500];
     if (!error?.response && (error?.code === 'ERR_NETWORK' || error?.message === 'Network Error')) {
-      return 'No se pudo conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.';
+      return 'No se pudo conectar con el servidor. Revisa tu conexion e inténtalo de nuevo.';
     }
-    return 'Ocurrió un error al procesar la prenda. Inténtalo de nuevo.';
+    return 'Ocurri un error al procesar la prenda. Inténtalo de nuevo.';
   }
 
   function obtenerMensajeErrorEliminacionPrenda(error) {
@@ -38,7 +38,7 @@
     }
     if (error?.response?.status === 403) return mensajesPorEstado[403];
     if (error?.response?.status === 404) return mensajesPorEstado[404];
-    return 'No se pudo eliminar la prenda. Inténtalo de nuevo o desactívala para retirarla del catálogo.';
+    return 'No se pudo eliminar la prenda. Inténtalo de nuevo o desactvala para retirarla del catálogo.';
   }
 
   export function useGestionPrendas() {
@@ -101,7 +101,7 @@
       );
 
       if (rechazadas) {
-        errorImagenes.value = `No se agregaron ${rechazadas} imagen(es). Usa archivos JPG, PNG o WEBP de máximo 4 MB y no superes 9 fotos por prenda.`;
+        errorImagenes.value = `No se agregaron ${rechazadas} imagen(es). Usa archivos JPG, PNG o WEBP de mximo 4 MB y no superes 9 fotos por prenda.`;
       }
 
       const necesitaPortada = !imagenes.value.some(imagen => imagen.portada);
@@ -265,7 +265,7 @@
       try {
         const confirmado = await confirmarAccion({
           titulo: 'Eliminar prenda',
-          texto: `¿Eliminar "${producto.nombre}"? Solo se pueden eliminar prendas que nunca se hayan vendido. Si ya tuvo ventas, puedes desactivarla para retirarla del catálogo.`,
+          texto: `¿Eliminar "${producto.nombre}"? Solo se pueden eliminar prendas sin movimientos de inventario ni ventas. Si ya los tiene, puedes desactivarla para retirarla del catálogo.`,
           textoBotonConfirmar: 'Eliminar prenda'
         });
         if (!confirmado) return;
@@ -273,7 +273,7 @@
         await clienteApi.delete(`${BASE}/${idProducto}`);
         mostrarModal.value = false;
         await cargarProductos();
-        notificarExito(`Se eliminó "${producto.nombre}".`);
+        notificarExito(`Se elimin "${producto.nombre}".`);
       } catch (error) {
         notificarError(`No se pudo eliminar "${producto.nombre}". ${obtenerMensajeErrorEliminacionPrenda(error, variantes.value)}`);
       } finally {
@@ -285,7 +285,7 @@
       errorFormulario.value = '';
 
       if (!validarCampoPrenda('nombre', formulario.value.nombre)) {
-        errorFormulario.value = 'El nombre es obligatorio y solo admite letras, números y puntuación común.';
+        errorFormulario.value = 'El nombre es obligatorio y solo admite letras, números y puntuacion comun.';
         return false;
       }
 
@@ -321,7 +321,7 @@
         }
 
         if (!validarPrecio(variante.precio)) {
-          errorFormulario.value = 'El precio no puede ser negativo y admite máximo dos decimales.';
+          errorFormulario.value = 'El precio no puede ser negativo y admite mximo dos decimales.';
           return false;
         }
 
@@ -510,7 +510,7 @@
       try {
         const erroresImagenes = await guardarImagenes(idProducto);
         if (erroresImagenes.length) {
-          errorImagenes.value = `No se pudieron guardar todas las imágenes: ${erroresImagenes.join(' ')}`;
+          errorImagenes.value = `No se pudieron guardar todas las imgenes: ${erroresImagenes.join(' ')}`;
           return;
         }
 
@@ -523,7 +523,7 @@
         productoPendienteImagenesId.value = null;
         mostrarModalEditar.value = false;
         errorImagenes.value = '';
-        notificarExito('Imágenes guardadas correctamente.');
+        notificarExito('Imgenes guardadas correctamente.');
       } catch (error) {
         errorImagenes.value = obtenerDetalleErrorImagen(error);
       } finally {
@@ -548,6 +548,7 @@
           const respuesta = await clienteApi.post(BASE, {
             ...datosProducto(),
             activo: true,
+            publicado: true,
             variantes: variantes.value.map(variante => ({
               talla: String(variante.talla).trim(),
               sku: String(variante.sku).trim(),
@@ -559,18 +560,18 @@
           variantesCreadas = dataRes?.variantes || [];
         } else {
           idProducto = productoActual.value?.id_producto;
-          if (!idProducto) throw new Error('No se encontró la prenda que se quiere editar.');
+          if (!idProducto) throw new Error('No se encontr la prenda que se quiere editar.');
 
           await clienteApi.patch(`${BASE}/${idProducto}`, datosProducto());
         }
 
-        if (!idProducto) throw new Error('El servidor no devolvió el ID de la prenda.');
+        if (!idProducto) throw new Error('El servidor no devolvi el ID de la prenda.');
 
         await guardarVariantes(idProducto, variantesCreadas, tareasPendientes);
         const erroresImagenes = await guardarImagenes(idProducto);
         if (erroresImagenes.length) {
           productoPendienteImagenesId.value = idProducto;
-          errorImagenes.value = `La prenda se guardó, pero no todas las imágenes: ${erroresImagenes.join(' ')}`;
+          errorImagenes.value = `La prenda se guardó, pero no todas las imgenes: ${erroresImagenes.join(' ')}`;
           await cargarProductos();
           return;
         }
@@ -585,7 +586,7 @@
         mostrarModal.value = false;
 
         if (tareasPendientes.length) {
-          notificarAdvertencia('La prenda se guardó, pero algunas variantes o movimientos requieren atención: ' + tareasPendientes.join(' '));
+          notificarAdvertencia('La prenda se guardó, pero algunas variantes o movimientos requieren atencion: ' + tareasPendientes.join(' '));
         } else {
           notificarExito(modoFormulario.value === 'crear'
             ? 'Prenda creada correctamente.'
@@ -631,7 +632,7 @@
 
       } catch (err) {
         productos.value = [];
-        errorCargaProductos.value = obtenerMensajeError(err, 'No se pudieron cargar las prendas. Revisa tu conexión e inténtalo de nuevo.');
+        errorCargaProductos.value = obtenerMensajeError(err, 'No se pudieron cargar las prendas. Revisa tu conexion e inténtalo de nuevo.');
       } finally {
         cargandoProductos.value = false;
       }
@@ -650,6 +651,22 @@
       } catch (error) {
         producto.activo = estadoAnterior;
         notificarError(`No se pudo ${activo ? 'activar' : 'desactivar'} "${producto.nombre}": ${obtenerMensajeError(error)}`);
+      }
+    }
+
+    async function cambiarEstadoPublicado(producto, publicado) {
+      const id = Number(producto.id_producto || producto.id);
+      const estadoAnterior = estaActivo(producto.publicado);
+      producto.publicado = publicado;
+
+      try {
+        const respuesta = await clienteApi.patch(`${BASE}/${id}/toggle-publicado`);
+        const data = respuesta.data?.data ?? respuesta.data;
+        producto.publicado = estaActivo(data?.publicado ?? publicado);
+        notificarExito(`Prenda ${publicado ? 'publicada en la tienda' : 'oculta de la tienda'}.`);
+      } catch (error) {
+        producto.publicado = estadoAnterior;
+        notificarError(`No se pudo ${publicado ? 'publicar' : 'ocultar'} "${producto.nombre}": ${obtenerMensajeError(error)}`);
       }
     }
 
@@ -704,7 +721,7 @@
         }
 
         if (!opcion) {
-          errorFormulario.value = `Se creó ${etiqueta}, pero no apareció en la lista. Actualiza las opciones e inténtalo de nuevo.`;
+          errorFormulario.value = `Se cre ${etiqueta}, pero no apareci en la lista. Actualiza las opciones e inténtalo de nuevo.`;
           return;
         }
         formulario.value = { ...formulario.value, [campoFormulario]: String(opcion[idCampo]) };
@@ -805,6 +822,7 @@
       precioDesde,
       cargarProductos,
       cambiarEstadoActivo,
+      cambiarEstadoPublicado,
       cargarOpcionesFormulario,
       crearCategoria,
       crearCatalogo,

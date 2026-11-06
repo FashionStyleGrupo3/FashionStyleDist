@@ -161,7 +161,7 @@ function actualizarCantidad(evento, form) {
           maxlength="100"
           required
           autocomplete="off"
-          placeholder="Compra, venta, corrección..."
+          placeholder="Compra, venta, correccion..."
         />
       </label>
 
@@ -172,7 +172,7 @@ function actualizarCantidad(evento, form) {
           v-model="form.observaciones"
           rows="3"
           maxlength="500"
-          placeholder="información adicional"
+          placeholder="Información adicional"
         ></textarea>
       </label>
 

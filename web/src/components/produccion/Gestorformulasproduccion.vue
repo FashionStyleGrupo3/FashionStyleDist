@@ -66,8 +66,8 @@ const lineas = computed(() => {
 
 const costoMaterialesPrenda = computed(() => lineas.value.reduce((acc, l) => acc + l.costo, 0));
 
-async function cargarBase() {
-  cargando.value = true;
+async function cargarBase({ silencioso = false } = {}) {
+  if (!silencioso) cargando.value = true;
   try {
     [productos.value, materias.value, proveedores.value, unidades.value] = await Promise.all([
       listarProductos(),
@@ -77,9 +77,9 @@ async function cargarBase() {
     ]);
     await cargarFormulas();
   } catch (error) {
-    notificarError(mensajeError(error, 'No se pudieron cargar los datos de producción.'));
+    if (!silencioso) notificarError(mensajeError(error, 'No se pudieron cargar los datos de producción.'));
   } finally {
-    cargando.value = false;
+    if (!silencioso) cargando.value = false;
   }
 }
 
@@ -112,8 +112,8 @@ async function quitar(linea) {
   }
 }
 
-onMounted(cargarBase);
-useRecargaAutomatica(cargarBase);
+onMounted(() => cargarBase());
+useRecargaAutomatica(() => cargarBase({ silencioso: true }), { intervaloSondeo: 60000 });
 </script>
 
 <template>

@@ -21,14 +21,14 @@ const proveedoresFiltrados = computed(() => {
   );
 });
  
-async function cargar() {
-  cargando.value = true;
+async function cargar({ silencioso = false } = {}) {
+  if (!silencioso) cargando.value = true;
   try {
     proveedores.value = await proveedoresApi.listar();
   } catch (error) {
-    notificarError(mensajeError(error, 'No se pudieron cargar los proveedores.'));
+    if (!silencioso) notificarError(mensajeError(error, 'No se pudieron cargar los proveedores.'));
   } finally {
-    cargando.value = false;
+    if (!silencioso) cargando.value = false;
   }
 }
  
@@ -57,7 +57,7 @@ async function eliminar(p) {
 }
  
 onMounted(cargar);
-useRecargaAutomatica(cargar);
+useRecargaAutomatica(() => cargar({ silencioso: true }), { intervaloSondeo: 60000 });
 </script>
 
 <template>

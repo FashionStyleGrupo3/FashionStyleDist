@@ -115,7 +115,7 @@ export async function registrarVenta({
  */
 export async function cancelarVenta(id, motivo = '') {
   const respuesta = await clienteApi.post(`${RUTA}/${id}/cancelar`, {
-    motivo: String(motivo || '').trim() || 'Cancelación desde panel administrativo'
+    motivo: String(motivo || '').trim() || 'Cancelacion desde panel administrativo'
   });
   return normalizarVenta(extraerDatos(respuesta));
 }

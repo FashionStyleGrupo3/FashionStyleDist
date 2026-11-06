@@ -152,7 +152,7 @@ const handleGoogleError = (err) => {
       @submit.prevent="handleLogin"
     >
       <div class="fs-auth__campo">
-        <label for="correo">Correo Electrónico</label>
+        <label for="correo">Correo electrónico</label>
 
         <div class="fs-auth__input">
             <input
@@ -219,11 +219,11 @@ const handleGoogleError = (err) => {
       :to="{ name: 'recuperar-contrasena' }"
       class="fs-auth__olvido"
     >
-      ¿Olvidaste tu contraseña?
+      Ólvidaste tu contraseña?
     </RouterLink>
 
     <div class="fs-auth__separador">
-      o continúa con
+      o continá con
     </div>
 
     <BotonGoogle
@@ -247,7 +247,7 @@ const handleGoogleError = (err) => {
         <span>
           Acepto los
           <a
-            href="#/terminos"
+            href="/terminos"
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -268,7 +268,7 @@ const handleGoogleError = (err) => {
     </div>
 
     <p class="fs-auth__pie">
-      ¿No tienes cuenta?
+      No tienes cuenta?
       <RouterLink :to="{ name: 'registro' }">
         Regístrate
       </RouterLink>

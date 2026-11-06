@@ -1,6 +1,6 @@
 ﻿import clienteApi from '@/services/clienteApi';
 
-// Formato minimoimo (filtro rápido, sin red).
+// Formato mínimo (filtro rápido, sin red).
 export function ciudadTieneFormatoValido(ciudad) {
   const valor = String(ciudad || '').trim();
   return valor.length >= 3 && valor.length <= 100 && /^[\p{L}][\p{L}\s.'-]*$/u.test(valor);

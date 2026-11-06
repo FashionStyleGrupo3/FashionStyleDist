@@ -92,7 +92,7 @@ const puedeGuardar = computed(() => {
 
 async function guardar() {
   if (!puedeGuardar.value) {
-    error.value = 'Completa producto e insumo. La cantidad debe estar entre 0.01 y 1000, con máximo 2 decimales.';
+    error.value = 'Completa producto e insumo. La cantidad debe estar entre 0.01 y 1000, con mximo 2 decimales.';
     return;
   }
 
@@ -112,14 +112,14 @@ async function guardar() {
     };
 
     const res = await clienteApi.post('/formulas-produccion/lote', payload);
-    notificarExito(res.data?.message || 'Fórmula creada correctamente.');
+    notificarExito(res.data?.message || 'Frmula creada correctamente.');
     emit('creada', res.data?.data);
     emit('cerrar');
   } catch (e) {
     console.error('[ModalNuevaFormula] Error:', e);
     const msg = e.response?.data?.message
       || (e.response?.data?.errors && Object.values(e.response.data.errors).flat().join(' '))
-      || 'No se pudo crear la fórmula.';
+      || 'No se pudo crear la frmula.';
     error.value = msg;
     notificarError(msg);
   } finally {
@@ -138,7 +138,7 @@ function cerrar() {
     <div class="p-6">
       <div class="mb-5 flex items-start justify-between gap-4">
         <div>
-          <h2 class="text-xl font-extrabold text-gray-900 font-titulos">Nueva fórmula de producción</h2>
+          <h2 class="text-xl font-extrabold text-gray-900 font-titulos">Nueva frmula de produccion</h2>
           <p class="mt-1 text-sm text-gray-500">
             Define la prenda y los insumos que requiere. Después podrás calcular sus costos.
           </p>
@@ -187,7 +187,7 @@ function cerrar() {
       <div class="rounded-xl border border-gray-200 overflow-hidden mb-4">
         <div class="bg-gray-50 px-4 py-2 border-b border-gray-200 flex items-center justify-between">
           <h3 class="text-sm font-bold uppercase tracking-wide text-gray-700">
-            Insumos de la fórmula
+            Insumos de la frmula
           </h3>
           <button
             type="button"

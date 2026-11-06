@@ -1,4 +1,4 @@
-﻿<script setup>
+<script setup>
 import { computed, ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import {
@@ -12,7 +12,10 @@ import {
   MessageCircle,
   CheckCircle2,
   Loader2,
-  Lock
+  Lock,
+  FileText,
+  Mail,
+  Download
 } from 'lucide-vue-next';
 import { useCarritoStore } from '@/stores/carrito';
 import { useAutenticacionStore } from '@/stores/autenticacion';
@@ -20,6 +23,7 @@ import { useFormatoMoneda } from '@/composables/useFormatoMoneda';
 import { useImagenStorage } from '@/composables/useImagenStorage';
 import { crearCheckout, iniciarPagoWompi, cargarScriptWompi } from '@/services/wompiServicio';
 import { useValidacionCiudad } from '@/composables/useValidacionCiudad';
+import VisorFacturaFashion from '@/components/facturas/VisorFacturaFashion.vue';
 import clienteApi from '@/services/clienteApi';
 
 const router = useRouter();
@@ -31,6 +35,16 @@ const { resolverUrlImagen, IMAGEN_RESPALDO } = useImagenStorage();
 const items = computed(() => carritoStore.items);
 const totalPrendas = computed(() => carritoStore.totalPrendas);
 const totalMonto = computed(() => carritoStore.totalMonto);
+const totalOriginal = computed(() => carritoStore.totalOriginal);
+const totalAhorro = computed(() => carritoStore.totalAhorro);
+
+function tieneDescuento(item) {
+  return Number(item.precioOriginal) > Number(item.precio);
+}
+
+function porcentajeDescuento(item) {
+  return Math.round((1 - Number(item.precio) / Number(item.precioOriginal)) * 100);
+}
 
 // ============================================================================
 // PAGO CON WOMPI Y DATOS DE ENTREGA
@@ -39,6 +53,11 @@ const cargandoPago = ref(false);
 const errorPago = ref(null);
 const mostrarFormularioEnvio = ref(false);
 const reciboConfirmado = ref(null);
+
+// Visor y Descarga de Factura
+const visorFacturaAbierto = ref(false);
+const facturaParaVisor = ref(null);
+const pedidoParaVisor = ref(null);
 
 const datosCliente = ref({
   nombre: authStore.usuario?.nombre || '',
@@ -72,6 +91,42 @@ function datosEnvioCompletos() {
     Boolean(String(datosCliente.value.ciudad || '').trim()) &&
     Boolean(String(datosCliente.value.direccion || '').trim())
   );
+}
+
+function abrirVisorFactura() {
+  if (!reciboConfirmado.value) return;
+
+  const ultimoGuardado = JSON.parse(localStorage.getItem('fs_ultimo_pedido') || '{}');
+  const itemsGuardados = ultimoGuardado.items || items.value || [];
+
+  facturaParaVisor.value = reciboConfirmado.value.factura || {
+    id: reciboConfirmado.value.facturaId,
+    numero: reciboConfirmado.value.numeroFactura || `FAC-${reciboConfirmado.value.facturaId || '0001'}`
+  };
+
+  pedidoParaVisor.value = {
+    id: reciboConfirmado.value.pedidoId,
+    referencia: reciboConfirmado.value.referencia,
+    total: reciboConfirmado.value.monto,
+    metodoPago: reciboConfirmado.value.metodoPago,
+    facturaId: reciboConfirmado.value.facturaId,
+    cliente: {
+      nombre: datosCliente.value.nombre,
+      correo: reciboConfirmado.value.correoEnviadoA || datosCliente.value.correo,
+      telefono: datosCliente.value.telefono,
+      direccion: datosCliente.value.direccion,
+      ciudad: datosCliente.value.ciudad
+    },
+    detalles: itemsGuardados.map(i => ({
+      nombre: i.nombre,
+      talla: i.talla,
+      cantidad: i.cantidad,
+      precio: i.precio,
+      subtotal: i.precio * i.cantidad
+    }))
+  };
+
+  visorFacturaAbierto.value = true;
 }
 
 async function pagarConWompi() {
@@ -124,8 +179,11 @@ async function pagarConWompi() {
   await iniciarPagoWompi({
     pedido,
     cliente: datosCliente.value,
+    // Con el widget abierto el botón no debe quedarse en "Procesando pago..."
+    onAbierto: () => {
+      cargandoPago.value = false;
+    },
     onVerificando: () => {
-      // El usuario ya pagó en el widget; se verifica con el backend
       cargandoPago.value = true;
     },
     onAprobado: (detalles) => {
@@ -134,6 +192,9 @@ async function pagarConWompi() {
         referencia: detalles.referencia,
         idTransaccion: detalles.transaccionId,
         total: detalles.monto,
+        facturaId: detalles.facturaId,
+        numeroFactura: detalles.numeroFactura,
+        correoEnviadoA: detalles.correoEnviadoA,
         items: JSON.parse(JSON.stringify(items.value)),
         fecha: new Date().toISOString()
       }));
@@ -145,7 +206,6 @@ async function pagarConWompi() {
       cargandoPago.value = false;
     },
     onRevision: () => {
-      // Pago aprobado, pero las prendas se agotaron mientras se procesaba: lo resuelve el equipo.
       errorPago.value = `Recibimos tu pago (ref. ${pedido.referencia}), pero una prenda se agotó mientras lo procesábamos. Nuestro equipo te contactará para resolverlo o reembolsarte.`;
       carritoStore.limpiarCarrito();
       cargandoPago.value = false;
@@ -199,13 +259,18 @@ const relacionados = computed(() => {
 async function cargarRelacionados() {
   cargandoRelacionados.value = true;
   try {
-    const res = await clienteApi.get('/productos');
+    const [res, promos] = await Promise.all([
+      clienteApi.get('/productos'),
+      obtenerPromocionesVigentes()
+    ]);
     const datos = res.data?.data ?? res.data ?? [];
     const lista = Array.isArray(datos) ? datos : datos.data || [];
 
     productosTodos.value = lista.map(p => {
       const variantes = Array.isArray(p.variantes) ? p.variantes : [];
       const varianteS = variantes.find(v => v.talla === 'S') || variantes[0] || {};
+      const precioBase = Number(varianteS.precio_venta ?? p.precio_venta ?? p.precio_base ?? 0);
+      const calc = calcularPrecioPromocional(p, precioBase, promos);
 
       return {
         id: p.id_producto ?? p.id,
@@ -213,7 +278,11 @@ async function cargarRelacionados() {
         categoriaId: p.categoria_id ?? p.categoria?.id_categoria ?? p.categoria?.id ?? null,
         catalogoId: p.catalogo_id ?? p.catalogo?.id_catalogo ?? p.catalogo?.id ?? null,
         imagen: resolverImagenProducto(p),
-        precio: Number(varianteS.precio_venta ?? p.precio_venta ?? p.precio_base ?? 0),
+        precio: calc.precioFinal,
+        precioOriginal: calc.precioOriginal,
+        tieneDescuento: calc.ahorro > 0,
+        porcentajeDescuento: calc.porcentaje,
+        promocion: calc.promocion
       };
     });
   } catch (e) {
@@ -317,23 +386,42 @@ onMounted(() => {
       </button>
     </div>
 
-    <!-- Confirmación de pago exitoso -->
-    <div v-if="reciboConfirmado" class="rounded-2xl border border-emerald-200 bg-white p-8 text-center shadow-sm max-w-xl mx-auto">
+    <!-- Confirmación de pago exitoso con Factura y Notificación por Correo -->
+    <div v-if="reciboConfirmado" class="rounded-2xl border border-emerald-200 bg-white p-8 text-center shadow-sm max-w-xl mx-auto space-y-5">
       <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
         <CheckCircle2 class="h-10 w-10" />
       </div>
-      <h2 class="mt-4 text-2xl font-extrabold text-gray-900">¡Pago Confirmado con Éxito!</h2>
-      <p class="mt-1 text-sm text-gray-500">
-        Transacción verificada y autorizada por Wompi Bancolombia.
-      </p>
+      <div>
+        <h2 class="text-2xl font-extrabold text-gray-900">¡Pago Confirmado con Éxito!</h2>
+        <p class="mt-1 text-sm text-gray-500">
+          Transacción verificada y autorizada por Wompi Bancolombia.
+        </p>
+      </div>
 
-      <div class="mt-6 space-y-2 rounded-2xl border border-gray-200 bg-gray-50 p-4 text-left text-xs">
+      <!-- Notificación destacada de envío de factura por correo -->
+      <div class="rounded-xl border border-emerald-200 bg-emerald-50/90 p-4 text-left text-xs text-emerald-900 flex items-start gap-3">
+        <Mail class="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
+        <div>
+          <p class="font-bold text-sm text-emerald-950">Factura electrónica emitida</p>
+          <p class="mt-0.5 text-emerald-800 leading-relaxed">
+            Hemos generado tu factura legal de venta y se ha enviado automáticamente a tu correo:
+            <strong class="underline decoration-emerald-400 font-semibold">{{ reciboConfirmado.correoEnviadoA || datosCliente.correo || 'tu correo registrado' }}</strong>.
+          </p>
+        </div>
+      </div>
+
+      <!-- Resumen de transacción -->
+      <div class="space-y-2 rounded-2xl border border-gray-200 bg-gray-50 p-4 text-left text-xs">
         <div class="flex justify-between gap-3">
-          <span class="text-gray-500">Referencia:</span>
+          <span class="text-gray-500">Referencia de Pago:</span>
           <strong class="font-mono text-gray-900">{{ reciboConfirmado.referencia }}</strong>
         </div>
+        <div v-if="reciboConfirmado.numeroFactura || reciboConfirmado.facturaId" class="flex justify-between gap-3">
+          <span class="text-gray-500">N.º Factura:</span>
+          <strong class="font-mono font-bold text-corporativo-rosa">{{ reciboConfirmado.numeroFactura || `FAC-${reciboConfirmado.facturaId}` }}</strong>
+        </div>
         <div class="flex justify-between gap-3">
-          <span class="text-gray-500">ID Transacción:</span>
+          <span class="text-gray-500">ID Transacción Wompi:</span>
           <span class="font-mono font-semibold text-emerald-700">{{ reciboConfirmado.transaccionId }}</span>
         </div>
         <div class="flex justify-between gap-3">
@@ -346,13 +434,24 @@ onMounted(() => {
         </div>
       </div>
 
-      <button
-        type="button"
-        class="mt-6 inline-flex items-center gap-2 rounded-xl bg-corporativo-rosa px-6 py-3 font-bold text-white shadow-sm hover:bg-corporativo-rosa-hover transition"
-        @click="reciboConfirmado = null; seguirComprando()"
-      >
-        <ShoppingBag class="h-5 w-5" /> Seguir comprando
-      </button>
+      <!-- Botones de Acción: Ver/Descargar Factura y Seguir Comprando -->
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+        <button
+          type="button"
+          class="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-gray-900 px-5 py-3 font-bold text-white shadow-sm hover:bg-black transition text-xs sm:text-sm"
+          @click="abrirVisorFactura"
+        >
+          <FileText class="h-4 w-4" /> Ver / Descargar Factura (PDF)
+        </button>
+
+        <button
+          type="button"
+          class="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-corporativo-rosa px-5 py-3 font-bold text-white shadow-sm hover:bg-pink-700 transition text-xs sm:text-sm"
+          @click="reciboConfirmado = null; seguirComprando()"
+        >
+          <ShoppingBag class="h-4 w-4" /> Seguir comprando
+        </button>
+      </div>
     </div>
 
     <!-- Carrito vacío -->
@@ -402,6 +501,8 @@ onMounted(() => {
             <p v-if="item.sku" class="text-xs text-gray-400">SKU: {{ item.sku }}</p>
             <p class="mt-2 text-sm font-bold text-corporativo-rosa">
               {{ formatearCOP(item.precio) }} <span class="text-xs font-normal text-gray-500">/ unidad</span>
+              <span v-if="tieneDescuento(item)" class="ml-1 text-xs font-normal text-gray-400 line-through">{{ formatearCOP(item.precioOriginal) }}</span>
+              <span v-if="tieneDescuento(item)" class="ml-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-bold text-emerald-700">-{{ porcentajeDescuento(item) }}%</span>
             </p>
             <p class="mt-1 text-xs text-gray-400">
               Stock disponible: {{ item.stockMaximo }}
@@ -438,6 +539,7 @@ onMounted(() => {
             </div>
 
             <p class="text-base font-extrabold text-gray-900">
+              <span v-if="tieneDescuento(item)" class="mr-1 text-xs font-normal text-gray-400 line-through">{{ formatearCOP(item.precioOriginal * item.cantidad) }}</span>
               {{ formatearCOP(item.precio * item.cantidad) }}
             </p>
 
@@ -468,7 +570,11 @@ onMounted(() => {
               </div>
               <div class="flex justify-between">
                 <dt class="text-gray-500">Subtotal</dt>
-                <dd class="font-semibold text-gray-900">{{ formatearCOP(totalMonto) }}</dd>
+                <dd class="font-semibold text-gray-900">{{ formatearCOP(totalOriginal) }}</dd>
+              </div>
+              <div v-if="totalAhorro > 0" class="flex justify-between">
+                <dt class="text-emerald-600">Descuento</dt>
+                <dd class="font-semibold text-emerald-600">- {{ formatearCOP(totalAhorro) }}</dd>
               </div>
               <div class="flex justify-between">
                 <dt class="text-gray-500">Envío</dt>
@@ -596,6 +702,9 @@ onMounted(() => {
           @click="verProducto(producto.id)"
         >
           <div class="relative aspect-[4/5] overflow-hidden bg-gray-100">
+            <span v-if="producto.tieneDescuento" class="absolute top-2 left-2 z-10 rounded bg-rose-600 px-1.5 py-0.5 text-[10px] font-bold text-white shadow-sm">
+              -{{ producto.porcentajeDescuento }}%
+            </span>
             <img
               v-if="producto.imagen"
               :src="producto.imagen"
@@ -613,9 +722,14 @@ onMounted(() => {
             <h3 class="text-sm font-bold text-gray-900 line-clamp-2 min-h-[2.5rem]">
               {{ producto.nombre }}
             </h3>
-            <p class="mt-2 text-base font-extrabold text-corporativo-rosa">
-              {{ formatearCOP(producto.precio) }}
-            </p>
+            <div class="mt-2 flex items-center gap-2">
+              <p class="text-base font-extrabold text-corporativo-rosa">
+                {{ formatearCOP(producto.precio) }}
+              </p>
+              <s v-if="producto.tieneDescuento" class="text-xs text-gray-400">
+                {{ formatearCOP(producto.precioOriginal) }}
+              </s>
+            </div>
             <span class="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-gray-400 group-hover:text-corporativo-rosa transition">
               Ver producto <ArrowRight class="h-3 w-3" />
             </span>
@@ -624,5 +738,13 @@ onMounted(() => {
       </div>
     </section>
 
+    <!-- Modal Visor y Descarga de Factura Electrónica -->
+    <VisorFacturaFashion
+      :abierto="visorFacturaAbierto"
+      :factura="facturaParaVisor"
+      :pedido="pedidoParaVisor"
+      @cerrar="visorFacturaAbierto = false"
+    />
+
   </div>
-</template> 
+</template>

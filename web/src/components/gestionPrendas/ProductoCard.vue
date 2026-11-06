@@ -8,11 +8,19 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['open', 'toggle-active']);
+const emit = defineEmits(['open', 'toggle-active', 'toggle-published']);
 const { resolverUrlImagen } = useImagenStorage();
 
 function onToggleActive(event) {
   emit('toggle-active', event.target.checked);
+}
+
+function onTogglePublished(event) {
+  emit('toggle-published', event.target.checked);
+}
+
+function esPublicado(producto) {
+  return producto?.publicado === true || producto?.publicado === 1 || producto?.publicado === '1';
 }
 
 function esActivo(producto) {
@@ -40,7 +48,23 @@ function precioDesde(producto) {
 
 <template>
   <article class="flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:shadow-md">
-    <div class="flex items-center justify-end gap-3 border-b border-slate-100 px-4 py-3">
+    <div class="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-3">
+      <div class="flex items-center gap-2">
+        <span class="text-[10px] font-semibold uppercase tracking-[0.18em]"
+          :class="esPublicado(producto) ? 'text-pink-600' : 'text-slate-500'">{{ esPublicado(producto) ? 'En tienda' :
+          'Oculto' }}</span>
+        <label class="relative inline-flex h-6 w-11 cursor-pointer items-center">
+          <input :checked="esPublicado(producto)" type="checkbox"
+            :aria-label="esPublicado(producto) ? 'Ocultar de la tienda' : 'Publicar en la tienda'" class="peer sr-only"
+            @change="onTogglePublished">
+          <span
+            class="h-6 w-11 rounded-full bg-slate-300 transition peer-checked:bg-pink-500 peer-focus-visible:ring-2 peer-focus-visible:ring-pink-500 peer-focus-visible:ring-offset-2"
+            aria-hidden="true"></span>
+          <span
+            class="absolute left-1 h-4 w-4 rounded-full bg-white shadow transition peer-checked:translate-x-5"
+            aria-hidden="true"></span>
+        </label>
+      </div>
       <div class="flex items-center gap-2">
         <span class="text-[10px] font-semibold uppercase tracking-[0.18em]"
           :class="esActivo(producto) ? 'text-emerald-700' : 'text-slate-500'">{{ esActivo(producto) ? 'Activo' :

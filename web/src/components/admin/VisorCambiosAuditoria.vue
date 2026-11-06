@@ -45,7 +45,7 @@ const grupos = computed(() => {
     >
       <ShieldCheck class="mx-auto h-8 w-8 text-gray-300" />
       <p class="mt-3 text-sm font-semibold text-gray-700">No hay movimientos para mostrar</p>
-      <p class="mt-1 text-xs text-gray-500">Prueba con otro filtro o vuelve a actualizar la bitácora.</p>
+      <p class="mt-1 text-xs text-gray-500">Prueba con otro filtro o vuelve a actualizar la bitcora.</p>
     </div>
 
     <section v-for="grupo in grupos" :key="grupo.dia" class="mb-8 last:mb-0">
@@ -102,7 +102,7 @@ const grupos = computed(() => {
 
               <!-- Cambio interno sin datos visibles -->
               <p v-if="info.soloInterno" class="mt-2 text-xs text-gray-500">
-                Ajuste interno de la cuenta (por ejemplo, un código de seguridad). No cambió datos visibles.
+                Ajuste interno de la cuenta (por ejemplo, un código de seguridad). No cambi datos visibles.
               </p>
 
               <!-- Modificacion: antes → ahora -->
@@ -146,7 +146,7 @@ const grupos = computed(() => {
                 </div>
               </div>
 
-              <!-- Pie: mís detalles -->
+              <!-- Pie: más detalles -->
               <div v-if="!info.soloInterno" class="mt-3 flex flex-wrap items-center justify-between gap-2">
                 <button
                   v-if="info.cambios.length > VISIBLES || info.datos.length > VISIBLES || abiertos.has(item.id)"
@@ -161,7 +161,7 @@ const grupos = computed(() => {
                   {{
                     abiertos.has(item.id)
                       ? 'Mostrar menos'
-                      : `Ver ${Math.max(info.cambios.length, info.datos.length) - VISIBLES} mís`
+                      : `Ver ${Math.max(info.cambios.length, info.datos.length) - VISIBLES} más`
                   }}
                 </button>
                 <span v-else></span>

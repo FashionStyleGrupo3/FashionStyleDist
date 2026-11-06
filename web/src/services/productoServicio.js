@@ -24,6 +24,9 @@ export async function obtenerProductos(filtros = {}) {
     return esActivo;
   });
 
+  // Lo que el admin oculta (publicado = false) no se muestra en la tienda, ni siquiera a un admin que la navegue.
+  lista = lista.filter((p) => p.publicado === undefined || p.publicado === null || Number(p.publicado) === 1 || p.publicado === true);
+
   // Filtrado de seguridad en cliente para categoría
   if (filtros.categoriaId) {
     const catIdNum = Number(filtros.categoriaId);

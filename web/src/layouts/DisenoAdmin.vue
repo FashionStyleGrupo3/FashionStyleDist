@@ -1,7 +1,7 @@
 ﻿<script setup>
 // -> Componente DisenoAdmin
 import { ref, computed, watch } from 'vue';
-import { RouterView, RouterLink, useRoute } from 'vue-router';
+import { RouterView, RouterLink, useRoute, useRouter } from 'vue-router';
 import {
   LayoutDashboard,
   Boxes,
@@ -24,9 +24,22 @@ import {
 } from 'lucide-vue-next';
 import AvatarUsuario from '@/components/perfil/AvatarUsuario.vue';
 import { useAutenticacionStore } from '@/stores/autenticacion';
+import { useRecargaAutomatica } from '@/composables/useRecargaAutomatica';
 
 const route = useRoute();
+const router = useRouter();
 const authStore = useAutenticacionStore();
+
+// Si un admin cambia el rol de esta persona, se actualiza solo (sin recargar).
+useRecargaAutomatica(() => authStore.refrescarSesion(), { recursos: ['usuarios'], intervaloSondeo: 30000 });
+
+// Si pierde el acceso al panel (p. ej. empleado -> cliente), sale del admin.
+watch(
+  () => authStore.esPersonal,
+  (esPersonal) => {
+    if (!esPersonal) router.replace('/');
+  }
+);
 
 // Estado reactivo para minimizar o expandir la barra lateral
 const sidebarMinimizada = ref(false);

@@ -128,7 +128,7 @@ const claseInput =
 
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
-          <input v-model="form.nombre" type="text" maxlength="100" placeholder="Ej. Tela algodón, Hilo negro, Botones" :class="claseInput" @input="filtrarFormulario('nombre', 'comercial', 100, $event)" />
+          <input v-model="form.nombre" type="text" maxlength="100" placeholder="Ej. Tela algodon, Hilo negro, Botones" :class="claseInput" @input="filtrarFormulario('nombre', 'comercial', 100, $event)" />
         </div>
 
         <div>

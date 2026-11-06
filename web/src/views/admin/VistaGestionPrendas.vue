@@ -49,6 +49,7 @@
             :key="p.id_producto || p.id"
             :producto="p"
             @toggle-active="cambiarEstadoActivo(p, $event)"
+            @toggle-published="cambiarEstadoPublicado(p, $event)"
             @open="abrirModal"
           />
         </section>
@@ -158,6 +159,7 @@ const {
   precioDesde,
   cargarProductos,
   cambiarEstadoActivo,
+  cambiarEstadoPublicado,
   cargarOpcionesFormulario,
   abrirModal,
   resolverRuta

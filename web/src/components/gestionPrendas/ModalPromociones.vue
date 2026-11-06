@@ -100,7 +100,7 @@ async function guardar() {
     if (backErrores) {
       errores.value = Object.fromEntries(Object.entries(backErrores).map(([k, v]) => [k, [].concat(v)[0]]));
     }
-    notificarError(e?.response?.data?.message || 'No se pudo guardar la Promoción.');
+    notificarError(e?.response?.data?.message || 'No se pudo guardar la promoción.');
   } finally {
     guardando.value = false;
   }
@@ -129,14 +129,14 @@ function cancelarEdicion() {
 }
 
 async function borrar(promo) {
-  if (!window.confirm(`¿Eliminar la Promoción "${promo.nombre}"?`)) return;
+  if (!window.confirm(`¿Eliminar la promoción "${promo.nombre}"?`)) return;
   try {
     await eliminarPromocion(promo.id);
     notificarExito('Promoción eliminada.');
     await cargar();
     emit('actualizado');
   } catch (e) {
-    notificarError(e?.response?.data?.message || 'No se pudo eliminar la Promoción.');
+    notificarError(e?.response?.data?.message || 'No se pudo eliminar la promoción.');
   }
 }
 
@@ -183,7 +183,7 @@ watch(
 
       <div class="grid flex-1 gap-6 overflow-y-auto p-5 md:grid-cols-2">
         <form class="space-y-3" @submit.prevent="guardar">
-          <h3 class="text-sm font-bold text-gray-800">{{ editandoId ? 'Editar Promocion' : 'Nueva Promocion' }}</h3>
+          <h3 class="text-sm font-bold text-gray-800">{{ editandoId ? 'Editar promoción' : 'Nueva promoción' }}</h3>
 
           <div>
             <input v-model="form.nombre" type="text" maxlength="100" placeholder="Nombre (ej. Black Friday) *"
@@ -191,7 +191,7 @@ watch(
             <p v-if="errores.nombre" class="mt-1 text-xs text-red-600">{{ errores.nombre }}</p>
           </div>
 
-          <textarea v-model="form.descripcion" rows="2" maxlength="500" placeholder="Descripción (opcional)"
+          <textarea v-model="form.descripcion" rows="2" maxlength="500" placeholder="Descripcion (opcional)"
             class="w-full rounded-xl border border-gray-300 px-3 py-2 text-sm focus:border-corporativo-rosa focus:outline-none"></textarea>
 
           <div class="grid grid-cols-2 gap-2">
@@ -251,7 +251,7 @@ watch(
             <button type="submit" :disabled="guardando"
               class="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-corporativo-rosa py-2.5 text-sm font-bold text-white hover:bg-corporativo-rosa-hover disabled:opacity-50">
               <Loader2 v-if="guardando" class="h-4 w-4 animate-spin" />
-              {{ editandoId ? 'Guardar cambios' : 'Crear Promocion' }}
+              {{ editandoId ? 'Guardar cambios' : 'Crear promoción' }}
             </button>
             <button v-if="editandoId" type="button" class="rounded-xl border border-gray-300 px-3 text-sm text-gray-600"
               @click="cancelarEdicion">Cancelar</button>

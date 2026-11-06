@@ -1,13 +1,14 @@
-﻿<script setup>
+<script setup>
 // -> página del catálogo: /catalogo?categoria=3&catalogo=1
 import { ref, computed, watch, onMounted } from 'vue';
 import { useRecargaAutomatica } from '@/composables/useRecargaAutomatica';
 import { useRoute, useRouter, RouterLink } from 'vue-router';
-import { X } from 'lucide-vue-next';
+import { X, Tag } from 'lucide-vue-next';
 import { useFiltrosStore } from '@/stores/filtros';
 import { useFavoritosStore } from '@/stores/favoritos';
 import { obtenerProductos } from '@/services/productoServicio';
 import { obtenerCategorias, obtenerCatalogos } from '@/services/clasificacionServicio';
+import { productoTienePromocion, recargarPromociones } from '@/composables/usePromociones';
 import MenuFiltros from '@/components/escaparate/MenuFiltros.vue';
 import CuadriculaProductos from '@/components/escaparate/CuadriculaProductos.vue';
 
@@ -20,6 +21,7 @@ const todos = ref([]);
 const categorias = ref([]);
 const colecciones = ref([]);
 const totalEncontrados = ref(0);
+const soloOfertas = ref(false);
 
 // La URL manda: /catalogo?categoria=2 → filtra por esa categoría
 watch(
@@ -27,9 +29,20 @@ watch(
   (q) => {
     filtrosStore.establecerCategoria(q.categoria ? Number(q.categoria) : null);
     filtrosStore.establecerCatalogo(q.catalogo ? Number(q.catalogo) : null);
+    if (q.ofertas === '1' || q.ofertas === 'true') {
+      soloOfertas.value = true;
+    }
   },
   { immediate: true }
 );
+
+function alternarOfertas() {
+  soloOfertas.value = !soloOfertas.value;
+  const query = { ...route.query };
+  if (soloOfertas.value) query.ofertas = '1';
+  else delete query.ofertas;
+  router.push({ name: 'catalogo', query });
+}
 
 // Al tocar un filtro se actualiza la URL (as se puede compartir el enlace)
 function cambiarFiltro(clave, id) {
@@ -52,6 +65,8 @@ const conteos = computed(() => {
   return { categorias: cat, catalogos: col, total: todos.value.length };
 });
 
+const conteoOfertas = computed(() => todos.value.filter(productoTienePromocion).length);
+
 const buscarNombre = (lista, campo, id) =>
   lista.find((x) => Number(x[campo] || x.id) === Number(id))?.nombre || '';
 
@@ -60,12 +75,14 @@ const nombreColeccion = computed(() => buscarNombre(colecciones.value, 'id_catal
 
 const titulo = computed(() => {
   if (favoritosStore.soloFavoritos) return 'Mis favoritos';
+  if (soloOfertas.value) return 'Ofertas y Promociones';
   return nombreCategoria.value || nombreColeccion.value || 'Todo el catálogo';
 });
 
 function limpiarTodo() {
   filtrosStore.limpiarFiltros();
   favoritosStore.soloFavoritos = false;
+  soloOfertas.value = false;
   router.push({ name: 'catalogo' });
 }
 
@@ -73,7 +90,12 @@ function limpiarTodo() {
 // cuando el admin cambia algo en otra pestaña o el cliente vuelve a la pestaña)
 async function cargarDatosTienda() {
   try {
-    const [prods, cats, cols] = await Promise.all([obtenerProductos(), obtenerCategorias(), obtenerCatalogos()]);
+    const [prods, cats, cols] = await Promise.all([
+      obtenerProductos(),
+      obtenerCategorias(),
+      obtenerCatalogos(),
+      recargarPromociones()
+    ]);
     todos.value = prods;
     categorias.value = Array.isArray(cats) ? cats : [];
     colecciones.value = Array.isArray(cols) ? cols : [];
@@ -97,7 +119,7 @@ useRecargaAutomatica(cargarDatosTienda, { recursos: ['productos', 'categorias', 
           <template v-if="titulo !== 'Todo el catálogo'"> / <span>{{ titulo }}</span></template>
         </nav>
         <h1>{{ titulo }}</h1>
-        <p v-if="nombreCategoria && nombreColeccion">colección {{ nombreColeccion }}</p>
+        <p v-if="nombreCategoria && nombreColeccion">coleccion {{ nombreColeccion }}</p>
         <p v-else>Descubre tu estilo perfecto</p>
       </div>
     </section>
@@ -110,7 +132,24 @@ useRecargaAutomatica(cargarDatosTienda, { recursos: ['productos', 'categorias', 
         @cambiar-categoria="(id) => cambiarFiltro('categoria', id)"
         @cambiar-catalogo="(id) => cambiarFiltro('catalogo', id)"
       >
-        <!-- Lado derecho de la barra: orden y total -->
+        <!-- Lado derecho de la barra: filtro de ofertas, orden y total -->
+        <button
+          type="button"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition border"
+          :class="soloOfertas ? 'bg-rose-600 text-white border-rose-600 shadow-sm' : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'"
+          @click="alternarOfertas"
+        >
+          <Tag class="w-3.5 h-3.5" />
+          <span>En oferta</span>
+          <span
+            v-if="conteoOfertas > 0"
+            class="ml-0.5 rounded-full px-1.5 py-0.2 text-[10px]"
+            :class="soloOfertas ? 'bg-white text-rose-700 font-extrabold' : 'bg-rose-100 text-rose-700'"
+          >
+            {{ conteoOfertas }}
+          </span>
+        </button>
+
         <span class="fs-total">{{ totalEncontrados }} productos</span>
         <select
           class="fs-select"
@@ -125,12 +164,15 @@ useRecargaAutomatica(cargarDatosTienda, { recursos: ['productos', 'categorias', 
       </MenuFiltros>
 
       <!-- Filtros activos que se pueden quitar -->
-      <div v-if="filtrosStore.busqueda || favoritosStore.soloFavoritos" class="fs-activos">
+      <div v-if="filtrosStore.busqueda || favoritosStore.soloFavoritos || soloOfertas" class="fs-activos">
         <button v-if="filtrosStore.busqueda" type="button" @click="filtrosStore.establecerBusqueda('')">
           Búsqueda: “{{ filtrosStore.busqueda }}” <X class="w-3.5 h-3.5" />
         </button>
         <button v-if="favoritosStore.soloFavoritos" type="button" @click="favoritosStore.soloFavoritos = false">
           Solo favoritos <X class="w-3.5 h-3.5" />
+        </button>
+        <button v-if="soloOfertas" type="button" @click="alternarOfertas">
+          Solo en oferta <X class="w-3.5 h-3.5" />
         </button>
       </div>
 
@@ -139,6 +181,7 @@ useRecargaAutomatica(cargarDatosTienda, { recursos: ['productos', 'categorias', 
         :catalogo-id="filtrosStore.catalogoId"
         :busqueda="filtrosStore.busqueda"
         :orden="filtrosStore.orden"
+        :solo-ofertas="soloOfertas"
         @total-actualizado="totalEncontrados = $event"
         @limpiar-filtros="limpiarTodo"
       />

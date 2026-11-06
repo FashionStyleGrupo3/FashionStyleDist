@@ -71,35 +71,20 @@ const paginaVentas = ref(1);
 const totalPaginasVentas = ref(1);
 const totalRegistrosVentas = ref(0);
 
-// Filtra lo que se escribe en los campos de texto del formulario de venta.
 function filtrarVenta(campo, tipo, limite, evento) {
   const valor = filtrarCampo(evento.target.value, tipo, limite);
   if (campo === 'cliente') clienteNombre.value = valor;
+  if (campo === 'documento') clienteDocumento.value = valor;
+  if (campo === 'telefono') clienteTelefono.value = valor;
   if (campo === 'notas') notasVenta.value = valor;
   evento.target.value = valor;
 }
 
-// Cédula / NIT: solo números y guion.
-function filtrarDocumento(evento) {
-  const valor = String(evento.target.value).replace(/[^0-9-]/g, '').slice(0, 20);
-  clienteDocumento.value = valor;
-  evento.target.value = valor;
-}
-
-// Teléfono: solo números.
-function filtrarTelefono(evento) {
-  const valor = String(evento.target.value).replace(/\D/g, '').slice(0, 10);
-  clienteTelefono.value = valor;
-  evento.target.value = valor;
-}
-
-// Búsqueda de prendas: letras, números, espacios, guion y guion bajo.
 function filtrarBusqueda(evento) {
-  const valor = String(evento.target.value)
-    .replace(/[^\p{L}\p{M}\p{N} _-]/gu, '')
+  busquedaPrenda.value = String(evento.target.value)
+    .replace(/[^\p{L}\p{M}\p{N} 0-9_-]/gu, '')
     .slice(0, 100);
-  busquedaPrenda.value = valor;
-  evento.target.value = valor;
+  evento.target.value = busquedaPrenda.value;
 }
 
 function normalizarProductoCatalogo(p = {}) {
@@ -123,8 +108,8 @@ function normalizarProductoCatalogo(p = {}) {
   };
 }
 
-async function cargarCatalogoPOS() {
-  cargandoProductos.value = true;
+async function cargarCatalogoPOS({ silencioso = false } = {}) {
+  if (!silencioso) cargandoProductos.value = true;
   try {
     const res = await clienteApi.get('/productos');
     const raw = res.data?.data ?? res.data ?? [];
@@ -138,9 +123,9 @@ async function cargarCatalogoPOS() {
       }
     }
   } catch (error) {
-    notificarError(obtenerMensajeError(error, 'No se pudo cargar el catálogo de prendas.'));
+    if (!silencioso) notificarError(obtenerMensajeError(error, 'No se pudo cargar el catálogo de prendas.'));
   } finally {
-    cargandoProductos.value = false;
+    if (!silencioso) cargandoProductos.value = false;
   }
 }
 
@@ -181,7 +166,7 @@ function agregarABolsa(producto) {
   const existente = bolsa.value.find((item) => String(item.varianteId) === String(variante.idVariante));
   if (existente) {
     if (existente.cantidad >= variante.stock) {
-      notificarError(`Stock máximo alcanzado (${variante.stock} unidades).`);
+      notificarError(`Stock mximo alcanzado (${variante.stock} unidades).`);
       return;
     }
     existente.cantidad += 1;
@@ -348,8 +333,8 @@ async function exportarVentas(formato) {
   }
 }
 
-async function cargarHistorialYResumen() {
-  cargandoVentas.value = true;
+async function cargarHistorialYResumen({ silencioso = false } = {}) {
+  if (!silencioso) cargandoVentas.value = true;
   try {
     const [resLista, resResumen] = await Promise.all([
       listarVentas({ pagina: paginaVentas.value, medioPago: filtroMedioPago.value }),
@@ -361,22 +346,16 @@ async function cargarHistorialYResumen() {
     totalRegistrosVentas.value = resLista.totalRegistros;
     resumen.value = resResumen;
   } catch (error) {
-    notificarError(obtenerMensajeError(error, 'No se pudo cargar el historial de ventas.'));
+    if (!silencioso) notificarError(obtenerMensajeError(error, 'No se pudo cargar el historial de ventas.'));
   } finally {
-    cargandoVentas.value = false;
+    if (!silencioso) cargandoVentas.value = false;
   }
-}
-
-function cambiarFiltroMedioPago(valor) {
-  filtroMedioPago.value = valor;
-  paginaVentas.value = 1;
-  cargarHistorialYResumen();
 }
 
 async function anularVentaConfirmada(venta) {
   const ok = await confirmarAccion({
     titulo: `Cancelar venta #${venta.id}`,
-    texto: 'Se anulará la venta y su factura asociada, y el sistema revertirá automáticamente el stock al inventario (Kárdex).',
+    texto: 'Se anular la venta, su factura asociada y el backend revertir automáticamente el stock al inventario (Kárdex).',
     textoBotonConfirmar: 'Sí, cancelar venta'
   });
   if (!ok) return;
@@ -407,7 +386,13 @@ function formatearFecha(valor) {
 onMounted(() => {
   cargarHistorialYResumen();
 });
-useRecargaAutomatica(() => Promise.all([cargarCatalogoPOS(), cargarHistorialYResumen()]));
+useRecargaAutomatica(
+  () => Promise.all([
+    cargarCatalogoPOS({ silencioso: true }),
+    cargarHistorialYResumen({ silencioso: true })
+  ]),
+  { intervaloSondeo: 60000 }
+);
 </script>
 
 <template>
@@ -431,25 +416,18 @@ useRecargaAutomatica(() => Promise.all([cargarCatalogoPOS(), cargarHistorialYRes
           Actualizar
         </button>
 
-        <button
-          type="button"
+        <button type="button"
           class="inline-flex items-center gap-1.5 rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-xs font-semibold text-gray-700 shadow-sm hover:bg-gray-50 disabled:opacity-50"
-          :disabled="exportandoVentas"
-          @click="exportarVentas('excel')"
-        >
+          :disabled="exportandoVentas" @click="exportarVentas('excel')">
           <Download class="h-4 w-4" /> Excel
         </button>
-        <button
-          type="button"
+        <button type="button"
           class="inline-flex items-center gap-1.5 rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-xs font-semibold text-gray-700 shadow-sm hover:bg-gray-50 disabled:opacity-50"
-          :disabled="exportandoVentas"
-          @click="exportarVentas('pdf')"
-        >
+          :disabled="exportandoVentas" @click="exportarVentas('pdf')">
           <Download class="h-4 w-4" /> PDF
         </button>
 
-        <button
-          type="button"
+        <button type="button"
           class="inline-flex items-center gap-2 rounded-xl bg-corporativo-rosa px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-sm transition hover:bg-pink-700"
           @click="abrirVentanaVentaFisica">
           <ShoppingBag class="h-4 w-4" />
@@ -595,7 +573,7 @@ useRecargaAutomatica(() => Promise.all([cargarCatalogoPOS(), cargarHistorialYRes
                 Nueva Venta en Tienda física
               </h2>
               <p class="text-xs text-gray-500">
-                Selecciona las prendas, añade los datos del comprador (opcional) y el sistema generar la factura
+                Selecciona las prendas, añade los datos del comprador (opcional) y el sistema generará la factura
                 automáticamente por el valor del producto.
               </p>
             </div>
@@ -736,7 +714,7 @@ useRecargaAutomatica(() => Promise.all([cargarCatalogoPOS(), cargarHistorialYRes
                     Nombre del comprador (opcional)
                   </label>
                   <input v-model="clienteNombre" type="text" maxlength="100"
-                    placeholder="Si se deja vacío: Consumidor final"
+                    placeholder="Si se deja vacó: Consumidor final"
                     class="w-full rounded-xl border border-gray-300 px-3 py-2 text-xs focus:border-corporativo-rosa focus:outline-none"
                     @input="filtrarVenta('cliente', 'persona', 100, $event)" />
                 </div>
@@ -744,7 +722,7 @@ useRecargaAutomatica(() => Promise.all([cargarCatalogoPOS(), cargarHistorialYRes
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   <div>
                     <label class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-                      Cédula / NIT (opcional)
+                      Cdula / NIT (opcional)
                     </label>
                     <input v-model="clienteDocumento" type="text" inputmode="numeric" maxlength="20"
                       placeholder="Ej. 1020304050"
@@ -754,7 +732,7 @@ useRecargaAutomatica(() => Promise.all([cargarCatalogoPOS(), cargarHistorialYRes
 
                   <div>
                     <label class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-                      Teléfono (opcional)
+                      Telfono (opcional)
                     </label>
                     <input v-model="clienteTelefono" type="tel" inputmode="tel" maxlength="20"
                       placeholder="Ej. 3001234567"

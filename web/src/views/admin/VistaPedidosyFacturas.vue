@@ -1,4 +1,4 @@
-﻿<script setup>
+<script setup>
 // -> Componente VistaPedidosyFacturas: Despacho de Pedidos y Facturación automática
 import { ref, computed, onMounted } from 'vue';
 import { useRecargaAutomatica } from '@/composables/useRecargaAutomatica';
@@ -60,40 +60,51 @@ const resumenPedidos = computed(() => {
   };
 });
 
-async function cargarPedidos() {
-  cargandoPedidos.value = true;
+// `silencioso: true` = recarga en segundo plano (sondeo / tiempo real): no muestra el
+// spinner "Cargando..." ni reemplaza la tabla, para no interrumpir al usuario.
+async function cargarPedidos({ silencioso = false } = {}) {
+  if (!silencioso) cargandoPedidos.value = true;
   try {
     const res = await listarPedidos({
       pagina: paginaPedidos.value,
       estado: filtroEstadoPedido.value,
       buscar: busquedaPedido.value.trim()
     });
-    pedidos.value = res.lista;
+    // Solo se reemplaza la lista si realmente cambió algo (evita re-renders inútiles)
+    if (!silencioso || JSON.stringify(res.lista) !== JSON.stringify(pedidos.value)) {
+      pedidos.value = res.lista;
+    }
     paginaPedidos.value = res.paginaActual;
     totalPaginasPedidos.value = res.totalPaginas;
     totalRegistrosPedidos.value = res.totalRegistros;
   } catch (error) {
-    notificarError(obtenerMensajeError(error, 'No se pudieron cargar los pedidos online.'));
+    if (!silencioso) {
+      notificarError(obtenerMensajeError(error, 'No se pudieron cargar los pedidos online.'));
+    }
   } finally {
-    cargandoPedidos.value = false;
+    if (!silencioso) cargandoPedidos.value = false;
   }
 }
 
-async function cargarFacturas() {
-  cargandoFacturas.value = true;
+async function cargarFacturas({ silencioso = false } = {}) {
+  if (!silencioso) cargandoFacturas.value = true;
   try {
     const res = await listarFacturas({
       pagina: paginaFacturas.value,
       buscar: busquedaFactura.value.trim()
     });
-    facturas.value = res.lista;
+    if (!silencioso || JSON.stringify(res.lista) !== JSON.stringify(facturas.value)) {
+      facturas.value = res.lista;
+    }
     paginaFacturas.value = res.paginaActual;
     totalPaginasFacturas.value = res.totalPaginas;
     totalRegistrosFacturas.value = res.totalRegistros;
   } catch (error) {
-    notificarError(obtenerMensajeError(error, 'No se pudieron cargar las facturas.'));
+    if (!silencioso) {
+      notificarError(obtenerMensajeError(error, 'No se pudieron cargar las facturas.'));
+    }
   } finally {
-    cargandoFacturas.value = false;
+    if (!silencioso) cargandoFacturas.value = false;
   }
 }
 
@@ -119,8 +130,8 @@ function abrirModalDespacho(pedido) {
 }
 
 function alGuardarDespacho() {
-  cargarPedidos();
-  cargarFacturas();
+  cargarPedidos({ silencioso: true });
+  cargarFacturas({ silencioso: true });
 }
 
 function manejarVerFacturaPedido(pedido) {
@@ -136,7 +147,18 @@ onMounted(() => {
   cargarPedidos();
   cargarFacturas();
 });
-useRecargaAutomatica(() => Promise.all([cargarPedidos(), cargarFacturas()]));
+// Recarga en segundo plano: sin spinner, sin cerrar filas abiertas y sin saltos de scroll.
+// Se pausa mientras haya un modal abierto. El sondeo es solo un respaldo (60 s) del tiempo real.
+useRecargaAutomatica(
+  () => {
+    if (modalDespachoAbierto.value || visorFacturaAbierto.value) return Promise.resolve();
+    return Promise.all([
+      cargarPedidos({ silencioso: true }),
+      cargarFacturas({ silencioso: true })
+    ]);
+  },
+  { intervaloSondeo: 60000 }
+);
 </script>
 
 <template>
@@ -167,7 +189,7 @@ useRecargaAutomatica(() => Promise.all([cargarPedidos(), cargarFacturas()]));
 
       <div class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm flex items-center justify-between">
         <div>
-          <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">En tránsito</p>
+          <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">En transito</p>
           <p class="mt-1 text-2xl font-extrabold text-indigo-600">{{ resumenPedidos.enTransito }}</p>
         </div>
         <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
@@ -227,7 +249,7 @@ useRecargaAutomatica(() => Promise.all([cargarPedidos(), cargarFacturas()]));
               v-model="busquedaPedido"
               type="search"
               maxlength="100"
-              placeholder="Buscar por #pedido, guía o cliente..."
+              placeholder="Buscar por #pedido, guá o cliente..."
               class="w-full rounded-xl border border-gray-300 bg-white pl-9 pr-3 py-2 text-xs sm:text-sm focus:border-corporativo-rosa focus:outline-none focus:ring-2 focus:ring-pink-100"
               @keyup.enter="paginaPedidos = 1; cargarPedidos()"
               @input="(e)=>{ busquedaPedido = String(e.target.value).replace(/[^\p{L}\p{M}\p{N} 0-9_-]/gu,'').slice(0,100); e.target.value = busquedaPedido; }"
@@ -270,6 +292,7 @@ useRecargaAutomatica(() => Promise.all([cargarPedidos(), cargarFacturas()]));
       @cambiar-filtro="cambiarFiltroEstado"
       @gestionar="abrirModalDespacho"
       @ver-factura="manejarVerFacturaPedido"
+      @pedido-actualizado="alGuardarDespacho"
     >
       <template #pie>
         <PaginadorTabla

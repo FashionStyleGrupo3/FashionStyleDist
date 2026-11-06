@@ -185,7 +185,7 @@ async function guardarPassword() {
     return;
   }
   if (password.value.password !== password.value.password_confirmation) {
-    mensajePasswordError.value = 'La confirmación de la contraseña no coincide.';
+    mensajePasswordError.value = 'La confirmacion de la contraseña no coincide.';
     return;
   }
 
@@ -264,7 +264,7 @@ const icono = 'absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events
               </div>
               <div>
                 <h2 class="text-base font-bold text-gray-900 sm:text-lg">Datos personales</h2>
-                <p class="text-xs text-gray-500">Manten al día tus datos para tus pedidos y entregas.</p>
+                <p class="text-xs text-gray-500">Manten al dá tus datos para tus pedidos y entregas.</p>
               </div>
             </div>
             <span
@@ -298,7 +298,7 @@ const icono = 'absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events
               </div>
 
               <div>
-                <label :class="etiqueta">Correo Electrónico</label>
+                <label :class="etiqueta">Correo electrónico</label>
                 <div class="relative">
                   <div :class="icono">
                     <Mail class="h-4 w-4" />
@@ -315,7 +315,7 @@ const icono = 'absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events
 
                 <div v-else class="mt-4 space-y-4">
                   <div>
-                    <label :class="etiqueta">Nuevo correo Electrónico</label>
+                    <label :class="etiqueta">Nuevo correo electrónico</label>
                     <div class="relative">
                       <div :class="icono">
                         <Mail class="h-4 w-4" />
@@ -326,7 +326,7 @@ const icono = 'absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events
                   </div>
 
                   <div v-if="codigoEnviado">
-                    <label :class="etiqueta">código de verificación</label>
+                    <label :class="etiqueta">código de verificacion</label>
                     <div class="relative">
                       <div :class="icono">
                         <KeyRound class="h-4 w-4" />
@@ -456,7 +456,7 @@ const icono = 'absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events
                     <Lock class="h-4 w-4" />
                   </div>
                   <input v-model="password.password" type="password" required minlength="8" maxlength="128" autocomplete="new-password"
-                    placeholder="Mínimo 8 caracteres" :class="campo" />
+                    placeholder="Minimoimo 8 caracteres" :class="campo" />
                 </div>
                 <RequisitosPassword :password="password.password" />
               </div>

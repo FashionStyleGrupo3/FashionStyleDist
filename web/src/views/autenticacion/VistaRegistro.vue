@@ -45,7 +45,7 @@ const noCoinciden = computed(
   () => confirmacion.value.length > 0 && password.value !== confirmacion.value
 );
 
-// Celular colombiano: 10 dgitos que empiezan por 3 (se ignoran espacios y guiones).
+// Celular colombiano: 10 dígitos que empiezan por 3 (se ignoran espacios y guiones).
 const telefonoLimpio = computed(() => telefono.value.replace(/[\s-]/g, ''));
 const telefonoInvalido = computed(
   () => telefonoLimpio.value.length > 0 && !/^3\d{9}$/.test(telefonoLimpio.value)
@@ -92,7 +92,7 @@ function mensajeDe(err, porDefecto) {
 const registrar = async () => {
   errorMessage.value = '';
   if (!/^\S+@\S+\.\S+$/.test(correo.value.trim())) {
-    errorMessage.value = 'Ingresa un correo Electrónico válido.';
+    errorMessage.value = 'Ingresa un correo electrónico válido.';
     return;
   }
   cargando.value = true;
@@ -171,7 +171,7 @@ const handleGoogleError = (err) => { errorMessage.value = err.message; };
 
       <div class="fs-auth__fila">
         <div class="fs-auth__campo">
-          <label for="correo">Correo Electrónico</label>
+          <label for="correo">Correo electrónico</label>
           <div class="fs-auth__input">
                 <input
                   id="correo"
@@ -264,7 +264,7 @@ const handleGoogleError = (err) => { errorMessage.value = err.message; };
             <button
               type="button"
               class="fs-auth__ojo"
-              :aria-label="verPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+              :aria-label="verPassword ? 'Ocultar contraseá' : 'Mostrar contraseá'"
               @click="verPassword = !verPassword"
             >
               <EyeOff v-if="verPassword" class="w-5 h-5" />
@@ -272,13 +272,13 @@ const handleGoogleError = (err) => { errorMessage.value = err.message; };
             </button>
           </div>
           <p v-if="!password" class="fs-auth__nota">
-            Mínimo 10 caracteres, con mayúscula, minúscula, número y símbolo.
+            Minimoimo 10 caracteres, con mayíscula, miníscula, número y smbolo.
           </p>
           <RequisitosPassword v-else :password="password" />
         </div>
 
         <div class="fs-auth__campo">
-          <label for="confirmacion">Confirmar contraseña</label>
+          <label for="confirmacion">Confirmar contraseá</label>
           <div class="fs-auth__input">
             <input
               id="confirmacion"
@@ -292,7 +292,7 @@ const handleGoogleError = (err) => { errorMessage.value = err.message; };
             />
           </div>
           <p v-if="noCoinciden" class="fs-auth__nota mal">
-            Las contraseñas no coinciden.
+            Las contraseás no coinciden.
           </p>
         </div>
       </div>
@@ -301,7 +301,7 @@ const handleGoogleError = (err) => { errorMessage.value = err.message; };
         <input v-model="aceptaTerminos" type="checkbox" />
         <span>
           Acepto los
-          <a href="#/terminos" target="_blank">términos y condiciones</a>
+          <a href="/terminos" target="_blank">términos y condiciones</a>
           y el tratamiento de mis datos personales.
         </span>
       </label>
@@ -315,7 +315,7 @@ const handleGoogleError = (err) => { errorMessage.value = err.message; };
       </button>
     </form>
 
-    <div class="fs-auth__separador">o continúa con</div>
+    <div class="fs-auth__separador">o continá con</div>
 
     <BotonGoogle
       :deshabilitado="cargando || !aceptaTerminos"
@@ -327,7 +327,7 @@ const handleGoogleError = (err) => { errorMessage.value = err.message; };
     </p>
 
     <p class="fs-auth__pie">
-      ¿Ya tienes cuenta?
+      Ya tienes cuenta?
       <RouterLink :to="{ name: 'login' }">Inicia sesión</RouterLink>
     </p>
   </div>

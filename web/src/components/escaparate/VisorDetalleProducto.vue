@@ -45,12 +45,12 @@ const precioFinal = computed(() => infoPrecio.value.precioFinal);
 const totalLinea = computed(() => precioFinal.value * cantidadDeseada.value);
 
 const etiquetaCategoria = computed(() => {
-  if (!props.producto) return 'colección FashionStyle';
+  if (!props.producto) return 'Colección FashionStyle';
   const cat = props.producto.categoria;
   const catalogo = props.producto.catalogo;
   const nombreCat = typeof cat === 'object' ? cat?.nombre : cat;
   const nombreCatalogo = typeof catalogo === 'object' ? catalogo?.nombre : catalogo;
-  return [nombreCat, nombreCatalogo].filter(Boolean).join(' · ') || 'colección FashionStyle';
+  return [nombreCat, nombreCatalogo].filter(Boolean).join(' · ') || 'Colección FashionStyle';
 });
 
 function reiniciarSeleccion() {
@@ -109,7 +109,7 @@ function agregarAMiSeleccion() {
 
   const agregarItem = carritoStore.agregarItem || carritoStore.agregarPrenda;
   if (typeof agregarItem !== 'function') {
-    notificarError('No se encontró la acción para agregar productos al carrito.');
+    notificarError('No se encontró la accion para agregar productos al carrito.');
     return;
   }
 
@@ -157,7 +157,7 @@ function agregarAMiSeleccion() {
       </div>
       <p v-if="tieneDescuento" class="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-700">
         <Tag class="h-4 w-4" />
-        {{ infoPrecio.promocion?.nombre || 'Promocion' }}: ahorras {{ formatearCOP(infoPrecio.ahorro) }} por unidad
+        {{ infoPrecio.promocion?.nombre || 'Promoción' }}: ahorras {{ formatearCOP(infoPrecio.ahorro) }} por unidad
       </p>
 
       <div v-if="colores.length" class="mt-7">
@@ -199,7 +199,7 @@ function agregarAMiSeleccion() {
       <button type="button" :disabled="!varianteSeleccionada || stockDisponible < 1"
         class="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-corporativo-rosa px-5 py-3.5 font-bold text-white shadow-md transition hover:bg-corporativo-rosa-hover focus:outline-none focus:ring-2 focus:ring-pink-300 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
         @click="agregarAMiSeleccion">
-        <ShoppingBag class="h-5 w-5" /> Añadir a mi selección
+        <ShoppingBag class="h-5 w-5" /> Añadir a mi bolsa
       </button>
 
       <p class="mt-3 text-xs leading-5 text-gray-500">

@@ -65,45 +65,51 @@ const empleados = computed(() =>
   usuarios.value.filter(usuario => tieneRol(usuario, 'empleado'))
 );
 
-async function cargarClientes() {
-  cargandoClientes.value = true;
+async function cargarClientes({ silencioso = false } = {}) {
+  if (!silencioso) cargandoClientes.value = true;
 
   try {
     clientes.value = await obtenerClientes();
   } catch (e) {
-    error.value = mostrarError(
+    if (!silencioso) {
+      error.value = mostrarError(
       e,
       'No se pudo cargar el directorio de clientes.'
     );
+    }
   } finally {
-    cargandoClientes.value = false;
+    if (!silencioso) cargandoClientes.value = false;
   }
 }
 
-async function cargarUsuarios() {
+async function cargarUsuarios({ silencioso = false } = {}) {
   if (!esAdmin.value) return;
 
-  cargandoUsuarios.value = true;
+  if (!silencioso) cargandoUsuarios.value = true;
 
   try {
     usuarios.value = await obtenerUsuarios();
   } catch (e) {
-    error.value = mostrarError(
+    if (!silencioso) {
+      error.value = mostrarError(
       e,
       'No se pudo cargar la gestión de usuarios.'
     );
+    }
   } finally {
-    cargandoUsuarios.value = false;
+    if (!silencioso) cargandoUsuarios.value = false;
   }
 }
 
-async function cargarTodo() {
-  error.value = '';
-  mensaje.value = '';
+async function cargarTodo({ silencioso = false } = {}) {
+  if (!silencioso) {
+    error.value = '';
+    mensaje.value = '';
+  }
 
   await Promise.all([
-    cargarClientes(),
-    cargarUsuarios()
+    cargarClientes({ silencioso }),
+    cargarUsuarios({ silencioso })
   ]);
 }
 
@@ -235,7 +241,7 @@ async function guardarUsuario(usuario, datosFormulario) {
 }
 
 onMounted(cargarTodo);
-useRecargaAutomatica(cargarTodo);
+useRecargaAutomatica(() => cargarTodo({ silencioso: true }), { intervaloSondeo: 60000 });
 </script>
 
 

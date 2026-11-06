@@ -194,7 +194,7 @@ watch(() => props.formulario.catalogo_id, (valor, anterior) => {
         <div class="min-w-0 rounded-2xl border border-slate-200 bg-slate-50 p-3 sm:p-4">
           <section class="space-y-4">
             <h3 class="text-lg font-bold text-slate-900">
-              Fotografías
+              Fotografás
             </h3>
 
             <div
@@ -213,7 +213,7 @@ watch(() => props.formulario.catalogo_id, (valor, anterior) => {
                        text-sm font-semibold text-white transition hover:bg-slate-800"
                 @click="inputArchivos?.click()"
               >
-                Elegir fotografías
+                Elegir fotografás
               </button>
             </div>
 
@@ -319,7 +319,7 @@ watch(() => props.formulario.catalogo_id, (valor, anterior) => {
           <!-- Descripcion -->
           <div>
             <label for="eDescripcion" class="mb-2 block text-sm font-semibold text-slate-700">
-              Descripción
+              Descripcion
             </label>
 
             <textarea
@@ -435,7 +435,7 @@ watch(() => props.formulario.catalogo_id, (valor, anterior) => {
           <!-- coleccion -->
           <div>
             <label for="eColeccion" class="mb-2 block text-sm font-semibold text-slate-700">
-              colección / temporada
+              coleccion / temporada
             </label>
 
             <select
@@ -514,7 +514,7 @@ watch(() => props.formulario.catalogo_id, (valor, anterior) => {
                     <th class="pb-3 pr-2 font-semibold">
                       {{ modo === 'crear' ? 'Stock inicial' : 'Stock actual' }}
                     </th>
-                    <th class="pb-3 font-semibold">acción</th>
+                    <th class="pb-3 font-semibold">accion</th>
                   </tr>
                 </thead>
 

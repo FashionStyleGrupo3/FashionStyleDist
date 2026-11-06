@@ -45,9 +45,11 @@ function normalizar(v = {}) {
   };
 }
 
-async function cargarAlertas() {
-  cargando.value = true;
-  error.value = '';
+async function cargarAlertas({ silencioso = false } = {}) {
+  if (!silencioso) {
+    cargando.value = true;
+    error.value = '';
+  }
   try {
     if (umbralManual.value) {
       umbral.value = Math.min(1000, Math.max(1, Math.floor(Number(umbral.value) || 5)));
@@ -64,17 +66,17 @@ async function cargarAlertas() {
 
     emit('conteo', { agotados: agotados.value.length, bajoStock: bajoStock.value.length });
   } catch (e) {
-    error.value = e?.response?.data?.message || 'No se pudieron cargar las alertas de inventario.';
+    if (!silencioso) error.value = e?.response?.data?.message || 'No se pudieron cargar las alertas de inventario.';
   } finally {
-    cargando.value = false;
+    if (!silencioso) cargando.value = false;
   }
 }
 
 const listaActual = computed(() => (pestana.value === 'agotados' ? agotados.value : bajoStock.value));
 
-watch(() => props.recargarToken, cargarAlertas);
-onMounted(cargarAlertas);
-useRecargaAutomatica(cargarAlertas);
+watch(() => props.recargarToken, () => cargarAlertas());
+onMounted(() => cargarAlertas());
+useRecargaAutomatica(() => cargarAlertas({ silencioso: true }), { intervaloSondeo: 60000 });
 </script>
 
 <template>
@@ -137,7 +139,7 @@ useRecargaAutomatica(cargarAlertas);
               <th class="py-2 pr-3">Talla</th>
               <th class="py-2 pr-3">SKU</th>
               <th class="py-2 pr-3 text-center">Stock</th>
-              <th class="py-2 text-right">acción</th>
+              <th class="py-2 text-right">accion</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-100">

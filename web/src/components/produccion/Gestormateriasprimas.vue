@@ -54,17 +54,17 @@ const materiasFiltradas = computed(() => {
 
 const cantidadStockBajo = computed(() => materias.value.filter(esStockBajo).length);
 
-async function cargar() {
-  cargando.value = true;
+async function cargar({ silencioso = false } = {}) {
+  if (!silencioso) cargando.value = true;
   try {
     [materias.value, unidades.value] = await Promise.all([
       materiasPrimasApi.listar(),
       unidadesMedidaApi.listar(),
     ]);
   } catch (error) {
-    notificarError(mensajeError(error, 'No se pudieron cargar las materias primas.'));
+    if (!silencioso) notificarError(mensajeError(error, 'No se pudieron cargar las materias primas.'));
   } finally {
-    cargando.value = false;
+    if (!silencioso) cargando.value = false;
   }
 }
 
@@ -159,7 +159,7 @@ async function eliminarUnidad(u) {
 }
 
 onMounted(cargar);
-useRecargaAutomatica(cargar);
+useRecargaAutomatica(() => cargar({ silencioso: true }), { intervaloSondeo: 60000 });
 </script>
 
 <template>
@@ -292,7 +292,7 @@ useRecargaAutomatica(cargar);
               <th class="px-4 py-3">Insumo</th>
               <th class="px-4 py-3">Unidad</th>
               <th class="px-4 py-3 text-right">Stock</th>
-              <th class="px-4 py-3 text-right">Mínimo</th>
+              <th class="px-4 py-3 text-right">Minimoimo</th>
               <th class="px-4 py-3 text-right">Costo unitario</th>
               <th class="px-4 py-3">Estado</th>
               <th class="px-4 py-3 text-right">Acciones</th>

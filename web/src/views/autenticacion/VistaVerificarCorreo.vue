@@ -76,12 +76,12 @@ const reenviar = async () => {
 
     <form @submit.prevent="verificar" class="space-y-4" novalidate>
       <div v-if="!route.query.correo">
-        <label for="correo" class="auth-etiqueta">Correo Electrónico</label>
+        <label for="correo" class="auth-etiqueta">Correo electrónico</label>
         <input id="correo" v-model="correo" type="email" required autocomplete="email" class="auth-campo" maxlength="254" @input="(e)=>{ correo = String(e.target.value).replace(/\s+/g,'').slice(0,254); e.target.value = correo; }" />
       </div>
 
       <div>
-        <label for="codigo" class="auth-etiqueta">código de verificación</label>
+        <label for="codigo" class="auth-etiqueta">código de verificacion</label>
           <input
             id="codigo"
             v-model="codigo"
@@ -105,7 +105,7 @@ const reenviar = async () => {
 
     <div class="text-center text-xs text-gray-500 mt-5 space-y-2">
       <p>
-        ¿No te llegó?
+        Ño te llegó?
         <button
           type="button"
           class="font-semibold text-corporativo-rosa hover:underline disabled:text-gray-400 disabled:no-underline"

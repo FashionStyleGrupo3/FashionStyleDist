@@ -4,8 +4,12 @@ import { ref, computed } from 'vue';
 import clienteApi from '@/services/clienteApi';
 
 export const useAutenticacionStore = defineStore('autenticacion', () => {
+  // La sesión vive solo en sessionStorage: al cerrar la pestaña o el navegador se pierde.
+  // Se eliminan los restos de sesiones antiguas que quedaron en localStorage.
+  ['fs_token', 'fs_user', 'fs_roles'].forEach((clave) => localStorage.removeItem(clave));
+
   function leerJSON(clave, porDefecto) {
-    const valor = localStorage.getItem(clave);
+    const valor = sessionStorage.getItem(clave);
 
     if (!valor || valor === 'undefined') {
       return porDefecto;
@@ -54,7 +58,7 @@ export const useAutenticacionStore = defineStore('autenticacion', () => {
     ];
   }
 
-  const tokenGuardado = localStorage.getItem('fs_token');
+  const tokenGuardado = sessionStorage.getItem('fs_token');
 
   const token = ref(
     tokenGuardado && tokenGuardado !== 'undefined'
@@ -110,9 +114,9 @@ export const useAutenticacionStore = defineStore('autenticacion', () => {
 
   function persistirSesion() {
     if (token.value) {
-      localStorage.setItem('fs_token', token.value);
-      localStorage.setItem('fs_user', JSON.stringify(usuario.value));
-      localStorage.setItem('fs_roles', JSON.stringify(roles.value));
+      sessionStorage.setItem('fs_token', token.value);
+      sessionStorage.setItem('fs_user', JSON.stringify(usuario.value));
+      sessionStorage.setItem('fs_roles', JSON.stringify(roles.value));
     }
   }
 
@@ -245,6 +249,37 @@ export const useAutenticacionStore = defineStore('autenticacion', () => {
     }
   }
 
+  /**
+   * Vuelve a pedir /me para que un cambio de rol hecho por un administrador
+   * (p. ej. cliente -> empleado) se vea sin recargar la página.
+   * hidratarSesion solo corre una vez por carga; esta puede llamarse las veces que haga falta.
+   */
+  async function refrescarSesion() {
+    if (!token.value) return false;
+
+    try {
+      const respuesta = await clienteApi.get('/me');
+      const datos = respuesta.data?.data ?? respuesta.data;
+      const nuevoUsuario = datos?.user ?? datos?.usuario ?? datos;
+      const nuevosRoles = normalizarRoles(
+        datos?.roles ?? nuevoUsuario?.roles ?? nuevoUsuario?.rol ?? [],
+        nuevoUsuario
+      );
+
+      if (JSON.stringify(nuevosRoles) === JSON.stringify(rolesNormalizados.value)) {
+        return false;
+      }
+
+      usuario.value = nuevoUsuario;
+      roles.value = nuevosRoles;
+      persistirSesion();
+      return true;
+    } catch (error) {
+      // Sin red o sesión vencida: se ignora; el interceptor de la API ya maneja el 401.
+      return false;
+    }
+  }
+
   async function cerrarSesion() {
     try {
       if (token.value) {
@@ -261,9 +296,9 @@ export const useAutenticacionStore = defineStore('autenticacion', () => {
       roles.value = [];
       sesionHidratada.value = false;
 
-      localStorage.removeItem('fs_token');
-      localStorage.removeItem('fs_user');
-      localStorage.removeItem('fs_roles');
+      sessionStorage.removeItem('fs_token');
+      sessionStorage.removeItem('fs_user');
+      sessionStorage.removeItem('fs_roles');
       localStorage.removeItem('favoritos');
       localStorage.removeItem('fs_carrito');
 
@@ -308,6 +343,7 @@ export const useAutenticacionStore = defineStore('autenticacion', () => {
     iniciarSesionGoogle,
     actualizarUsuario,
     hidratarSesion,
+    refrescarSesion,
     cerrarSesion,
     solicitarRecuperacion,
     restablecerContrasena,

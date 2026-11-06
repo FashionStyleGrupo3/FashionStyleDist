@@ -37,7 +37,7 @@ onMounted(() => {
             <Sparkles class="w-4 h-4" />
           </span>
           <h1 class="text-2xl sm:text-3xl font-extrabold font-titulos text-gray-900 tracking-tight">
-            Catálogo & Clasificación
+            Catálogo & Clasificacion
           </h1>
         </div>
         <p class="text-xs sm:text-sm text-gray-500">

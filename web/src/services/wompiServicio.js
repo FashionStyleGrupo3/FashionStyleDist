@@ -70,6 +70,7 @@ export async function crearCheckout(items, cliente) {
     items: lineas,
     cliente: {
       nombre: String(cliente.nombre || '').trim(),
+      correo: String(cliente.correo || '').trim(),
       telefono: String(cliente.telefono || '').trim(),
       ciudad: String(cliente.ciudad || '').trim(),
       departamento: String(cliente.departamento || cliente.ciudad || '').trim(),
@@ -104,6 +105,40 @@ export async function confirmarCheckout(referencia, transaccionId) {
 }
 
 /**
+ * El widget de Wompi no siempre ejecuta el callback cuando el cliente lo cierra con la "X"
+ * (sobre todo si todavía no intentó pagar). Sin este aviso la promesa de iniciarPagoWompi
+ * nunca terminaba y el botón de pago se quedaba cargando para siempre.
+ *
+ * Vigila el iframe que inyecta el widget: cuando desaparece (o se oculta) llama a `alCerrar`.
+ * Devuelve una función para dejar de vigilar.
+ */
+function vigilarCierreWidget(alCerrar) {
+  const previos = new Set(document.querySelectorAll('iframe'));
+  const esDeWompi = (f) =>
+    /wompi/i.test(f.getAttribute('src') || f.src || '') ||
+    Boolean(f.closest('[id*="wompi" i], [class*="wompi" i]'));
+
+  let widget = null;
+  let cerradoSeguidos = 0;
+
+  const intervalo = setInterval(() => {
+    if (!widget) {
+      widget = [...document.querySelectorAll('iframe')].find((f) => !previos.has(f) && esDeWompi(f)) || null;
+      return;
+    }
+    const visible = widget.isConnected && widget.getClientRects().length > 0;
+    cerradoSeguidos = visible ? 0 : cerradoSeguidos + 1;
+    // Dos revisiones seguidas (~1 s) para no confundir una transición con un cierre
+    if (cerradoSeguidos >= 2) {
+      clearInterval(intervalo);
+      alCerrar();
+    }
+  }, 500);
+
+  return () => clearInterval(intervalo);
+}
+
+/**
  * Abre el widget de Wompi para un pedido ya creado en el backend.
  *
  * @param {boolean} cancelarAlCerrar  Si el cliente cierra el widget sin intentar pagar, se anula
@@ -119,7 +154,8 @@ export async function iniciarPagoWompi({
   onRevision,
   onCancelado,
   onError,
-  onVerificando
+  onVerificando,
+  onAbierto
 }) {
   const referencia = pedido?.referencia;
   const montoCentavos = Number(pedido?.monto_centavos ?? 0);
@@ -145,6 +181,11 @@ export async function iniciarPagoWompi({
           referencia: resultado?.referencia || referencia,
           metodoPago: resultado?.metodo_pago || metodo || 'Wompi',
           monto: Number(resultado?.monto_total ?? pedido?.monto_total ?? Math.round(montoCentavos / 100)),
+          facturaId: resultado?.factura_id || resultado?.factura?.id || null,
+          numeroFactura: resultado?.numero_factura || resultado?.factura?.numero_factura || null,
+          factura: resultado?.factura || null,
+          pedidoId: resultado?.pedido_id || null,
+          correoEnviadoA: resultado?.correo_enviado_a || cliente?.correo || null,
           cliente
         });
       } else if (estadoPedido === 'Revision_Pago') {
@@ -184,37 +225,79 @@ export async function iniciarPagoWompi({
   }
 
   const telefono = String(cliente.telefono || '').replace(/\D/g, '');
-  const checkout = new window.WidgetCheckout({
-    currency: pedido.moneda || 'COP',
-    amountInCents: montoCentavos,
-    reference: referencia,
-    publicKey,
-    signature: { integrity: firmaIntegridad },
-    customerData: {
-      email: cliente.correo || undefined,
-      fullName: cliente.nombre,
-      phoneNumber: telefono,
-      phoneNumberPrefix: '+57'
-    },
-    shippingAddress: {
-      addressLine1: cliente.direccion,
-      city: cliente.ciudad,
-      region: cliente.departamento || cliente.ciudad,
-      country: 'CO',
-      phoneNumber: telefono
-    }
-  });
 
   await new Promise((resolve) => {
-    checkout.open(async (resultado) => {
-      const transaccion = resultado?.transaction;
-      if (!transaccion?.id) {
-        await abandonar();
-      } else {
-        await finalizar(transaccion.id, transaccion.payment_method_type);
-      }
+    let terminado = false;
+    let detenerVigilancia = () => {};
+
+    // Garantiza que la promesa se resuelve una sola vez, pase lo que pase con el widget.
+    const cerrarFlujo = () => {
+      terminado = true;
+      detenerVigilancia();
       resolve();
-    });
+    };
+
+    try {
+      const checkout = new window.WidgetCheckout({
+        currency: pedido.moneda || 'COP',
+        amountInCents: montoCentavos,
+        reference: referencia,
+        publicKey,
+        signature: { integrity: firmaIntegridad },
+        customerData: {
+          email: cliente.correo || undefined,
+          fullName: cliente.nombre,
+          phoneNumber: telefono,
+          phoneNumberPrefix: '+57'
+        },
+        shippingAddress: {
+          addressLine1: cliente.direccion,
+          city: cliente.ciudad,
+          region: cliente.departamento || cliente.ciudad,
+          country: 'CO',
+          phoneNumber: telefono
+        }
+      });
+
+      // Camino 2: el cliente cerró con la "X" y Wompi no avisó. Se espera un momento por si el
+      // callback llega tarde y, si no llega, se trata como un pago abandonado.
+      // Debe empezar ANTES de open(): así distingue el iframe nuevo del widget de los previos.
+      detenerVigilancia = vigilarCierreWidget(() => {
+        setTimeout(async () => {
+          if (terminado) return;
+          terminado = true;
+          try {
+            await abandonar();
+          } finally {
+            resolve();
+          }
+        }, 1500);
+      });
+
+      // Camino 1: Wompi avisa por el callback (pago terminado o cierre con aviso).
+      checkout.open(async (resultado) => {
+        if (terminado) return;
+        terminado = true;
+        detenerVigilancia();
+        try {
+          const transaccion = resultado?.transaction;
+          if (!transaccion?.id) {
+            await abandonar();
+          } else {
+            await finalizar(transaccion.id, transaccion.payment_method_type);
+          }
+        } finally {
+          resolve();
+        }
+      });
+
+      // El widget ya está en pantalla: la interfaz puede dejar de mostrar "Procesando...".
+      onAbierto?.();
+    } catch (e) {
+      console.error('No se pudo abrir el widget de Wompi:', e);
+      cerrarFlujo();
+      onError?.('No se pudo abrir la pasarela de pagos. Inténtalo de nuevo.');
+    }
   });
 }
 

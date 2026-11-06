@@ -1,4 +1,3 @@
-﻿
 import { createRouter, createWebHashHistory, createWebHistory } from 'vue-router';
 import { useAutenticacionStore } from '@/stores/autenticacion';
 
@@ -181,8 +180,6 @@ const routes = [
         path: 'seguridad',
         name: 'admin-seguridad',
         component: () => import('@/views/admin/VistaUsuariosYClientes.vue'),
-        // Hereda los roles del padre (admin y empleado). Las pestañas de
-        // empleados y usuarios/roles ya se ocultan con esAdmin en la vista.
       },
       {
         path: 'seguridad/auditoria',
@@ -269,7 +266,6 @@ router.beforeEach(async (to) => {
     (ruta) => ruta.meta.requiereAutenticacion
   );
 
-  // Si hay una sesión guardada, verificarla con el servidor.
   if (authStore.estaAutenticado && !authStore.sesionHidratada) {
     try {
       await authStore.hidratarSesion();
@@ -293,7 +289,7 @@ router.beforeEach(async (to) => {
   }
 
   // Validar los permisos de cada ruta coincidente,
-  // incluidas las rutas hijas con restricciones mís especficas.
+  // incluidas las rutas hijas con restricciones más específicas.
   if (requiereAutenticacion) {
     const rutasConRoles = to.matched.filter(
       (ruta) => ruta.meta.rolesPermitidos?.length
@@ -331,7 +327,6 @@ router.beforeEach(async (to) => {
 
 router.onError((error) => {
   if (error.message?.includes('Failed to fetch dynamically imported module')) {
-    // Evita un bucle infinito si el archivo realmente no existe
     if (!sessionStorage.getItem('fs_chunk_reload')) {
       sessionStorage.setItem('fs_chunk_reload', '1');
       window.location.reload();

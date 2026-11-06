@@ -1,12 +1,14 @@
-﻿import axios from 'axios';
+import axios from 'axios';
 import { emitirCambio, normalizarRuta } from '@/utils/busCambios';
 import { idSocket } from '@/services/tiempoReal';
 
+const URL_PRIMARIO = 'https://fashionstyle.api.adsocidm.com/public/api';
+const URL_RESPALDO = 'https://fashionstylebackend-o3hx.onrender.com/api';
+
 const clienteApi = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
+  baseURL: import.meta.env.VITE_API_BASE_URL || URL_PRIMARIO,
   headers: {
-    Accept: 'application/json',
-    'Content-Type': 'application/json'
+    Accept: 'application/json'
   },
   timeout: 15000
 });
@@ -36,7 +38,7 @@ export function obtenerMensajeError(
   fallback = 'No se pudo completar la operación. Verifica los datos e intenta nuevamente.'
 ) {
   if (!error?.response) {
-    return 'No se pudo conectar con el servidor. Verifica tu conexión e intenta nuevamente.';
+    return 'No se pudo conectar con el servidor. Verifica tu conexion e intenta nuevamente.';
   }
 
   const status = error.response.status;
@@ -64,15 +66,13 @@ export function obtenerMensajeError(
 
 clienteApi.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('fs_token');
+    const token = sessionStorage.getItem('fs_token');
     if (token) {
-      config.headers = config.headers || {};
       config.headers.Authorization = 'Bearer ' + token;
     }
 
     const socketId = idSocket();
     if (socketId) {
-      config.headers = config.headers || {};
       config.headers['X-Socket-ID'] = socketId;
     }
     return config;
@@ -84,14 +84,45 @@ const METODOS_QUE_MODIFICAN = ['post', 'put', 'patch', 'delete'];
 
 clienteApi.interceptors.response.use(
   (response) => {
-
     const metodo = String(response.config?.method || '').toLowerCase();
     if (METODOS_QUE_MODIFICAN.includes(metodo)) {
       emitirCambio(normalizarRuta(response.config?.url, response.config?.baseURL));
     }
     return response;
   },
-  (error) => {
+  async (error) => {
+    const configOriginal = error.config;
+
+    // Fallback inteligente a Render en caso de fallo de red, CORS o 5xx del backend primario
+    const esFalloRedOCors = !error.response || error.code === 'ERR_NETWORK';
+    const esErrorServidor = error.response && error.response.status >= 500;
+    const yaReintentado = Boolean(configOriginal?._reintentadoConRespaldo);
+
+    if (configOriginal && (esFalloRedOCors || esErrorServidor) && !yaReintentado) {
+      configOriginal._reintentadoConRespaldo = true;
+      const baseActual = String(configOriginal.baseURL || '');
+      const urlActual = String(configOriginal.url || '');
+
+      const usaAdsocidm = baseActual.includes('fashionstyle.api.adsocidm.com') || urlActual.includes('fashionstyle.api.adsocidm.com');
+
+      if (usaAdsocidm) {
+        console.warn(
+          `[clienteApi] Error en backend principal Adsocidm (${error.message || error.response?.status}). Conmutando automáticamente al backend de respaldo Render...`
+        );
+
+        configOriginal.baseURL = URL_RESPALDO;
+        if (urlActual.startsWith('http')) {
+          configOriginal.url = urlActual.replace(/https?:\/\/fashionstyle\.api\.adsocidm\.com\/public\/api/g, URL_RESPALDO);
+        }
+
+        try {
+          return await clienteApi.request(configOriginal);
+        } catch (errorRespaldo) {
+          console.error('[clienteApi] Falló también el backend de respaldo:', errorRespaldo.message);
+        }
+      }
+    }
+
     if (error.response?.data && typeof error.response.data === 'object') {
       const msg = error.response.data.message || error.response.data.mensaje;
       if (
@@ -107,17 +138,19 @@ clienteApi.interceptors.response.use(
     }
 
     if (error.response?.status === 401) {
-      localStorage.removeItem('fs_token');
-      localStorage.removeItem('fs_user');
-      localStorage.removeItem('fs_roles');
+      sessionStorage.removeItem('fs_token');
+      sessionStorage.removeItem('fs_user');
+      sessionStorage.removeItem('fs_roles');
 
-      const ruta = window.location.hash.replace(/^#/, '') || '/';
-      const esProtegida = ruta.startsWith('/admin') || ruta.startsWith('/perfil');
+      const ruta = window.location.pathname;
+      const esProtegida =
+        ruta.startsWith('/admin') || ruta.startsWith('/perfil');
 
-      if (esProtegida && !ruta.startsWith('/login')) {
+      if (esProtegida && !window.location.hash.includes('/login')) {
         window.location.hash = `#/login?redir=${encodeURIComponent(ruta)}`;
       }
     }
+
     return Promise.reject(error);
   }
 );

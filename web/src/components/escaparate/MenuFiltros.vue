@@ -76,7 +76,7 @@ useRecargaAutomatica(cargarFiltros, { recursos: ['categorias', 'catalogos', 'pro
     <!-- Colecciones + orden -->
     <div class="fs-barra">
       <div class="fs-colecciones">
-        <span v-if="catalogos.length" class="fs-barra__etiqueta">colección</span>
+        <span v-if="catalogos.length" class="fs-barra__etiqueta">Colección</span>
         <button
           v-for="col in catalogos"
           :key="idDe(col, 'id_catalogo')"

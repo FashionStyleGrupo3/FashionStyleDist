@@ -83,7 +83,7 @@ function manejarErrorImagen() {
 </script>
 
 <template>
-  <section class="w-full" aria-label="Galería de imágenes del producto">
+  <section class="w-full" aria-label="Galerá de imágenes del producto">
     <div class="relative flex aspect-[4/5] max-h-[620px] items-center justify-center overflow-hidden rounded-2xl bg-gray-100">
       <img
         v-if="fotoActiva?.url && !errorImagenActiva"

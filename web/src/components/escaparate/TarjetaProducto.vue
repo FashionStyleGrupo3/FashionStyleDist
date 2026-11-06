@@ -47,7 +47,7 @@ const sinPrecio = computed(() => precioMinimo.value <= 0)
 
 const { infoPrecio, tieneDescuento } = usePromociones(computed(() => props.producto), precioMinimo)
 
-// Linea gris debajo del nombre: "Categoría • colección"
+// Linea gris debajo del nombre: "Categorá • coleccion"
 const subtitulo = computed(() =>
   [props.producto.categoria?.nombre, props.producto.catalogo?.nombre].filter(Boolean).join(' • ')
 )

@@ -14,6 +14,13 @@ export const useCarritoStore = defineStore('carrito', () => {
     items.value.reduce((acc, i) => acc + (Number(i.precio || 0) * Number(i.cantidad || 0)), 0)
   );
 
+  // Total a precio de lista (sin descuentos) y ahorro por promociones.
+  const totalOriginal = computed(() =>
+    items.value.reduce((acc, i) => acc + (Number(i.precioOriginal || i.precio || 0) * Number(i.cantidad || 0)), 0)
+  );
+
+  const totalAhorro = computed(() => Math.max(0, totalOriginal.value - totalMonto.value));
+
   // IDs de categorías y catálogos presentes en el carrito (sin duplicados).
   const categoriasEnCarrito = computed(() => {
     const set = new Set();
@@ -140,6 +147,8 @@ export const useCarritoStore = defineStore('carrito', () => {
     cajonAbierto,
     totalPrendas,
     totalMonto,
+    totalOriginal,
+    totalAhorro,
     categoriasEnCarrito,
     idsEnCarrito,
     agregarPrenda,

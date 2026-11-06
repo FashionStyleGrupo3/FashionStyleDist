@@ -149,8 +149,8 @@ const varianteSeleccionada = computed(() =>
   variantes.value.find((v) => String(v.id_variante) === String(form.variante_id))
 );
 
-async function cargarMovimientos() {
-  cargando.value = true;
+async function cargarMovimientos({ silencioso = false } = {}) {
+  if (!silencioso) cargando.value = true;
   try {
     const params = { page: pagina.value, ...parametrosKardex() };
     const { data } = await clienteApi.get('/inventarios', { params });
@@ -158,9 +158,9 @@ async function cargarMovimientos() {
     movimientos.value = Array.isArray(paginaApi) ? paginaApi : paginaApi.data || [];
     ultimaPagina.value = paginaApi.last_page || 1;
   } catch (error) {
-    notificarError(error.response?.data?.message || 'No se pudieron cargar los movimientos.');
+    if (!silencioso) notificarError(error.response?.data?.message || 'No se pudieron cargar los movimientos.');
   } finally {
-    cargando.value = false;
+    if (!silencioso) cargando.value = false;
   }
 }
 
@@ -278,19 +278,19 @@ async function exportarExistencias(formato) {
   }
 }
 
-async function cargarResumen() {
+async function cargarResumen({ silencioso = false } = {}) {
   try {
     resumen.value = (await clienteApi.get('/inventarios/resumen')).data.data || resumen.value;
   } catch (error) {
-    notificarError(error.response?.data?.message || 'No se pudo cargar el resumen.');
+    if (!silencioso) notificarError(error.response?.data?.message || 'No se pudo cargar el resumen.');
   }
 }
 
-async function cargarVariantes() {
+async function cargarVariantes({ silencioso = false } = {}) {
   try {
     variantes.value = variantesDeProductos((await clienteApi.get('/productos')).data);
   } catch (error) {
-    notificarError(error.response?.data?.message || 'No se pudieron cargar las variantes.');
+    if (!silencioso) notificarError(error.response?.data?.message || 'No se pudieron cargar las variantes.');
   }
 }
 
@@ -305,7 +305,7 @@ function abrirNuevo(tipo = 'entrada', varianteId = null) {
     form.variante_id = varianteId;
   }
   form.tipo_movimiento = tipo;
-  form.concepto = tipo === 'entrada' ? 'Recepción de producción / compra' : tipo === 'salida' ? 'Uso o merma interna' : 'Ajuste de conteo físico';
+  form.concepto = tipo === 'entrada' ? 'Recepcion de produccion / compra' : tipo === 'salida' ? 'Uso o merma interna' : 'Ajuste de conteo físico';
   modal.value = true;
 }
 
@@ -324,7 +324,7 @@ function abrirReposicion(alerta) {
   Object.assign(form, {
     variante_id: alerta.idVariante,
     tipo_movimiento: 'entrada',
-    concepto: 'reposición de stock',
+    concepto: 'Reposición de stock',
     observaciones: `Stock al registrar: ${alerta.stock}`,
     cantidad: ''
   });
@@ -354,7 +354,7 @@ async function guardar() {
     } else {
       if (!form.variante_id || form.cantidad === '') return notificarError('Selecciona una variante e indica la cantidad.');
       if (!Number.isInteger(Number(form.cantidad)) || Number(form.cantidad) < 0) return notificarError('La cantidad debe ser un entero no negativo.');
-      if (Number(form.cantidad) > 1000000) return notificarError('La cantidad máxima permitida es 1.000.000.');
+      if (Number(form.cantidad) > 1000000) return notificarError('La cantidad mxima permitida es 1.000.000.');
       if (['entrada', 'salida'].includes(form.tipo_movimiento) && Number(form.cantidad) < 1) return notificarError('Entrada y salida requieren una cantidad mayor que cero.');
 
       await clienteApi.post('/inventarios', {
@@ -382,8 +382,8 @@ async function anular(movimiento) {
 
   const confirmado = await confirmarAccion({
     titulo: 'Anular movimiento',
-    texto: '¿Anular este movimiento? El backend revertirá su saldo y no podrás deshacerlo manualmente.',
-    textoBotonConfirmar: 'S, anular'
+    texto: '¿Anular este movimiento? El sistema revertirá su saldo y no podrás deshacerlo manualmente.',
+    textoBotonConfirmar: 'Sí, anular'
   });
 
   if (!confirmado) return;
@@ -409,40 +409,6 @@ async function cambiarPagina(numero) {
   await cargarMovimientos();
 }
 
-function exportarStockCSV() {
-  if (!variantes.value.length) {
-    return notificarError('No hay variantes para exportar.');
-  }
-
-  const encabezados = ['ID_Variante', 'Prenda', 'Código', 'Color', 'Categoría', 'Talla', 'SKU', 'Precio_Venta', 'Stock_Actual', 'Estado_Stock'];
-  const filas = variantes.value.map((v) => {
-    const estado = Number(v.stock || 0) <= 0 ? 'Agotado' : Number(v.stock || 0) <= 5 ? 'Bajo Stock' : 'Disponible';
-    return [
-      v.id_variante,
-      `"${(v.producto?.nombre || '').replace(/"/g, '""')}"`,
-      `"${v.producto?.codigo || ''}"`,
-      `"${v.producto?.color || ''}"`,
-      `"${v.producto?.categoria?.nombre || ''}"`,
-      `"${v.talla || ''}"`,
-      `"${v.sku || ''}"`,
-      v.precio_venta || 0,
-      v.stock || 0,
-      estado
-    ].join(',');
-  });
-
-  const contenido = [encabezados.join(','), ...filas].join('\r\n');
-  const blob = new Blob([contenido], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const enlace = document.createElement('a');
-  enlace.setAttribute('href', url);
-  enlace.setAttribute('download', `inventario_existencias_${new Date().toISOString().slice(0, 10)}.csv`);
-  document.body.appendChild(enlace);
-  enlace.click();
-  document.body.removeChild(enlace);
-  notificarExito('Reporte de existencias descargado en CSV.');
-}
-
 function formatoMoneda(valor) {
   return new Intl.NumberFormat('es-CO', {
     style: 'currency',
@@ -457,7 +423,15 @@ onMounted(async () => {
   await cargarMovimientos();
   cargarCatalogosFiltro();
 });
-useRecargaAutomatica(() => Promise.all([cargarMovimientos(), cargarResumen(), cargarVariantes()]));
+// Recarga en segundo plano (sin spinner ni reemplazar la tabla); el sondeo es solo respaldo del tiempo real.
+useRecargaAutomatica(
+  () => Promise.all([
+    cargarMovimientos({ silencioso: true }),
+    cargarResumen({ silencioso: true }),
+    cargarVariantes({ silencioso: true })
+  ]),
+  { intervaloSondeo: 60000 }
+);
 </script>
 
 <template>
@@ -510,7 +484,7 @@ useRecargaAutomatica(() => Promise.all([cargarMovimientos(), cargarResumen(), ca
           <Boxes class="w-4 h-4 text-gray-400" />
         </div>
         <p class="mt-2 text-2xl font-black text-gray-900">{{ metricasStock.totalVariantes }}</p>
-        <p class="text-xs text-gray-500 mt-0.5">SKUs únicos registrados</p>
+        <p class="text-xs text-gray-500 mt-0.5">SKUs unicos registrados</p>
       </div>
 
       <div class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
@@ -524,7 +498,7 @@ useRecargaAutomatica(() => Promise.all([cargarMovimientos(), cargarResumen(), ca
 
       <div class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
         <div class="flex items-center justify-between">
-          <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Valoración comercial</span>
+          <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Valoracion comercial</span>
           <ArrowUpDown class="w-4 h-4 text-purple-600" />
         </div>
         <p class="mt-2 text-2xl font-black text-purple-600">{{ formatoMoneda(metricasStock.valorTotalInventario) }}</p>
@@ -533,7 +507,7 @@ useRecargaAutomatica(() => Promise.all([cargarMovimientos(), cargarResumen(), ca
 
       <div class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
         <div class="flex items-center justify-between">
-          <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Atención requerida</span>
+          <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Atencion requerida</span>
           <AlertTriangle class="w-4 h-4 text-amber-500" />
         </div>
         <p class="mt-2 text-2xl font-black text-amber-600">
@@ -671,7 +645,7 @@ useRecargaAutomatica(() => Promise.all([cargarMovimientos(), cargarResumen(), ca
                 <th class="py-3.5 px-3">SKU Trazable</th>
                 <th class="py-3.5 px-3 text-right">Precio Venta</th>
                 <th class="py-3.5 px-4 text-center">Stock Disponible</th>
-                <th class="py-3.5 px-4 text-right">Acciones Rápidas</th>
+                <th class="py-3.5 px-4 text-right">Acciones Rpidas</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-100">
@@ -758,7 +732,7 @@ useRecargaAutomatica(() => Promise.all([cargarMovimientos(), cargarResumen(), ca
                   <div class="inline-flex items-center gap-1">
                     <button
                       type="button"
-                      title="Registrar Entrada rápida"
+                      title="Registrar entrada rápida"
                       class="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 transition"
                       @click="() => abrirNuevo('entrada', variante.id_variante)"
                     >

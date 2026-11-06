@@ -1,4 +1,4 @@
-﻿import clienteApi from '@/services/clienteApi';
+import clienteApi from '@/services/clienteApi';
 import { extraerDatos, extraerPaginado } from '@/utils/respuestaApi';
 import { resolverUrlAlmacenamiento } from '@/composables/useImagenStorage';
 
@@ -134,12 +134,17 @@ export async function obtenerPedido(id) {
 /**
  * PUT /api/pedidos/{id} con { estado, empresa_transportadora, numero_guia }
  */
-export async function actualizarDespacho(id, { estado, empresaTransportadora, numeroGuia }) {
-  const respuesta = await clienteApi.put(`${RUTA}/${id}`, {
-    estado,
-    empresa_transportadora: String(empresaTransportadora || '').trim() || null,
-    numero_guia: String(numeroGuia || '').trim() || null
-  });
+export async function actualizarDespacho(id, { estado, empresaTransportadora, numeroGuia } = {}) {
+  const datos = {};
+  if (estado !== undefined) datos.estado = estado;
+  if (empresaTransportadora !== undefined) {
+    datos.empresa_transportadora = String(empresaTransportadora || '').trim() || null;
+  }
+  if (numeroGuia !== undefined) {
+    datos.numero_guia = String(numeroGuia || '').trim() || null;
+  }
+
+  const respuesta = await clienteApi.put(`${RUTA}/${id}`, datos);
   return normalizarPedido(extraerDatos(respuesta));
 }
 

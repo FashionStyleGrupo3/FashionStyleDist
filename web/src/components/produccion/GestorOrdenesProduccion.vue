@@ -99,8 +99,8 @@ function obtenerNombreMaterial(consumo) {
   return materiasPorId.value[consumo.materia_prima_id] || 'Material';
 }
 
-async function cargar() {
-  cargando.value = true;
+async function cargar({ silencioso = false } = {}) {
+  if (!silencioso) cargando.value = true;
   try {
     const respuesta = await clienteApi.get('/ordenes-produccion', {
       params: { page: pagina.value, ...(filtroEstado.value ? { estado: filtroEstado.value } : {}) },
@@ -110,9 +110,9 @@ async function cargar() {
     ultimaPagina.value = paginador?.last_page ?? 1;
     total.value = paginador?.total ?? ordenes.value.length;
   } catch (error) {
-    notificarError(mensajeError(error, 'No se pudieron cargar las órdenes de producción.'));
+    if (!silencioso) notificarError(mensajeError(error, 'No se pudieron cargar las órdenes de producción.'));
   } finally {
-    cargando.value = false;
+    if (!silencioso) cargando.value = false;
   }
 }
 
@@ -220,18 +220,16 @@ async function confirmarCancelacion() {
 
 async function cambiarEstado(orden, nuevoEstado) {
   if (nuevoEstado === 'completada') {
-    const ok = await confirmarAccion({
-      titulo: `¿Completar ${orden.numero}?`,
-      texto: 'Se descontaron del inventario las materias primas que consume esta orden.',
-      textoBotonConfirmar: 'S, completar',
-    });
-    if (!ok) return;
+    abrirCierre(orden);
+    return;
   }
   if (nuevoEstado === 'cancelada') {
     const ok = await confirmarAccion({
       titulo: `¿Cancelar ${orden.numero}?`,
-      texto: 'La orden quedar como cancelada.',
-      textoBotonConfirmar: 'S, cancelar',
+      texto: orden.stock_descontado
+        ? 'La orden quedará cancelada y las materias primas que ya consumió volverán a bodega.'
+        : 'La orden quedará cancelada. Aún no había consumido materias primas.',
+      textoBotonConfirmar: 'Sí, cancelar',
     });
     if (!ok) return;
   }
@@ -239,8 +237,8 @@ async function cambiarEstado(orden, nuevoEstado) {
   if (nuevoEstado === 'pausada') {
     const ok = await confirmarAccion({
       titulo: `¿Pausar ${orden.numero}?`,
-      texto: 'La orden quedará pausada y podrás reanudarla después. No se descontaron materias primas.',
-      textoBotonConfirmar: 'S, pausar orden',
+      texto: 'La orden quedará pausada y podrás reanudarla después.',
+      textoBotonConfirmar: 'Sí, pausar orden',
     });
     if (!ok) return;
   }
@@ -257,6 +255,9 @@ async function cambiarEstado(orden, nuevoEstado) {
   }
 }
 
+// ---------- Cierre de la orden (RF-059) ----------
+// Al completar se descuentan los insumos y las prendas entran al kárdex,
+// repartidas entre las tallas del producto.
 const cerrando = ref(null);
 const tallasCierre = ref([]);
 const cargandoTallas = ref(false);
@@ -368,7 +369,7 @@ async function eliminar(orden) {
   const ok = await confirmarAccion({
     titulo: `¿Eliminar ${orden.numero}?`,
     texto: 'Esta acción no se puede deshacer.',
-    textoBotonConfirmar: 'S, eliminar',
+    textoBotonConfirmar: 'Sí, eliminar',
   });
   if (!ok) return;
 
@@ -390,7 +391,7 @@ onMounted(() => {
   cargar();
   cargarMaterias();
 });
-useRecargaAutomatica(cargar);
+useRecargaAutomatica(() => cargar({ silencioso: true }), { intervaloSondeo: 60000 });
 </script>
 
 <template>
@@ -446,7 +447,7 @@ useRecargaAutomatica(cargar);
                   <button
                     v-if="o.estado === 'planificada'"
                     class="p-2 text-gray-500 hover:text-blue-600 disabled:opacity-40"
-                    title="Iniciar producción"
+                    title="Iniciar produccion"
                     :disabled="procesandoId === o.id"
                     @click="cambiarEstado(o, 'en_proceso')"
                   >
@@ -455,7 +456,7 @@ useRecargaAutomatica(cargar);
                   <button
                     v-if="o.estado === 'en_proceso'"
                     class="p-2 text-gray-500 hover:text-orange-600 disabled:opacity-40"
-                    title="Pausar producción"
+                    title="Pausar produccion"
                     :disabled="procesandoId === o.id"
                     @click="cambiarEstado(o, 'pausada')"
                   >
@@ -464,7 +465,7 @@ useRecargaAutomatica(cargar);
                   <button
                     v-if="o.estado === 'pausada'"
                     class="p-2 text-gray-500 hover:text-blue-600 disabled:opacity-40"
-                    title="Reanudar producción"
+                    title="Reanudar produccion"
                     :disabled="procesandoId === o.id"
                     @click="cambiarEstado(o, 'en_proceso')"
                   >
@@ -540,7 +541,7 @@ useRecargaAutomatica(cargar);
               step="1"
               class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-corporativo-rosa focus:outline-none focus:ring-2 focus:ring-pink-100"
             />
-            <p class="mt-1 text-xs text-gray-400">El costo total se reajusta según las unidades.</p>
+            <p class="mt-1 text-xs text-gray-400">El costo total se reajusta segun las unidades.</p>
           </div>
           <div>
             <label class="mb-1 block text-sm font-medium text-gray-700">Notas</label>

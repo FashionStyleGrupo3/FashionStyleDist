@@ -100,7 +100,7 @@ async function cargarDatos() {
 
     if (!formulasDisponibles.value.length) {
       formulaSeleccionada.value = null;
-      error.value = 'El backend no tiene fórmulas de producción disponibles.';
+      error.value = 'El backend no tiene fórmulas de produccion disponibles.';
       return;
     }
 
@@ -441,8 +441,8 @@ async function confirmarOrdenProduccion() {
     // Avisar a las otras pestañas que el stock cambió
     window.dispatchEvent(new CustomEvent('datos-actualizados'));
   } catch (requestError) {
-    console.error('Error al crear la orden de producción en el backend:', requestError);
-    errorOrden.value = requestError.response?.data?.message || 'No se pudo registrar la orden de producción.';
+    console.error('Error al crear la orden de produccion en el backend:', requestError);
+    errorOrden.value = requestError.response?.data?.message || 'No se pudo registrar la orden de produccion.';
   } finally {
     guardandoOrden.value = false;
   }
@@ -506,7 +506,7 @@ async function refrescarCalculadora() {
 
     if (!formulas.length) {
       formulaSeleccionada.value = null;
-      error.value = 'El backend no tiene fórmulas de producción disponibles.';
+      error.value = 'El backend no tiene fórmulas de produccion disponibles.';
       return;
     }
     error.value = null;
@@ -527,7 +527,7 @@ async function refrescarCalculadora() {
   }
 }
 
-useRecargaAutomatica(refrescarCalculadora);
+useRecargaAutomatica(refrescarCalculadora, { intervaloSondeo: 0 });
 </script>
 
 <template>
@@ -573,7 +573,7 @@ useRecargaAutomatica(refrescarCalculadora);
     <!-- Estados -->
     <div v-if="cargando" class="flex flex-col items-center justify-center py-24 text-gray-500">
       <Loader2 class="h-10 w-10 animate-spin text-corporativo-rosa" />
-      <p class="mt-4 text-sm font-medium">Cargando datos de producción...</p>
+      <p class="mt-4 text-sm font-medium">Cargando datos de produccion...</p>
     </div>
 
     <div v-else-if="error" class="rounded-xl border border-red-200 bg-red-50 p-4 sm:p-6 text-center">
@@ -590,7 +590,7 @@ useRecargaAutomatica(refrescarCalculadora);
 
     <div v-else-if="!formulasDisponibles.length" class="rounded-xl border border-gray-200 bg-gray-50 p-6 sm:p-12 text-center">
       <Package class="mx-auto h-12 w-12 text-gray-400" />
-      <p class="mt-3 font-semibold text-sm sm:text-base text-gray-700">No hay fórmulas de producción disponibles.</p>
+      <p class="mt-3 font-semibold text-sm sm:text-base text-gray-700">No hay fórmulas de produccion disponibles.</p>
       <p class="mt-1 text-xs sm:text-sm text-gray-500">Crea una fórmula en el backend para comenzar un cálculo.</p>
     </div>
 

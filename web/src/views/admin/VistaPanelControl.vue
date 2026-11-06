@@ -142,15 +142,15 @@ const modulos = computed(() => [
   { nombre: 'Ver tienda', ruta: '/', icono: ShoppingBag },
 ]);
 
-async function cargar() {
-  cargando.value = true;
+async function cargar({ silencioso = false } = {}) {
+  if (!silencioso) cargando.value = true;
   try {
     const { data } = await clienteApi.get('/dashboard', { params: { meses: meses.value } });
     datos.value = data?.data ?? null;
   } catch (error) {
-    notificarError(error.response?.data?.message || 'No se pudieron cargar los indicadores del panel.');
+    if (!silencioso) notificarError(error.response?.data?.message || 'No se pudieron cargar los indicadores del panel.');
   } finally {
-    cargando.value = false;
+    if (!silencioso) cargando.value = false;
   }
 }
 
@@ -222,7 +222,7 @@ async function exportar(formato) {
 }
 
 onMounted(cargar);
-useRecargaAutomatica(cargar, { recursos: ['ventas', 'pedidos', 'ordenes-produccion', 'inventarios', 'checkout', 'pagos'] });
+useRecargaAutomatica(() => cargar({ silencioso: true }), { recursos: ['ventas', 'pedidos', 'ordenes-produccion', 'inventarios', 'checkout', 'pagos'], intervaloSondeo: 60000 });
 </script>
 
 <template>

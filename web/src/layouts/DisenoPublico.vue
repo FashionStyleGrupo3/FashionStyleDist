@@ -1,4 +1,4 @@
-﻿<script setup>
+<script setup>
 import { ref, onMounted, watch } from 'vue';
 import { RouterView, RouterLink, useRouter, useRoute } from 'vue-router';
 import {
@@ -8,6 +8,7 @@ import { useCarritoStore } from '@/stores/carrito';
 import { useAutenticacionStore } from '@/stores/autenticacion';
 import { useFiltrosStore } from '@/stores/filtros';
 import { useFavoritosStore } from '@/stores/favoritos';
+import { useSincronizarPreciosCarrito } from '@/composables/usePromociones';
 import { obtenerCategorias } from '@/services/clasificacionServicio';
 import CajonCotizacion from '@/components/carrito/CajonCotizacion.vue';
 import AvatarUsuario from '@/components/perfil/AvatarUsuario.vue';
@@ -18,6 +19,7 @@ const carritoStore = useCarritoStore();
 const authStore = useAutenticacionStore();
 const filtrosStore = useFiltrosStore();
 const favoritosStore = useFavoritosStore();
+useSincronizarPreciosCarrito(carritoStore);
 const menuUsuarioAbierto = ref(false);
 const categoriasMenu = ref([]);
 
@@ -198,6 +200,16 @@ onMounted(async () => {
 
     <CajonCotizacion />
 
-    <PieTienda />
+    <footer class="fs-footer">
+      <div class="fs-contenedor">
+        <span>
+          © 2026 FashionStyle ·
+          <RouterLink to="/terminos">Términos y condiciones</RouterLink> ·
+          <RouterLink :to="{ name: 'catalogo' }">Catálogo</RouterLink> ·
+          <a href="https://github.com/FashionStyleGrupo3/FashionStyleDist/tree/main/mobile" target="_blank" rel="noopener">📱 App Móvil (Flutter)</a>
+        </span>
+        <span>Síguenos: Instagram · TikTok · Pinterest</span>
+      </div>
+    </footer>
   </div>
 </template>
