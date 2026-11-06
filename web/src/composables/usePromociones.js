@@ -81,3 +81,10 @@ export function usePromociones(producto, precioBase) {
     recargarPromociones
   };
 }
+
+export function useSincronizarPreciosCarrito(carritoStore) {
+  cargarPromociones();
+  alInvalidarPromociones(() => {
+    recargarPromociones();
+  });
+}

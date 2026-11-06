@@ -8,6 +8,8 @@ import { useCarritoStore } from '@/stores/carrito';
 import { useAutenticacionStore } from '@/stores/autenticacion';
 import { useFiltrosStore } from '@/stores/filtros';
 import { useFavoritosStore } from '@/stores/favoritos';
+import { useSincronizarPreciosCarrito } from '@/composables/usePromociones';
+import { useRecargaAutomatica } from '@/composables/useRecargaAutomatica';
 import { obtenerCategorias } from '@/services/clasificacionServicio';
 import CajonCotizacion from '@/components/carrito/CajonCotizacion.vue';
 import AvatarUsuario from '@/components/perfil/AvatarUsuario.vue';
@@ -17,6 +19,9 @@ const carritoStore = useCarritoStore();
 const authStore = useAutenticacionStore();
 const filtrosStore = useFiltrosStore();
 const favoritosStore = useFavoritosStore();
+useSincronizarPreciosCarrito(carritoStore);
+// Si un admin cambia el rol de esta persona (p. ej. cliente -> empleado), se actualiza solo.
+useRecargaAutomatica(() => authStore.refrescarSesion(), { recursos: ['usuarios'], intervaloSondeo: 30000 });
 const menuUsuarioAbierto = ref(false);
 const categoriasMenu = ref([]);
 
