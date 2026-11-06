@@ -1,5 +1,6 @@
 ﻿<script setup>
 import { computed, onMounted, ref } from 'vue';
+import { useRecargaAutomatica } from '@/composables/useRecargaAutomatica';
 import { RouterLink } from 'vue-router';
 import { ChevronDown, Truck, RotateCcw, ShoppingBag, AlertCircle, Check, CreditCard, XCircle } from 'lucide-vue-next';
 import { listarPedidos, ESTADOS_PEDIDO, ESTADOS_SIN_FLUJO, infoEstadoPedido } from '@/services/pedidoServicio';
@@ -199,6 +200,7 @@ async function volverAComprar(pedido) {
 }
 
 onMounted(() => cargar());
+useRecargaAutomatica(() => cargar(), { recursos: ['pedidos', 'facturas', 'pagos', 'ventas'] });
 </script>
 
 <template>

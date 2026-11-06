@@ -23,7 +23,7 @@ const configuracionPredeterminada = {
       tipo_cuenta: 'Corriente',
       numero_cuenta: '031-458920-55',
       titular: 'FashionStyle S.A.S.',
-      concepto: 'Comercializacion y Operacion',
+      concepto: 'Comercialización y Operación',
       porcentaje: 25,
       activa: true
     },
@@ -33,7 +33,7 @@ const configuracionPredeterminada = {
       tipo_cuenta: 'Ahorros',
       numero_cuenta: '008-921478-03',
       titular: 'Fondo de Materia Prima e Insumos',
-      concepto: 'reposicion de Telas y Fornituras',
+      concepto: 'reposición de Telas y Fornituras',
       porcentaje: 15,
       activa: true
     }

@@ -1,7 +1,7 @@
 ﻿<script setup>
 // -> Componente DisenoAdmin
 import { ref, computed, watch } from 'vue';
-import { RouterView, RouterLink, useRoute, useRouter } from 'vue-router';
+import { RouterView, RouterLink, useRoute } from 'vue-router';
 import {
   LayoutDashboard,
   Boxes,
@@ -14,6 +14,8 @@ import {
   UserRound,
   UsersRound,
   ClipboardList,
+  LifeBuoy,
+  Mail,
   LogOut,
   ChevronLeft,
   ChevronRight,
@@ -22,22 +24,9 @@ import {
 } from 'lucide-vue-next';
 import AvatarUsuario from '@/components/perfil/AvatarUsuario.vue';
 import { useAutenticacionStore } from '@/stores/autenticacion';
-import { useRecargaAutomatica } from '@/composables/useRecargaAutomatica';
 
 const route = useRoute();
-const router = useRouter();
 const authStore = useAutenticacionStore();
-
-// Si un admin cambia el rol de esta persona, se actualiza solo (sin recargar).
-useRecargaAutomatica(() => authStore.refrescarSesion(), { recursos: ['usuarios'], intervaloSondeo: 30000 });
-
-// Si pierde el acceso al panel (p. ej. empleado -> cliente), sale del admin.
-watch(
-  () => authStore.esPersonal,
-  (esPersonal) => {
-    if (!esPersonal) router.replace('/');
-  }
-);
 
 // Estado reactivo para minimizar o expandir la barra lateral
 const sidebarMinimizada = ref(false);
@@ -66,6 +55,8 @@ const enlaces = [
   { nombre: 'Gestión Prendas', ruta: { name: 'gestion-prendas' }, rutaNombre: 'gestion-prendas', icono: Shirt },
   { nombre: 'Clientes y Usuarios', ruta: '/admin/seguridad', icono: UsersRound },
   { nombre: 'Bitácora', ruta: '/admin/seguridad/auditoria', icono: ClipboardList, soloAdmin: true },
+  { nombre: 'Mensajes', ruta: '/admin/mensajes', icono: Mail },
+  { nombre: 'Centro de ayuda', ruta: '/admin/ayuda', icono: LifeBuoy },
   { nombre: 'Mi Cuenta', ruta: '/admin/cuenta', icono: UserRound },
 ];
 
@@ -80,11 +71,13 @@ const tituloSeccionActual = computed(() => {
   if (route.path.includes('/pedidos')) return 'Pedidos Online y Facturación automática';
   if (route.path.includes('/produccion')) return 'Producción / Costos';
   if (route.path.includes('/prendas')) return 'Gestión de Prendas';
-  if (route.path.includes('/seguridad/auditoria')) return 'Bitácora de Auditorá';
+  if (route.path.includes('/seguridad/auditoria')) return 'Bitácora de auditoría';
   if (route.path.includes('/seguridad')) return 'Clientes y Usuarios';
   if (route.path.includes('/pagos')) return 'Control de Pagos y Dispersión';
-  if (route.path.includes('/cuenta')) return 'Configuracion de Cuenta';
-  return 'Administraccion';
+  if (route.path.includes('/cuenta')) return 'Configuración de cuenta';
+  if (route.path.includes('/ayuda')) return 'Centro de ayuda';
+  if (route.path.includes('/mensajes')) return 'Mensajes de contacto';
+  return 'Administración';
 });
 </script>
 
@@ -94,7 +87,7 @@ const tituloSeccionActual = computed(() => {
       v-if="sidebarMovilAbierta"
       type="button"
       class="fixed inset-0 z-40 bg-black/40 md:hidden"
-      aria-label="Cerrar menú de administraccion"
+      aria-label="Cerrar menú de administración"
       @click="sidebarMovilAbierta = false"
     />
     <aside
@@ -109,7 +102,7 @@ const tituloSeccionActual = computed(() => {
           </RouterLink>
           <button type="button" @click="alternarSidebarMovil"
             class="grid h-9 w-9 place-items-center rounded-lg text-white/80 hover:bg-white/10 hover:text-white transition-colors md:hidden"
-            aria-label="Cerrar menú de administraccion">
+            aria-label="Cerrar menú de administración">
             <X class="h-5 w-5" />
           </button>
           <button type="button" @click="alternarSidebar"
@@ -159,7 +152,7 @@ const tituloSeccionActual = computed(() => {
             <button
               type="button"
               class="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-white/90 hover:bg-white/10 md:hidden"
-              aria-label="Abrir menú de administraccion"
+              aria-label="Abrir menú de administración"
               @click="alternarSidebarMovil"
             >
               <Menu class="h-5 w-5" />

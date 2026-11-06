@@ -17,7 +17,8 @@ import {
   SlidersHorizontal,
   CheckCircle2,
   XCircle,
-  HelpCircle
+  HelpCircle,
+  FileText
 } from 'lucide-vue-next';
 import clienteApi from '@/services/clienteApi';
 import { useNotificacion } from '@/composables/useNotificacion';
@@ -27,6 +28,10 @@ import FiltrosInventario from '@/components/Inventario/FiltrosInventario.vue';
 import TablaInventario from '@/components/Inventario/TablaInventario.vue';
 import ModalInventario from '@/components/Inventario/ModalInventario.vue';
 import PanelAlertasStock from '@/components/Inventario/PanelAlertasStock.vue';
+import PanelAlertasAutomaticas from '@/components/Inventario/PanelAlertasAutomaticas.vue';
+import { useAutenticacionStore } from '@/stores/autenticacion';
+import { exportarExcel, exportarPDF } from '@/composables/useExportarReporte';
+import { COLUMNAS_KARDEX } from '@/utils/kardex';
 
 const { notificarError, notificarExito, confirmarAccion } = useNotificacion();
 const { resolverUrlImagen } = useImagenStorage();
@@ -44,6 +49,17 @@ const busquedaExistencias = ref('');
 const filtroDisponibilidad = ref('todos'); // 'todos' | 'en_stock' | 'Bajo_stock' | 'agotados'
 const filtroTipo = ref('');
 const filtroEstado = ref('');
+// RF-031: filtros consolidados del kárdex
+const filtroAmbito = ref('');
+const filtroProducto = ref('');
+const filtroMateria = ref('');
+const filtroUsuario = ref('');
+const filtroDesde = ref('');
+const filtroHasta = ref('');
+const materias = ref([]);
+const usuariosKardex = ref([]);
+const exportando = ref(false);
+const authStore = useAutenticacionStore();
 const pagina = ref(1);
 const ultimaPagina = ref(1);
 const form = reactive({ variante_id: '', tipo_movimiento: 'entrada', concepto: '', observaciones: '', cantidad: '' });
@@ -136,9 +152,7 @@ const varianteSeleccionada = computed(() =>
 async function cargarMovimientos() {
   cargando.value = true;
   try {
-    const params = { page: pagina.value };
-    if (filtroTipo.value) params.tipo = filtroTipo.value;
-    if (filtroEstado.value) params.estado = filtroEstado.value;
+    const params = { page: pagina.value, ...parametrosKardex() };
     const { data } = await clienteApi.get('/inventarios', { params });
     const paginaApi = data.data || {};
     movimientos.value = Array.isArray(paginaApi) ? paginaApi : paginaApi.data || [];
@@ -147,6 +161,120 @@ async function cargarMovimientos() {
     notificarError(error.response?.data?.message || 'No se pudieron cargar los movimientos.');
   } finally {
     cargando.value = false;
+  }
+}
+
+function parametrosKardex() {
+  const params = {};
+  if (filtroTipo.value) params.tipo = filtroTipo.value;
+  if (filtroEstado.value) params.estado = filtroEstado.value;
+  if (filtroAmbito.value) params.ambito = filtroAmbito.value;
+  if (filtroProducto.value) params.producto_id = filtroProducto.value;
+  if (filtroMateria.value) params.materia_prima_id = filtroMateria.value;
+  if (filtroUsuario.value) params.usuario_id = filtroUsuario.value;
+  if (filtroDesde.value) params.fecha_inicio = filtroDesde.value;
+  if (filtroHasta.value) params.fecha_fin = filtroHasta.value;
+  if (busqueda.value.trim()) params.buscar = busqueda.value.trim();
+  return params;
+}
+
+const productosFiltro = computed(() => {
+  const vistos = new Map();
+  variantes.value.forEach((v) => {
+    const id = v.producto?.id_producto ?? v.producto_id;
+    if (id && !vistos.has(id)) vistos.set(id, { id, nombre: v.producto?.nombre || `Producto ${id}` });
+  });
+  return [...vistos.values()].sort((a, b) => a.nombre.localeCompare(b.nombre));
+});
+
+async function cargarCatalogosFiltro() {
+  try {
+    const { data } = await clienteApi.get('/materias-primas', { params: { per_page: 500 } });
+    const lista = data?.data?.data ?? data?.data ?? [];
+    materias.value = (Array.isArray(lista) ? lista : []).map((m) => ({ id: m.id_material ?? m.id, nombre: m.nombre }));
+  } catch {
+    materias.value = [];
+  }
+
+  // El listado de usuarios solo lo ve administración; el empleado filtra por los usuarios que aparecen en el kárdex.
+  if (authStore.esAdmin) {
+    try {
+      const { data } = await clienteApi.get('/usuarios');
+      const lista = data?.data ?? data ?? [];
+      const personal = (Array.isArray(lista) ? lista : []).filter((u) =>
+        (u.roles || []).some((r) => ['admin', 'empleado'].includes(r.name ?? r))
+      );
+      usuariosKardex.value = personal.map((u) => ({ id: u.id_usuario, nombre: u.nombre }));
+      return;
+    } catch {
+      // se usa el respaldo de abajo
+    }
+  }
+  const vistos = new Map();
+  movimientos.value.forEach((m) => {
+    if (m.usuario?.id_usuario) vistos.set(m.usuario.id_usuario, { id: m.usuario.id_usuario, nombre: m.usuario.nombre });
+  });
+  usuariosKardex.value = [...vistos.values()];
+}
+
+async function limpiarFiltrosKardex() {
+  [filtroTipo, filtroEstado, filtroAmbito, filtroProducto, filtroMateria, filtroUsuario, filtroDesde, filtroHasta, busqueda]
+    .forEach((filtro) => { filtro.value = ''; });
+  await filtrar();
+}
+
+async function exportarKardex(formato) {
+  exportando.value = true;
+  try {
+    const { data } = await clienteApi.get('/inventarios', { params: { ...parametrosKardex(), per_page: 100, page: 1 } });
+    const paginaApi = data.data || {};
+    let filas = paginaApi.data || [];
+    // Trae hasta 10 páginas (1.000 movimientos) con los filtros activos.
+    for (let p = 2; p <= Math.min(paginaApi.last_page || 1, 10); p += 1) {
+      const extra = await clienteApi.get('/inventarios', { params: { ...parametrosKardex(), per_page: 100, page: p } });
+      filas = filas.concat(extra.data?.data?.data || []);
+    }
+    if (!filas.length) {
+      notificarError('No hay movimientos con los filtros seleccionados.');
+      return;
+    }
+    if (formato === 'excel') {
+      await exportarExcel({ archivo: 'kardex_inventario', hojas: [{ nombre: 'Kárdex', titulo: 'Kárdex de inventario FashionStyle', columnas: COLUMNAS_KARDEX, filas }] });
+    } else {
+      await exportarPDF({ archivo: 'kardex_inventario', titulo: 'Kárdex de inventario', horizontal: true, secciones: [{ columnas: COLUMNAS_KARDEX, filas }] });
+    }
+    notificarExito(`Kárdex exportado (${filas.length} movimientos).`);
+  } catch (error) {
+    notificarError(error.response?.data?.message || 'No se pudo exportar el kárdex.');
+  } finally {
+    exportando.value = false;
+  }
+}
+
+async function exportarExistencias(formato) {
+  if (!variantes.value.length) {
+    return notificarError('No hay variantes para exportar.');
+  }
+  const columnas = [
+    { titulo: 'Prenda', ancho: 32, valor: (v) => v.producto?.nombre || '' },
+    { titulo: 'Código', ancho: 14, valor: (v) => v.producto?.codigo || '' },
+    { titulo: 'Color', ancho: 12, valor: (v) => v.producto?.color || '' },
+    { titulo: 'Categoría', ancho: 16, valor: (v) => v.producto?.categoria?.nombre || '' },
+    { titulo: 'Talla', clave: 'talla', ancho: 8 },
+    { titulo: 'SKU', clave: 'sku', ancho: 16 },
+    { titulo: 'Precio venta', clave: 'precio_venta', formato: 'moneda', ancho: 14 },
+    { titulo: 'Stock', clave: 'stock', formato: 'numero', ancho: 8 },
+    { titulo: 'Estado', ancho: 12, valor: (v) => (Number(v.stock || 0) <= 0 ? 'Agotado' : Number(v.stock || 0) <= 5 ? 'Bajo stock' : 'Disponible') },
+  ];
+  try {
+    if (formato === 'excel') {
+      await exportarExcel({ archivo: 'inventario_existencias', hojas: [{ nombre: 'Existencias', titulo: 'Existencias por talla', columnas, filas: variantes.value }] });
+    } else {
+      await exportarPDF({ archivo: 'inventario_existencias', titulo: 'Existencias por talla', horizontal: true, secciones: [{ columnas, filas: variantes.value }] });
+    }
+    notificarExito('Reporte de existencias descargado.');
+  } catch {
+    notificarError('No se pudo generar el reporte de existencias.');
   }
 }
 
@@ -177,7 +305,7 @@ function abrirNuevo(tipo = 'entrada', varianteId = null) {
     form.variante_id = varianteId;
   }
   form.tipo_movimiento = tipo;
-  form.concepto = tipo === 'entrada' ? 'Recepcion de produccion / compra' : tipo === 'salida' ? 'Uso o merma interna' : 'Ajuste de conteo físico';
+  form.concepto = tipo === 'entrada' ? 'Recepción de producción / compra' : tipo === 'salida' ? 'Uso o merma interna' : 'Ajuste de conteo físico';
   modal.value = true;
 }
 
@@ -196,7 +324,7 @@ function abrirReposicion(alerta) {
   Object.assign(form, {
     variante_id: alerta.idVariante,
     tipo_movimiento: 'entrada',
-    concepto: 'reposicion de stock',
+    concepto: 'reposición de stock',
     observaciones: `Stock al registrar: ${alerta.stock}`,
     cantidad: ''
   });
@@ -226,7 +354,7 @@ async function guardar() {
     } else {
       if (!form.variante_id || form.cantidad === '') return notificarError('Selecciona una variante e indica la cantidad.');
       if (!Number.isInteger(Number(form.cantidad)) || Number(form.cantidad) < 0) return notificarError('La cantidad debe ser un entero no negativo.');
-      if (Number(form.cantidad) > 1000000) return notificarError('La cantidad mxima permitida es 1.000.000.');
+      if (Number(form.cantidad) > 1000000) return notificarError('La cantidad máxima permitida es 1.000.000.');
       if (['entrada', 'salida'].includes(form.tipo_movimiento) && Number(form.cantidad) < 1) return notificarError('Entrada y salida requieren una cantidad mayor que cero.');
 
       await clienteApi.post('/inventarios', {
@@ -254,7 +382,7 @@ async function anular(movimiento) {
 
   const confirmado = await confirmarAccion({
     titulo: 'Anular movimiento',
-    texto: 'Ánular este movimiento? El backend revertir su saldo y no podrís deshacerlo manualmente.',
+    texto: '¿Anular este movimiento? El backend revertirá su saldo y no podrás deshacerlo manualmente.',
     textoBotonConfirmar: 'S, anular'
   });
 
@@ -286,7 +414,7 @@ function exportarStockCSV() {
     return notificarError('No hay variantes para exportar.');
   }
 
-  const encabezados = ['ID_Variante', 'Prenda', 'Codigo', 'Color', 'Categoria', 'Talla', 'SKU', 'Precio_Venta', 'Stock_Actual', 'Estado_Stock'];
+  const encabezados = ['ID_Variante', 'Prenda', 'Código', 'Color', 'Categoría', 'Talla', 'SKU', 'Precio_Venta', 'Stock_Actual', 'Estado_Stock'];
   const filas = variantes.value.map((v) => {
     const estado = Number(v.stock || 0) <= 0 ? 'Agotado' : Number(v.stock || 0) <= 5 ? 'Bajo Stock' : 'Disponible';
     return [
@@ -323,10 +451,11 @@ function formatoMoneda(valor) {
   }).format(valor || 0);
 }
 
-onMounted(() => {
-  cargarMovimientos();
+onMounted(async () => {
   cargarResumen();
   cargarVariantes();
+  await cargarMovimientos();
+  cargarCatalogosFiltro();
 });
 useRecargaAutomatica(() => Promise.all([cargarMovimientos(), cargarResumen(), cargarVariantes()]));
 </script>
@@ -340,7 +469,7 @@ useRecargaAutomatica(() => Promise.all([cargarMovimientos(), cargarResumen(), ca
           Gestión de Inventario y Kárdex
         </h1>
         <p class="text-xs sm:text-sm text-gray-500 mt-0.5">
-          Trazabilidad de prendas por variantes, control de existencias en alamacen y auditorá contable.
+          Trazabilidad de prendas por variantes, control de existencias en almacén y auditoría contable.
         </p>
       </div>
 
@@ -348,10 +477,18 @@ useRecargaAutomatica(() => Promise.all([cargarMovimientos(), cargarResumen(), ca
         <button
           type="button"
           class="inline-flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 transition"
-          @click="exportarStockCSV"
+          @click="exportarExistencias('excel')"
         >
           <Download class="w-4 h-4 text-gray-500" />
-          <span>Exportar CSV</span>
+          <span>Existencias Excel</span>
+        </button>
+        <button
+          type="button"
+          class="inline-flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 transition"
+          @click="exportarExistencias('pdf')"
+        >
+          <FileText class="w-4 h-4 text-gray-500" />
+          <span>Existencias PDF</span>
         </button>
 
         <button
@@ -373,7 +510,7 @@ useRecargaAutomatica(() => Promise.all([cargarMovimientos(), cargarResumen(), ca
           <Boxes class="w-4 h-4 text-gray-400" />
         </div>
         <p class="mt-2 text-2xl font-black text-gray-900">{{ metricasStock.totalVariantes }}</p>
-        <p class="text-xs text-gray-500 mt-0.5">SKUs unicos registrados</p>
+        <p class="text-xs text-gray-500 mt-0.5">SKUs únicos registrados</p>
       </div>
 
       <div class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
@@ -387,7 +524,7 @@ useRecargaAutomatica(() => Promise.all([cargarMovimientos(), cargarResumen(), ca
 
       <div class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
         <div class="flex items-center justify-between">
-          <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Valoracion comercial</span>
+          <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Valoración comercial</span>
           <ArrowUpDown class="w-4 h-4 text-purple-600" />
         </div>
         <p class="mt-2 text-2xl font-black text-purple-600">{{ formatoMoneda(metricasStock.valorTotalInventario) }}</p>
@@ -396,7 +533,7 @@ useRecargaAutomatica(() => Promise.all([cargarMovimientos(), cargarResumen(), ca
 
       <div class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
         <div class="flex items-center justify-between">
-          <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Atencion requerida</span>
+          <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Atención requerida</span>
           <AlertTriangle class="w-4 h-4 text-amber-500" />
         </div>
         <p class="mt-2 text-2xl font-black text-amber-600">
@@ -456,7 +593,7 @@ useRecargaAutomatica(() => Promise.all([cargarMovimientos(), cargarResumen(), ca
           @click="pestanaActiva = 'alertas'"
         >
           <AlertTriangle class="w-4 h-4 text-amber-500" />
-          <span>Alertas y reposicion</span>
+          <span>Alertas y reposición</span>
           <span
             v-if="conteoAlertas.agotados + conteoAlertas.BajoStock > 0"
             class="ml-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-800 font-bold"
@@ -534,7 +671,7 @@ useRecargaAutomatica(() => Promise.all([cargarMovimientos(), cargarResumen(), ca
                 <th class="py-3.5 px-3">SKU Trazable</th>
                 <th class="py-3.5 px-3 text-right">Precio Venta</th>
                 <th class="py-3.5 px-4 text-center">Stock Disponible</th>
-                <th class="py-3.5 px-4 text-right">Acciones Rpidas</th>
+                <th class="py-3.5 px-4 text-right">Acciones Rápidas</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-100">
@@ -621,7 +758,7 @@ useRecargaAutomatica(() => Promise.all([cargarMovimientos(), cargarResumen(), ca
                   <div class="inline-flex items-center gap-1">
                     <button
                       type="button"
-                      title="Registrar Entrada rpida"
+                      title="Registrar Entrada rápida"
                       class="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 transition"
                       @click="() => abrirNuevo('entrada', variante.id_variante)"
                     >
@@ -656,7 +793,7 @@ useRecargaAutomatica(() => Promise.all([cargarMovimientos(), cargarResumen(), ca
                 <td colspan="8" class="text-center py-12 text-gray-500">
                   <Package class="w-10 h-10 mx-auto text-gray-300 mb-2" />
                   <p class="font-medium">No se encontraron prendas con los criterios seleccionados.</p>
-                  <p class="text-xs text-gray-400 mt-1">Prueba cambiando el trmino de búsqueda o el filtro de disponibilidad.</p>
+                  <p class="text-xs text-gray-400 mt-1">Prueba cambiando el término de búsqueda o el filtro de disponibilidad.</p>
                 </td>
               </tr>
             </tbody>
@@ -673,8 +810,37 @@ useRecargaAutomatica(() => Promise.all([cargarMovimientos(), cargarResumen(), ca
         v-model:busqueda="busqueda"
         v-model:tipo="filtroTipo"
         v-model:estado="filtroEstado"
+        v-model:ambito="filtroAmbito"
+        v-model:producto-id="filtroProducto"
+        v-model:materia-id="filtroMateria"
+        v-model:usuario-id="filtroUsuario"
+        v-model:fecha-inicio="filtroDesde"
+        v-model:fecha-fin="filtroHasta"
+        :productos="productosFiltro"
+        :materias="materias"
+        :usuarios="usuariosKardex"
         @filtrar="filtrar"
+        @limpiar="limpiarFiltrosKardex"
       />
+
+      <div class="flex flex-wrap items-center justify-end gap-2">
+        <button
+          type="button"
+          class="inline-flex items-center gap-1.5 rounded-lg border border-tienda-borde bg-white px-3 py-2 text-xs font-semibold text-tienda-negro hover:bg-tienda-arena-suave disabled:opacity-50"
+          :disabled="exportando"
+          @click="exportarKardex('excel')"
+        >
+          <Download class="h-3.5 w-3.5" /> Excel
+        </button>
+        <button
+          type="button"
+          class="inline-flex items-center gap-1.5 rounded-lg border border-tienda-borde bg-white px-3 py-2 text-xs font-semibold text-tienda-negro hover:bg-tienda-arena-suave disabled:opacity-50"
+          :disabled="exportando"
+          @click="exportarKardex('pdf')"
+        >
+          <FileText class="h-3.5 w-3.5" /> PDF
+        </button>
+      </div>
 
       <TablaInventario
         :movimientos="visibles"
@@ -708,8 +874,8 @@ useRecargaAutomatica(() => Promise.all([cargarMovimientos(), cargarResumen(), ca
 
     <!-- PESTAÁ 3: ALERTAS Y reposicion -->
     <div v-if="pestanaActiva === 'alertas'" class="space-y-6">
+      <PanelAlertasAutomaticas />
       <PanelAlertasStock
-        :umbral-inicial="5"
         :recargar-token="tokenAlertas"
         @reponer="abrirReposicion"
       />

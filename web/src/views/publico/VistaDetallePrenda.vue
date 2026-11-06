@@ -1,10 +1,10 @@
 <script setup>
 // -> Componente VistaDetallePrenda
-import { ref, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useRecargaAutomatica } from '@/composables/useRecargaAutomatica';
 import { useRoute, useRouter } from 'vue-router';
-import { obtenerProducto } from '@/services/productoServicio';
-import { recargarPromociones } from '@/composables/usePromociones';
+import { obtenerProducto, obtenerProductos } from '@/services/productoServicio';
+import { claveNombrePrenda } from '@/utils/coloresPrenda';
 import VisorDetalleProducto from '@/components/escaparate/VisorDetalleProducto.vue';
 
 const route = useRoute();
@@ -13,6 +13,31 @@ const router = useRouter();
 const producto = ref(null);
 const cargando = ref(false);
 const error = ref(null);
+const catalogo = ref([]);
+
+// Cada color registrado en Gestión de Prendas es una prenda con el mismo nombre.
+const opcionesColor = computed(() => {
+  if (!producto.value) return [];
+  const clave = claveNombrePrenda(producto.value.nombre);
+  const hermanas = catalogo.value.filter(
+    (p) => claveNombrePrenda(p.nombre) === clave && String(p.id_producto) !== String(producto.value.id_producto)
+  );
+  return [producto.value, ...hermanas]
+    .filter((p) => String(p.color || '').trim())
+    .map((p) => ({
+      id: p.id_producto,
+      color: String(p.color).trim(),
+      disponible: (p.variantes || []).some((v) => Number(v.stock) > 0),
+    }));
+});
+
+async function cargarColores() {
+  try {
+    catalogo.value = await obtenerProductos();
+  } catch {
+    catalogo.value = [];
+  }
+}
 
 async function cargarProducto(id) {
   cargando.value = true;
@@ -35,6 +60,7 @@ async function cargarProducto(id) {
 }
 
 onMounted(() => {
+  cargarColores();
   const id = route.params.id;
   if (id) {
     cargarProducto(id);
@@ -48,10 +74,7 @@ async function refrescarProducto() {
   const id = route.params.id;
   if (!id || cargando.value) return;
   try {
-    const [dato] = await Promise.all([
-      obtenerProducto(id),
-      recargarPromociones()
-    ]);
+    const dato = await obtenerProducto(id);
     if (dato) producto.value = dato;
   } catch (e) {
     console.warn('No se pudo refrescar la prenda:', e);
@@ -86,6 +109,6 @@ watch(
       </button>
     </div>
 
-    <VisorDetalleProducto v-else-if="producto" :producto="producto" />
+    <VisorDetalleProducto v-else-if="producto" :producto="producto" :colores="opcionesColor" />
   </div>
 </template>

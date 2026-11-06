@@ -1,4 +1,4 @@
-<script setup>
+﻿<script setup>
 import { computed, ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import {
@@ -19,7 +19,7 @@ import { useAutenticacionStore } from '@/stores/autenticacion';
 import { useFormatoMoneda } from '@/composables/useFormatoMoneda';
 import { useImagenStorage } from '@/composables/useImagenStorage';
 import { crearCheckout, iniciarPagoWompi, cargarScriptWompi } from '@/services/wompiServicio';
-import { obtenerPromocionesVigentes, calcularPrecioPromocional } from '@/services/promocionServicio';
+import { useValidacionCiudad } from '@/composables/useValidacionCiudad';
 import clienteApi from '@/services/clienteApi';
 
 const router = useRouter();
@@ -48,6 +48,10 @@ const datosCliente = ref({
   departamento: authStore.usuario?.departamento || '',
   direccion: authStore.usuario?.direccion || ''
 });
+
+// RF-072: la ciudad de entrega se valida contra el catálogo nacional antes de pagar.
+const validacionCiudad = useValidacionCiudad(() => datosCliente.value.ciudad);
+const sugerenciasCiudad = validacionCiudad.sugerencias;
 
 function prepararDatosCliente() {
   if (authStore.usuario) {
@@ -84,6 +88,12 @@ async function pagarConWompi() {
   if (!datosEnvioCompletos()) {
     mostrarFormularioEnvio.value = true;
     errorPago.value = 'Completa los datos de entrega (nombre, teléfono, ciudad y dirección) para procesar el pago.';
+    return;
+  }
+
+  if (!(await validacionCiudad.comprobar())) {
+    mostrarFormularioEnvio.value = true;
+    errorPago.value = 'No encontramos la ciudad de entrega. Selecciónala de la lista de sugerencias.';
     return;
   }
 
@@ -189,18 +199,13 @@ const relacionados = computed(() => {
 async function cargarRelacionados() {
   cargandoRelacionados.value = true;
   try {
-    const [res, promos] = await Promise.all([
-      clienteApi.get('/productos'),
-      obtenerPromocionesVigentes()
-    ]);
+    const res = await clienteApi.get('/productos');
     const datos = res.data?.data ?? res.data ?? [];
     const lista = Array.isArray(datos) ? datos : datos.data || [];
 
     productosTodos.value = lista.map(p => {
       const variantes = Array.isArray(p.variantes) ? p.variantes : [];
       const varianteS = variantes.find(v => v.talla === 'S') || variantes[0] || {};
-      const precioBase = Number(varianteS.precio_venta ?? p.precio_venta ?? p.precio_base ?? 0);
-      const calc = calcularPrecioPromocional(p, precioBase, promos);
 
       return {
         id: p.id_producto ?? p.id,
@@ -208,11 +213,7 @@ async function cargarRelacionados() {
         categoriaId: p.categoria_id ?? p.categoria?.id_categoria ?? p.categoria?.id ?? null,
         catalogoId: p.catalogo_id ?? p.catalogo?.id_catalogo ?? p.catalogo?.id ?? null,
         imagen: resolverImagenProducto(p),
-        precio: calc.precioFinal,
-        precioOriginal: calc.precioOriginal,
-        tieneDescuento: calc.ahorro > 0,
-        porcentajeDescuento: calc.porcentaje,
-        promocion: calc.promocion
+        precio: Number(varianteS.precio_venta ?? p.precio_venta ?? p.precio_base ?? 0),
       };
     });
   } catch (e) {
@@ -399,17 +400,9 @@ onMounted(() => {
               Talla: <span class="font-semibold text-gray-700">{{ item.talla }}</span>
             </p>
             <p v-if="item.sku" class="text-xs text-gray-400">SKU: {{ item.sku }}</p>
-            <div class="mt-2 flex flex-wrap items-center gap-2">
-              <p class="text-sm font-bold text-corporativo-rosa">
-                {{ formatearCOP(item.precio) }} <span class="text-xs font-normal text-gray-500">/ unidad</span>
-              </p>
-              <s v-if="item.precioOriginal && Number(item.precioOriginal) > Number(item.precio)" class="text-xs text-gray-400">
-                {{ formatearCOP(item.precioOriginal) }}
-              </s>
-              <span v-if="item.precioOriginal && Number(item.precioOriginal) > Number(item.precio)" class="rounded bg-rose-100 px-1.5 py-0.5 text-[10px] font-bold text-rose-700">
-                Ahorras {{ formatearCOP(item.precioOriginal - item.precio) }}
-              </span>
-            </div>
+            <p class="mt-2 text-sm font-bold text-corporativo-rosa">
+              {{ formatearCOP(item.precio) }} <span class="text-xs font-normal text-gray-500">/ unidad</span>
+            </p>
             <p class="mt-1 text-xs text-gray-400">
               Stock disponible: {{ item.stockMaximo }}
             </p>
@@ -511,9 +504,22 @@ onMounted(() => {
               <input
                 v-model="datosCliente.ciudad"
                 type="text"
+                maxlength="100"
+                list="checkout-ciudades"
+                autocomplete="address-level2"
                 placeholder="Ciudad de entrega *"
-                class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs focus:border-corporativo-rosa focus:outline-none"
+                class="w-full rounded-lg border bg-white px-3 py-2 text-xs focus:border-corporativo-rosa focus:outline-none"
+                :class="validacionCiudad.noEncontrada.value || validacionCiudad.formatoInvalido.value ? 'border-red-400' : 'border-gray-300'"
               />
+              <datalist id="checkout-ciudades">
+                <option v-for="c in sugerenciasCiudad" :key="c" :value="c" />
+              </datalist>
+              <p v-if="validacionCiudad.formatoInvalido.value" class="text-[11px] font-medium text-red-600">
+                Ingresa un nombre de ciudad válido.
+              </p>
+              <p v-else-if="validacionCiudad.noEncontrada.value" class="text-[11px] font-medium text-red-600">
+                No encontramos esa ciudad. Selecciónala de la lista de sugerencias.
+              </p>
               <input
                 v-model="datosCliente.departamento"
                 type="text"
@@ -590,9 +596,6 @@ onMounted(() => {
           @click="verProducto(producto.id)"
         >
           <div class="relative aspect-[4/5] overflow-hidden bg-gray-100">
-            <span v-if="producto.tieneDescuento" class="absolute top-2 left-2 z-10 rounded bg-rose-600 px-1.5 py-0.5 text-[10px] font-bold text-white shadow-sm">
-              -{{ producto.porcentajeDescuento }}%
-            </span>
             <img
               v-if="producto.imagen"
               :src="producto.imagen"
@@ -610,14 +613,9 @@ onMounted(() => {
             <h3 class="text-sm font-bold text-gray-900 line-clamp-2 min-h-[2.5rem]">
               {{ producto.nombre }}
             </h3>
-            <div class="mt-2 flex items-center gap-2">
-              <p class="text-base font-extrabold text-corporativo-rosa">
-                {{ formatearCOP(producto.precio) }}
-              </p>
-              <s v-if="producto.tieneDescuento" class="text-xs text-gray-400">
-                {{ formatearCOP(producto.precioOriginal) }}
-              </s>
-            </div>
+            <p class="mt-2 text-base font-extrabold text-corporativo-rosa">
+              {{ formatearCOP(producto.precio) }}
+            </p>
             <span class="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-gray-400 group-hover:text-corporativo-rosa transition">
               Ver producto <ArrowRight class="h-3 w-3" />
             </span>

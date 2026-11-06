@@ -246,6 +246,13 @@
   text-align: center;
 }
 
+.fs-anuncio__enlace {
+  color: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 /* ===== CARRUSEL DE COLECCIONES ===== */
 .fs-hero {
   display: grid;

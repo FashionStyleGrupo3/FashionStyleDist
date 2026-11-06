@@ -35,6 +35,7 @@ import {
 import { useFormatoMoneda } from '@/composables/useFormatoMoneda';
 import { useNotificacion } from '@/composables/useNotificacion';
 import { filtrarCampo } from '@/utils/validacionCampos';
+import { exportarExcel, exportarPDF } from '@/composables/useExportarReporte';
 
 const { formatearCOP } = useFormatoMoneda();
 const { notificarExito, notificarError, confirmarAccion } = useNotificacion();
@@ -70,20 +71,35 @@ const paginaVentas = ref(1);
 const totalPaginasVentas = ref(1);
 const totalRegistrosVentas = ref(0);
 
+// Filtra lo que se escribe en los campos de texto del formulario de venta.
 function filtrarVenta(campo, tipo, limite, evento) {
   const valor = filtrarCampo(evento.target.value, tipo, limite);
   if (campo === 'cliente') clienteNombre.value = valor;
-  if (campo === 'documento') clienteDocumento.value = valor;
-  if (campo === 'telefono') clienteTelefono.value = valor;
   if (campo === 'notas') notasVenta.value = valor;
   evento.target.value = valor;
 }
 
+// Cédula / NIT: solo números y guion.
+function filtrarDocumento(evento) {
+  const valor = String(evento.target.value).replace(/[^0-9-]/g, '').slice(0, 20);
+  clienteDocumento.value = valor;
+  evento.target.value = valor;
+}
+
+// Teléfono: solo números.
+function filtrarTelefono(evento) {
+  const valor = String(evento.target.value).replace(/\D/g, '').slice(0, 10);
+  clienteTelefono.value = valor;
+  evento.target.value = valor;
+}
+
+// Búsqueda de prendas: letras, números, espacios, guion y guion bajo.
 function filtrarBusqueda(evento) {
-  busquedaPrenda.value = String(evento.target.value)
-    .replace(/[^\p{L}\p{M}\p{N} 0-9_-]/gu, '')
+  const valor = String(evento.target.value)
+    .replace(/[^\p{L}\p{M}\p{N} _-]/gu, '')
     .slice(0, 100);
-  evento.target.value = busquedaPrenda.value;
+  busquedaPrenda.value = valor;
+  evento.target.value = valor;
 }
 
 function normalizarProductoCatalogo(p = {}) {
@@ -165,7 +181,7 @@ function agregarABolsa(producto) {
   const existente = bolsa.value.find((item) => String(item.varianteId) === String(variante.idVariante));
   if (existente) {
     if (existente.cantidad >= variante.stock) {
-      notificarError(`Stock mximo alcanzado (${variante.stock} unidades).`);
+      notificarError(`Stock máximo alcanzado (${variante.stock} unidades).`);
       return;
     }
     existente.cantidad += 1;
@@ -283,6 +299,55 @@ async function descargarComprobantePdf() {
   }
 }
 
+const exportandoVentas = ref(false);
+
+// Reporte del historial de ventas con el filtro de medio de pago activo.
+async function exportarVentas(formato) {
+  exportandoVentas.value = true;
+  try {
+    let filas = [];
+    for (let pagina = 1; pagina <= 10; pagina += 1) {
+      const res = await listarVentas({ pagina, medioPago: filtroMedioPago.value, porPagina: 100 });
+      filas = filas.concat(res.lista);
+      if (pagina >= res.totalPaginas) break;
+    }
+    if (!filas.length) {
+      notificarError('No hay ventas para exportar.');
+      return;
+    }
+    const columnas = [
+      { titulo: 'Comprobante', clave: 'codigo', ancho: 26 },
+      { titulo: 'Fecha', ancho: 20, valor: (v) => (v.fecha ? new Date(v.fecha).toLocaleString('es-CO') : '') },
+      { titulo: 'Cliente', clave: 'clienteNombre', ancho: 26 },
+      { titulo: 'Medio de pago', clave: 'medioPago', ancho: 16 },
+      { titulo: 'Canal', ancho: 12, valor: (v) => (v.original?.pedido_id ? 'En línea' : 'POS') },
+      { titulo: 'Estado', clave: 'estado', ancho: 12 },
+      { titulo: 'Base gravable', formato: 'moneda', ancho: 16, valor: (v) => v.original?.desglose_iva?.subtotal ?? 0 },
+      { titulo: 'IVA', formato: 'moneda', ancho: 14, valor: (v) => v.original?.desglose_iva?.impuesto ?? 0 },
+      { titulo: 'Total', clave: 'total', formato: 'moneda', ancho: 16 },
+      { titulo: 'Factura', clave: 'facturaNumero', ancho: 18 }
+    ];
+    if (formato === 'excel') {
+      await exportarExcel({
+        archivo: 'historial_ventas',
+        hojas: [{ nombre: 'Ventas', titulo: 'Historial de ventas FashionStyle', columnas, filas }]
+      });
+    } else {
+      await exportarPDF({
+        archivo: 'historial_ventas',
+        titulo: 'Historial de ventas',
+        horizontal: true,
+        secciones: [{ columnas, filas }]
+      });
+    }
+    notificarExito(`Reporte de ventas descargado (${filas.length} registros).`);
+  } catch (error) {
+    notificarError(obtenerMensajeError(error, 'No se pudo exportar el historial de ventas.'));
+  } finally {
+    exportandoVentas.value = false;
+  }
+}
+
 async function cargarHistorialYResumen() {
   cargandoVentas.value = true;
   try {
@@ -302,11 +367,17 @@ async function cargarHistorialYResumen() {
   }
 }
 
+function cambiarFiltroMedioPago(valor) {
+  filtroMedioPago.value = valor;
+  paginaVentas.value = 1;
+  cargarHistorialYResumen();
+}
+
 async function anularVentaConfirmada(venta) {
   const ok = await confirmarAccion({
     titulo: `Cancelar venta #${venta.id}`,
-    texto: 'Se anular la venta, su factura asociada y el backend revertir automáticamente el stock al inventario (Kárdex).',
-    textoBotonConfirmar: 'S, cancelar venta'
+    texto: 'Se anulará la venta y su factura asociada, y el sistema revertirá automáticamente el stock al inventario (Kárdex).',
+    textoBotonConfirmar: 'Sí, cancelar venta'
   });
   if (!ok) return;
 
@@ -360,7 +431,25 @@ useRecargaAutomatica(() => Promise.all([cargarCatalogoPOS(), cargarHistorialYRes
           Actualizar
         </button>
 
-        <button type="button"
+        <button
+          type="button"
+          class="inline-flex items-center gap-1.5 rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-xs font-semibold text-gray-700 shadow-sm hover:bg-gray-50 disabled:opacity-50"
+          :disabled="exportandoVentas"
+          @click="exportarVentas('excel')"
+        >
+          <Download class="h-4 w-4" /> Excel
+        </button>
+        <button
+          type="button"
+          class="inline-flex items-center gap-1.5 rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-xs font-semibold text-gray-700 shadow-sm hover:bg-gray-50 disabled:opacity-50"
+          :disabled="exportandoVentas"
+          @click="exportarVentas('pdf')"
+        >
+          <Download class="h-4 w-4" /> PDF
+        </button>
+
+        <button
+          type="button"
           class="inline-flex items-center gap-2 rounded-xl bg-corporativo-rosa px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-sm transition hover:bg-pink-700"
           @click="abrirVentanaVentaFisica">
           <ShoppingBag class="h-4 w-4" />
@@ -506,7 +595,7 @@ useRecargaAutomatica(() => Promise.all([cargarCatalogoPOS(), cargarHistorialYRes
                 Nueva Venta en Tienda física
               </h2>
               <p class="text-xs text-gray-500">
-                Selecciona las prendas, aáde los datos del comprador (opcional) y el sistema generar la factura
+                Selecciona las prendas, añade los datos del comprador (opcional) y el sistema generar la factura
                 automáticamente por el valor del producto.
               </p>
             </div>
@@ -586,7 +675,7 @@ useRecargaAutomatica(() => Promise.all([cargarCatalogoPOS(), cargarHistorialYRes
                 <button type="button" :disabled="!varianteActivaDe(prod) || varianteActivaDe(prod).stock <= 0"
                   class="mt-3 inline-flex w-full items-center justify-center gap-1 rounded-lg bg-gray-900 px-3 py-2 text-xs font-bold text-white transition hover:bg-black disabled:opacity-40"
                   @click="agregarABolsa(prod)">
-                  <Plus class="h-3.5 w-3.5" /> Aádir producto
+                  <Plus class="h-3.5 w-3.5" /> Añadir producto
                 </button>
               </article>
             </div>
@@ -606,7 +695,7 @@ useRecargaAutomatica(() => Promise.all([cargarCatalogoPOS(), cargarHistorialYRes
                 </div>
 
                 <div v-if="!bolsa.length" class="py-6 text-center text-xs text-gray-400">
-                  Aáde al menos una prenda de la lista izquierda.
+                  Añade al menos una prenda de la lista izquierda.
                 </div>
 
                 <ul v-else class="mt-2 max-h-40 divide-y divide-gray-100 overflow-y-auto">
@@ -647,7 +736,7 @@ useRecargaAutomatica(() => Promise.all([cargarCatalogoPOS(), cargarHistorialYRes
                     Nombre del comprador (opcional)
                   </label>
                   <input v-model="clienteNombre" type="text" maxlength="100"
-                    placeholder="Si se deja vacó: Consumidor final"
+                    placeholder="Si se deja vacío: Consumidor final"
                     class="w-full rounded-xl border border-gray-300 px-3 py-2 text-xs focus:border-corporativo-rosa focus:outline-none"
                     @input="filtrarVenta('cliente', 'persona', 100, $event)" />
                 </div>
@@ -655,7 +744,7 @@ useRecargaAutomatica(() => Promise.all([cargarCatalogoPOS(), cargarHistorialYRes
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   <div>
                     <label class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-                      Cdula / NIT (opcional)
+                      Cédula / NIT (opcional)
                     </label>
                     <input v-model="clienteDocumento" type="text" inputmode="numeric" maxlength="20"
                       placeholder="Ej. 1020304050"
@@ -665,7 +754,7 @@ useRecargaAutomatica(() => Promise.all([cargarCatalogoPOS(), cargarHistorialYRes
 
                   <div>
                     <label class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-                      Telfono (opcional)
+                      Teléfono (opcional)
                     </label>
                     <input v-model="clienteTelefono" type="tel" inputmode="tel" maxlength="20"
                       placeholder="Ej. 3001234567"

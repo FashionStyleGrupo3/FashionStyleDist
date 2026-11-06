@@ -90,7 +90,7 @@ async function cargarUsuarios() {
   } catch (e) {
     error.value = mostrarError(
       e,
-      'No se pudo cargar la gestion de usuarios.'
+      'No se pudo cargar la gestión de usuarios.'
     );
   } finally {
     cargandoUsuarios.value = false;
@@ -182,11 +182,14 @@ async function crearEmpleado(datos) {
     await crearUsuario(datos);
 
     mostrarFormulario.value = false;
-    pestana.value = 'empleados';
+    // Los administradores no aparecen en la pestaña de empleados.
+    pestana.value = datos.rol === 'admin' ? 'usuarios' : 'empleados';
 
     await cargarUsuarios();
 
-    mensaje.value = 'Empleado creado correctamente.';
+    mensaje.value = datos.rol === 'admin'
+      ? 'Administrador creado correctamente: tiene todos los permisos.'
+      : 'Empleado creado correctamente.';
   } catch (e) {
     errorFormulario.value = mostrarError(
       e,

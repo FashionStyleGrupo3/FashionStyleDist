@@ -1,4 +1,4 @@
-<script setup>
+﻿<script setup>
 // -> Componente CuadriculaProductos
 import { ref, computed, watch } from 'vue';
 import { Shirt, RotateCcw, AlertCircle, ArrowLeft, ArrowRight } from 'lucide-vue-next';
@@ -6,7 +6,6 @@ import TarjetaProducto from './TarjetaProducto.vue';
 import { obtenerProductos } from '@/services/productoServicio';
 import { useRecargaAutomatica } from '@/composables/useRecargaAutomatica';
 import { useFavoritosStore } from '@/stores/favoritos';
-import { productoTienePromocion, recargarPromociones } from '@/composables/usePromociones';
 
 const props = defineProps({
   categoriaId: { type: [Number, String, null], default: null },
@@ -14,7 +13,6 @@ const props = defineProps({
   busqueda: { type: String, default: '' },
   orden: { type: String, default: 'recientes' },
   soloDisponibles: { type: Boolean, default: false },
-  soloOfertas: { type: Boolean, default: false },
   porPagina: { type: Number, default: 8 }
 });
 
@@ -61,7 +59,6 @@ const productosProcesados = computed(() => {
   let lista = [...productosCrudos.value];
 
   if (props.soloDisponibles) lista = lista.filter((p) => calcularStockTotal(p) > 0);
-  if (props.soloOfertas) lista = lista.filter(productoTienePromocion);
   if (favoritosStore.soloFavoritos) lista = lista.filter((p) => favoritosStore.esFavorito(p.id_producto));
 
   if (props.orden === 'precio-asc') {
@@ -109,14 +106,11 @@ watch(() => [props.categoriaId, props.catalogoId, props.busqueda], cargar, { imm
 async function refrescarSilencioso() {
   if (cargando.value) return;
   try {
-    const [lista] = await Promise.all([
-      obtenerProductos({
-        categoriaId: props.categoriaId,
-        catalogoId: props.catalogoId,
-        busqueda: props.busqueda
-      }),
-      recargarPromociones()
-    ]);
+    const lista = await obtenerProductos({
+      categoriaId: props.categoriaId,
+      catalogoId: props.catalogoId,
+      busqueda: props.busqueda
+    });
     conservarPagina = true;
     productosCrudos.value = lista;
     error.value = '';
@@ -141,7 +135,7 @@ useRecargaAutomatica(refrescarSilencioso, {
     <div v-else-if="error" class="fs-estado">
       <AlertCircle class="w-12 h-12 mx-auto text-red-400" />
       <h3>{{ error }}</h3>
-      <p>Verifica que el servicio backend está en ejecucion.</p>
+      <p>Verifica que el servicio backend está en ejecución.</p>
       <button type="button" class="fs-btn-negro" @click="cargar">
         <RotateCcw class="w-4 h-4" /> Reintentar carga
       </button>

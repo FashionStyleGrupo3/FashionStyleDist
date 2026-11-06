@@ -18,9 +18,6 @@ export default defineConfig(({ mode }) => {
     backendOrigin = 'https://fashionstyle.api.adsocidm.com';
   }
 
-  const usaPublicPath = rawUrl.includes('/public/') || backendOrigin.includes('adsocidm');
-  const prefijo = usaPublicPath ? '/public' : '';
-
   return {
     // Keep generated asset URLs valid when dist/index.html is opened directly.
     base: './',
@@ -28,30 +25,21 @@ export default defineConfig(({ mode }) => {
       vue(),
       vueDevTools(),
     ],
+
     resolve: {
       alias: {
         '@': fileURLToPath(new URL('./src', import.meta.url))
       }
     },
+
     server: {
       port: 3000,
-      open: false,
+      open: true,
+
       proxy: {
-        '/api': {
-          target: backendOrigin,
-          changeOrigin: true,
-          rewrite: (path) => path.startsWith('/public') ? path : `${prefijo}${path}`
-        },
-        '/sanctum': {
-          target: backendOrigin,
-          changeOrigin: true,
-          rewrite: (path) => path.startsWith('/public') ? path : `${prefijo}${path}`
-        },
-        '/storage': {
-          target: backendOrigin,
-          changeOrigin: true,
-          rewrite: (path) => path.startsWith('/public') ? path : `${prefijo}${path}`
-        }
+        '/api': { target: backendOrigin, changeOrigin: true },
+        '/sanctum': { target: backendOrigin, changeOrigin: true },
+        '/storage': { target: backendOrigin, changeOrigin: true }
       }
     }
   };

@@ -5,7 +5,8 @@ import { AlertTriangle, PackageX, PackagePlus, RefreshCw, Loader2 } from 'lucide
 import clienteApi from '@/services/clienteApi';
 
 const props = defineProps({
-  umbralInicial: { type: Number, default: 5 },
+  // null: se usa el umbral mínimo configurado en las alertas de stock.
+  umbralInicial: { type: Number, default: null },
   recargarToken: { type: Number, default: 0 }
 });
 
@@ -13,6 +14,7 @@ const emit = defineEmits(['reponer', 'conteo']);
 
 const pestana = ref('agotados');
 const umbral = ref(props.umbralInicial);
+const umbralManual = ref(props.umbralInicial !== null);
 const agotados = ref([]);
 const bajoStock = ref([]);
 const cargando = ref(false);
@@ -47,15 +49,18 @@ async function cargarAlertas() {
   cargando.value = true;
   error.value = '';
   try {
-    umbral.value = Math.min(1000, Math.max(1, Math.floor(Number(umbral.value) || 5)));
+    if (umbralManual.value) {
+      umbral.value = Math.min(1000, Math.max(1, Math.floor(Number(umbral.value) || 5)));
+    }
 
     const [resAgotados, resBajo] = await Promise.all([
       clienteApi.get('/inventarios/agotados'),
-      clienteApi.get('/inventarios/bajo-stock', { params: { umbral: umbral.value } })
+      clienteApi.get('/inventarios/bajo-stock', { params: umbralManual.value ? { umbral: umbral.value } : {} })
     ]);
 
     agotados.value = extraerLista(resAgotados.data).map(normalizar);
     bajoStock.value = extraerLista(resBajo.data).map(normalizar).filter((v) => v.stock > 0);
+    if (!umbralManual.value) umbral.value = Number(resBajo.data?.data?.umbral_variantes) || umbral.value || 5;
 
     emit('conteo', { agotados: agotados.value.length, bajoStock: bajoStock.value.length });
   } catch (e) {
@@ -86,6 +91,7 @@ useRecargaAutomatica(cargarAlertas);
           <input v-model.number="umbral" type="number" min="1" max="1000" step="1" inputmode="numeric"
             class="w-16 rounded-lg border border-gray-300 px-2 py-1 text-sm focus:border-corporativo-rosa focus:outline-none"
             @keydown="bloquearNotacion"
+            @input="umbralManual = true"
             @keyup.enter="cargarAlertas" />
         </label>
         <button type="button" :disabled="cargando"
@@ -131,7 +137,7 @@ useRecargaAutomatica(cargarAlertas);
               <th class="py-2 pr-3">Talla</th>
               <th class="py-2 pr-3">SKU</th>
               <th class="py-2 pr-3 text-center">Stock</th>
-              <th class="py-2 text-right">accion</th>
+              <th class="py-2 text-right">acción</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-100">
@@ -152,7 +158,7 @@ useRecargaAutomatica(cargarAlertas);
                 <button type="button"
                   class="inline-flex items-center gap-1.5 rounded-lg bg-corporativo-rosa px-3 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-pink-700"
                   @click="emit('reponer', v)">
-                  <PackagePlus class="h-3.5 w-3.5" /> Registrar entrada de reposicion
+                  <PackagePlus class="h-3.5 w-3.5" /> Registrar entrada de reposición
                 </button>
               </td>
             </tr>

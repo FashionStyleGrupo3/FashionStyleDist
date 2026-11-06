@@ -1,6 +1,10 @@
 ﻿<script setup>
 import { ref, watch } from 'vue';
 import { filtrarCampoPrenda, filtrarPrecio, filtrarStock } from '@/utils/validacionPrenda';
+import { fondoMuestra, hexDeColor } from '@/utils/coloresPrenda';
+
+const COLORES_SUGERIDOS = ['Negro', 'Blanco', 'Marfil', 'Beige', 'Camel', 'Café', 'Gris', 'Azul marino', 'Azul', 'Celeste', 'Verde oliva', 'Vinotinto', 'Rojo', 'Rosado', 'Mostaza', 'Negro y blanco'];
+
 
 const props = defineProps({
   visible: {
@@ -190,7 +194,7 @@ watch(() => props.formulario.catalogo_id, (valor, anterior) => {
         <div class="min-w-0 rounded-2xl border border-slate-200 bg-slate-50 p-3 sm:p-4">
           <section class="space-y-4">
             <h3 class="text-lg font-bold text-slate-900">
-              Fotografás
+              Fotografías
             </h3>
 
             <div
@@ -200,7 +204,7 @@ watch(() => props.formulario.catalogo_id, (valor, anterior) => {
               @drop.prevent="emit('drop-archivos', $event.dataTransfer.files)"
             >
               <p class="text-sm leading-6 text-slate-500">
-                Arrastra las fotos aquí o seleccionalas. Máximo 4 MB cada una.
+                Arrastra las fotos aquí o selecciónalas. Máximo 4 MB cada una.
               </p>
 
               <button
@@ -209,7 +213,7 @@ watch(() => props.formulario.catalogo_id, (valor, anterior) => {
                        text-sm font-semibold text-white transition hover:bg-slate-800"
                 @click="inputArchivos?.click()"
               >
-                Elegir fotografás
+                Elegir fotografías
               </button>
             </div>
 
@@ -315,7 +319,7 @@ watch(() => props.formulario.catalogo_id, (valor, anterior) => {
           <!-- Descripcion -->
           <div>
             <label for="eDescripcion" class="mb-2 block text-sm font-semibold text-slate-700">
-              Descripcion
+              Descripción
             </label>
 
             <textarea
@@ -336,16 +340,30 @@ watch(() => props.formulario.catalogo_id, (valor, anterior) => {
                 Color
               </label>
 
-              <input
-                id="eColor"
-                :value="formulario.color"
-                type="text"
-                maxlength="30"
-                class="w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3 py-3 text-base text-slate-800 outline-none transition focus:border-pink-500 focus:ring-4 focus:ring-pink-100"
-                placeholder="Ej: Negro"
-                @input="updateForm('color', $event.target.value, $event.target)"
-              />
-              <p class="mt-1 text-xs text-slate-500">Máximo 30 caracteres.</p>
+              <div class="flex items-center gap-2">
+                <span
+                  class="h-9 w-9 shrink-0 rounded-full border border-black/10"
+                  :style="{ background: fondoMuestra(formulario.color) }"
+                  :title="hexDeColor(formulario.color) ? 'Vista previa del color' : 'Color no reconocido: se mostrará en tono arena'"
+                ></span>
+                <input
+                  id="eColor"
+                  :value="formulario.color"
+                  type="text"
+                  maxlength="30"
+                  list="colores-sugeridos"
+                  class="w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3 py-3 text-base text-slate-800 outline-none transition focus:border-pink-500 focus:ring-4 focus:ring-pink-100"
+                  placeholder="Ej: Negro"
+                  @input="updateForm('color', $event.target.value, $event.target)"
+                />
+                <datalist id="colores-sugeridos">
+                  <option v-for="c in COLORES_SUGERIDOS" :key="c" :value="c" />
+                </datalist>
+              </div>
+              <p class="mt-1 text-xs text-slate-500">
+                Máximo 30 caracteres. Para ofrecer la prenda en otro color, usa «Duplicar» y cambia el color:
+                la tienda mostrará todos los colores en el detalle.
+              </p>
             </div>
 
             <div class="min-w-0">
@@ -417,7 +435,7 @@ watch(() => props.formulario.catalogo_id, (valor, anterior) => {
           <!-- coleccion -->
           <div>
             <label for="eColeccion" class="mb-2 block text-sm font-semibold text-slate-700">
-              coleccion / temporada
+              colección / temporada
             </label>
 
             <select
@@ -496,7 +514,7 @@ watch(() => props.formulario.catalogo_id, (valor, anterior) => {
                     <th class="pb-3 pr-2 font-semibold">
                       {{ modo === 'crear' ? 'Stock inicial' : 'Stock actual' }}
                     </th>
-                    <th class="pb-3 font-semibold">accion</th>
+                    <th class="pb-3 font-semibold">acción</th>
                   </tr>
                 </thead>
 

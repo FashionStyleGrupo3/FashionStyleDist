@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600&display=swap');
+/* Misma tipografía que la tienda y el panel (Inter, cargada en Tienda.css). */
 
 /* ===== ESTRUCTURA: foto a la izquierda, formulario a la derecha ===== */
 .fs-auth {
@@ -7,7 +7,7 @@
   min-height: 100vh;
   background: #ffffff;
   color: #1f2430;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--fs-fuente);
 }
 
 .fs-auth__foto {
@@ -43,7 +43,9 @@
   top: 48px;
   left: 56px;
   z-index: 1;
-  font-family: 'DM Serif Display', serif;
+  font-family: var(--fs-fuente);
+  font-weight: 500;
+  letter-spacing: -0.03em;
   font-size: 34px;
   color: #ffffff;
   text-decoration: none;
@@ -56,7 +58,8 @@
   bottom: 56px;
   z-index: 1;
   margin: 0;
-  font-family: 'DM Serif Display', serif;
+  font-family: var(--fs-fuente);
+  letter-spacing: -0.03em;
   font-size: clamp(36px, 4vw, 58px);
   font-weight: 400;
   line-height: 1.05;
@@ -100,7 +103,8 @@
 
 .fs-auth__titulo {
   margin: 0 0 12px;
-  font-family: 'DM Serif Display', serif;
+  font-family: var(--fs-fuente);
+  letter-spacing: -0.03em;
   font-size: clamp(44px, 5vw, 64px);
   font-weight: 400;
   line-height: 1.05;
@@ -305,7 +309,8 @@
 .fs-auth .fs-auth__caja h1,
 .fs-auth .fs-auth__caja h2:not(.fs-auth__titulo) {
   margin-bottom: 10px;
-  font-family: 'DM Serif Display', serif;
+  font-family: var(--fs-fuente);
+  letter-spacing: -0.03em;
   font-size: 40px;
   font-weight: 400;
   line-height: 1.1;

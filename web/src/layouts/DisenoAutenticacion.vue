@@ -5,7 +5,7 @@ import { useImagenStorage } from '@/composables/useImagenStorage';
 import '@/assets/estilos/auth.css';
 
 const { resolverUrlImagen } = useImagenStorage();
-const foto = resolverUrlImagen('img/login-modelo.jpg');
+const foto = `${import.meta.env.BASE_URL}img/login-modelo.jpg`;
 </script>
 
 <template>

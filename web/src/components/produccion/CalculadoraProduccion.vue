@@ -100,7 +100,7 @@ async function cargarDatos() {
 
     if (!formulasDisponibles.value.length) {
       formulaSeleccionada.value = null;
-      error.value = 'El backend no tiene fórmulas de produccion disponibles.';
+      error.value = 'El backend no tiene fórmulas de producción disponibles.';
       return;
     }
 
@@ -388,7 +388,7 @@ function eliminarCalculo(id) {
 async function limpiarHistorial() {
   const confirmado = await confirmarAccion({
     titulo: 'Vaciar historial',
-    texto: 'Éliminar todo el historial de cálculos guardados?',
+    texto: '¿Eliminar todo el historial de cálculos guardados?',
     textoBotonConfirmar: 'Sí, vaciar'
   });
 
@@ -441,8 +441,8 @@ async function confirmarOrdenProduccion() {
     // Avisar a las otras pestañas que el stock cambió
     window.dispatchEvent(new CustomEvent('datos-actualizados'));
   } catch (requestError) {
-    console.error('Error al crear la orden de produccion en el backend:', requestError);
-    errorOrden.value = requestError.response?.data?.message || 'No se pudo registrar la orden de produccion.';
+    console.error('Error al crear la orden de producción en el backend:', requestError);
+    errorOrden.value = requestError.response?.data?.message || 'No se pudo registrar la orden de producción.';
   } finally {
     guardandoOrden.value = false;
   }
@@ -457,7 +457,7 @@ const alActualizarDatosGlobales = async () => {
     materiasPrimas.value = materias;
     formulasDisponibles.value = formulas;
     
-    // Si habá una fórmula seleccionada, la refrescamos
+    // Si había una fórmula seleccionada, la refrescamos
     if (formulaSeleccionada.value) {
       const idActual = formulaSeleccionada.value.id ?? formulaSeleccionada.value.id_formula;
       const formulaFresca = formulas.find(f => String(f.id ?? f.id_formula) === String(idActual));
@@ -506,7 +506,7 @@ async function refrescarCalculadora() {
 
     if (!formulas.length) {
       formulaSeleccionada.value = null;
-      error.value = 'El backend no tiene fórmulas de produccion disponibles.';
+      error.value = 'El backend no tiene fórmulas de producción disponibles.';
       return;
     }
     error.value = null;
@@ -573,7 +573,7 @@ useRecargaAutomatica(refrescarCalculadora);
     <!-- Estados -->
     <div v-if="cargando" class="flex flex-col items-center justify-center py-24 text-gray-500">
       <Loader2 class="h-10 w-10 animate-spin text-corporativo-rosa" />
-      <p class="mt-4 text-sm font-medium">Cargando datos de produccion...</p>
+      <p class="mt-4 text-sm font-medium">Cargando datos de producción...</p>
     </div>
 
     <div v-else-if="error" class="rounded-xl border border-red-200 bg-red-50 p-4 sm:p-6 text-center">
@@ -590,7 +590,7 @@ useRecargaAutomatica(refrescarCalculadora);
 
     <div v-else-if="!formulasDisponibles.length" class="rounded-xl border border-gray-200 bg-gray-50 p-6 sm:p-12 text-center">
       <Package class="mx-auto h-12 w-12 text-gray-400" />
-      <p class="mt-3 font-semibold text-sm sm:text-base text-gray-700">No hay fórmulas de produccion disponibles.</p>
+      <p class="mt-3 font-semibold text-sm sm:text-base text-gray-700">No hay fórmulas de producción disponibles.</p>
       <p class="mt-1 text-xs sm:text-sm text-gray-500">Crea una fórmula en el backend para comenzar un cálculo.</p>
     </div>
 
@@ -1284,9 +1284,10 @@ useRecargaAutomatica(refrescarCalculadora);
           <div class="w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto">
             <Check class="w-8 h-8" />
           </div>
-          <h3 class="text-xl font-bold text-gray-900">Órden Programada!</h3>
+          <h3 class="text-xl font-bold text-gray-900">¡Orden programada!</h3>
           <p class="text-sm text-gray-600 max-w-sm mx-auto">
             La orden <strong>{{ numeroOrden || 'registrada' }}</strong> para <strong>{{ resumenOrden.cantidad }} unidades</strong> de {{ resumenOrden.nombre }} ha sido registrada.
+            Los insumos se descontarán de bodega cuando la marques como completada.
           </p>
           <div class="pt-2">
             <button

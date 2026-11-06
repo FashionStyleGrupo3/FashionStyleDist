@@ -4,9 +4,6 @@ import { ref, computed } from 'vue';
 import clienteApi from '@/services/clienteApi';
 
 export const useAutenticacionStore = defineStore('autenticacion', () => {
-  // La sesión vive solo en sessionStorage: al cerrar la pestaña o el navegador se pierde.
-  ['fs_token', 'fs_user', 'fs_roles'].forEach((clave) => localStorage.removeItem(clave));
-
   function leerJSON(clave, porDefecto) {
     const valor = localStorage.getItem(clave);
 
@@ -84,9 +81,7 @@ export const useAutenticacionStore = defineStore('autenticacion', () => {
 
   // El empleado no se considera administrador.
   const esAdmin = computed(() =>
-    rolesNormalizados.value.some((rol) =>
-      ['admin', 'administrador', 'super-admin'].includes(rol)
-    )
+    rolesNormalizados.value.some((rol) => ['admin', 'administrador'].includes(rol))
   );
 
   const esEmpleado = computed(() =>
@@ -250,37 +245,6 @@ export const useAutenticacionStore = defineStore('autenticacion', () => {
     }
   }
 
-  /**
-   * Vuelve a pedir /me para que un cambio de rol hecho por un administrador
-   * (p. ej. cliente -> empleado) se vea sin recargar la página.
-   * hidratarSesion solo corre una vez por carga; esta puede llamarse las veces que haga falta.
-   */
-  async function refrescarSesion() {
-    if (!token.value) return false;
-
-    try {
-      const respuesta = await clienteApi.get('/me');
-      const datos = respuesta.data?.data ?? respuesta.data;
-      const nuevoUsuario = datos?.user ?? datos?.usuario ?? datos;
-      const nuevosRoles = normalizarRoles(
-        datos?.roles ?? nuevoUsuario?.roles ?? nuevoUsuario?.rol ?? [],
-        nuevoUsuario
-      );
-
-      if (JSON.stringify(nuevosRoles) === JSON.stringify(rolesNormalizados.value)) {
-        return false;
-      }
-
-      usuario.value = nuevoUsuario;
-      roles.value = nuevosRoles;
-      persistirSesion();
-      return true;
-    } catch (error) {
-      // Sin red o sesión vencida: se ignora; el interceptor de la API ya maneja el 401.
-      return false;
-    }
-  }
-
   async function cerrarSesion() {
     try {
       if (token.value) {
@@ -344,7 +308,6 @@ export const useAutenticacionStore = defineStore('autenticacion', () => {
     iniciarSesionGoogle,
     actualizarUsuario,
     hidratarSesion,
-    refrescarSesion,
     cerrarSesion,
     solicitarRecuperacion,
     restablecerContrasena,

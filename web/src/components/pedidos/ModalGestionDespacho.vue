@@ -57,10 +57,10 @@ function validar() {
   if (!formulario.value.estado) return 'Selecciona un estado.';
   if (requiereGuia.value) {
     if (!formulario.value.empresaTransportadora.trim()) return 'Indica la empresa transportadora para marcar el pedido como enviado.';
-    if (!formulario.value.numeroGuia.trim()) return 'Indica el número de guá para marcar el pedido como enviado.';
+    if (!formulario.value.numeroGuia.trim()) return 'Indica el número de guía para marcar el pedido como enviado.';
   }
   if (formulario.value.numeroGuia && !/^[A-Za-z0-9-]{4,40}$/.test(formulario.value.numeroGuia.trim())) {
-    return 'El número de guá solo admite letras, números y guiones (4 a 40 caracteres).';
+    return 'El número de guía solo admite letras, números y guiones (4 a 40 caracteres).';
   }
   return '';
 }
@@ -188,7 +188,7 @@ async function guardar() {
 
           <div>
             <label class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-500">
-              número de guá <span v-if="requiereGuia" class="text-corporativo-rosa">*</span>
+              número de guía <span v-if="requiereGuia" class="text-corporativo-rosa">*</span>
             </label>
             <input
               v-model="formulario.numeroGuia"
@@ -205,7 +205,7 @@ async function guardar() {
             class="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800"
           >
             <AlertTriangle class="mt-0.5 h-4 w-4 shrink-0" />
-            Al cancelar, se deberan revertir las salidas de inventario del pedido.
+            Al cancelar, se deberán revertir las salidas de inventario del pedido.
           </div>
 
           <p v-if="errorFormulario" class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-700">

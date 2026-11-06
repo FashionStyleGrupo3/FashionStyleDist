@@ -90,7 +90,7 @@ const claseInput =
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Nombre / Razon social</label>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Nombre / Razón social</label>
           <input v-model="form.nombre" type="text" maxlength="150" :class="claseInput" @input="filtrarFormulario('nombre', 'comercial', 150, $event)" />
         </div>
 
@@ -114,7 +114,7 @@ const claseInput =
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Direccion</label>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Dirección</label>
           <input v-model="form.direccion" type="text" maxlength="180" :class="claseInput" @input="filtrarFormulario('direccion', 'direccion', 180, $event)" />
         </div>
 

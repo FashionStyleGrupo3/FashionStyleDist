@@ -24,6 +24,7 @@ import {
 import { useAutenticacionStore } from '@/stores/autenticacion';
 import { obtenerPerfilActual, actualizarPerfil, actualizarContrasena, solicitarCambioCorreo, confirmarCambioCorreo } from '@/services/usuarioServicio';
 import { filtrarCampo } from '@/utils/validacionCampos';
+import { useValidacionCiudad } from '@/composables/useValidacionCiudad';
 import RequisitosPassword from '@/components/autenticacion/RequisitosPassword.vue';
 import { passwordEsSegura } from '@/utils/validarPassword';
 
@@ -139,12 +140,21 @@ async function cargarPerfil() {
   }
 }
 
+// RF-072: misma validación de ciudad que en el registro y el checkout.
+const validacionCiudad = useValidacionCiudad(() => formulario.value.ciudad);
+const sugerenciasCiudad = validacionCiudad.sugerencias;
+
 async function guardarPerfil() {
   mensajePerfilExito.value = '';
   mensajePerfilError.value = '';
 
   if (!formulario.value.nombre.trim()) {
     mensajePerfilError.value = 'El nombre completo es obligatorio.';
+    return;
+  }
+
+  if (formulario.value.ciudad.trim() && !(await validacionCiudad.comprobar())) {
+    mensajePerfilError.value = 'No encontramos esa ciudad. Selecciónala de la lista de sugerencias.';
     return;
   }
 
@@ -175,7 +185,7 @@ async function guardarPassword() {
     return;
   }
   if (password.value.password !== password.value.password_confirmation) {
-    mensajePasswordError.value = 'La confirmacion de la contraseña no coincide.';
+    mensajePasswordError.value = 'La confirmación de la contraseña no coincide.';
     return;
   }
 
@@ -254,7 +264,7 @@ const icono = 'absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events
               </div>
               <div>
                 <h2 class="text-base font-bold text-gray-900 sm:text-lg">Datos personales</h2>
-                <p class="text-xs text-gray-500">Manten al dá tus datos para tus pedidos y entregas.</p>
+                <p class="text-xs text-gray-500">Manten al día tus datos para tus pedidos y entregas.</p>
               </div>
             </div>
             <span
@@ -288,7 +298,7 @@ const icono = 'absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events
               </div>
 
               <div>
-                <label :class="etiqueta">Correo Electronico</label>
+                <label :class="etiqueta">Correo Electrónico</label>
                 <div class="relative">
                   <div :class="icono">
                     <Mail class="h-4 w-4" />
@@ -305,7 +315,7 @@ const icono = 'absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events
 
                 <div v-else class="mt-4 space-y-4">
                   <div>
-                    <label :class="etiqueta">Nuevo correo Electronico</label>
+                    <label :class="etiqueta">Nuevo correo Electrónico</label>
                     <div class="relative">
                       <div :class="icono">
                         <Mail class="h-4 w-4" />
@@ -316,7 +326,7 @@ const icono = 'absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events
                   </div>
 
                   <div v-if="codigoEnviado">
-                    <label :class="etiqueta">código de verificacion</label>
+                    <label :class="etiqueta">código de verificación</label>
                     <div class="relative">
                       <div :class="icono">
                         <KeyRound class="h-4 w-4" />
@@ -372,12 +382,18 @@ const icono = 'absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events
                   <div :class="icono">
                     <Building class="h-4 w-4" />
                   </div>
-                  <input v-model="formulario.ciudad" type="text" maxlength="80" placeholder="Ej. Bogotá" :class="campo" @input="filtrarPerfil('ciudad', 'persona', 80, $event)" />
+                  <input v-model="formulario.ciudad" type="text" maxlength="80" list="perfil-ciudades" autocomplete="address-level2" placeholder="Ej. Bogotá" :class="campo" @input="filtrarPerfil('ciudad', 'persona', 80, $event)" />
+                  <datalist id="perfil-ciudades">
+                    <option v-for="c in sugerenciasCiudad" :key="c" :value="c" />
+                  </datalist>
                 </div>
+                <p v-if="validacionCiudad.noEncontrada.value" class="mt-1 text-xs font-medium text-red-600">
+                  No encontramos esa ciudad. Selecciónala de la lista de sugerencias.
+                </p>
               </div>
 
               <div>
-                <label :class="etiqueta">Direccion</label>
+                <label :class="etiqueta">Dirección</label>
                 <div class="relative">
                   <div :class="icono">
                     <MapPin class="h-4 w-4" />
@@ -440,7 +456,7 @@ const icono = 'absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events
                     <Lock class="h-4 w-4" />
                   </div>
                   <input v-model="password.password" type="password" required minlength="8" maxlength="128" autocomplete="new-password"
-                    placeholder="Minimoimo 8 caracteres" :class="campo" />
+                    placeholder="Mínimo 8 caracteres" :class="campo" />
                 </div>
                 <RequisitosPassword :password="password.password" />
               </div>

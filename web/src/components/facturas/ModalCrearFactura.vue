@@ -278,7 +278,7 @@ async function enviar() {
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-500">
-              Fecha de emision
+              Fecha de emisión
             </label>
             <input
               v-model="formulario.fechaEmision"

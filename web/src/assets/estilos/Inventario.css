@@ -1,11 +1,12 @@
 
 .vista-inventario {
-  --rosa: #e91e8c;
-  --rosa-hover: #d81b7d;
-  --borde: #e5e7eb;
-  --borde-suave: #f1f2f4;
-  --texto: #111827;
-  --texto-suave: #6b7280;
+  /* Acento y neutros de la tienda (Tienda.css) para que el panel se vea igual. */
+  --rosa: var(--fs-negro, #111111);
+  --rosa-hover: #333333;
+  --borde: var(--fs-borde, #e4ddd2);
+  --borde-suave: var(--fs-arena-suave, #f3eee6);
+  --texto: var(--fs-texto, #2b2b2b);
+  --texto-suave: var(--fs-gris, #6f6f6f);
   --verde: #15803d;
   --verde-fondo: #dcfce7;
   --ambar: #b45309;
@@ -20,7 +21,7 @@
   border: 1px solid var(--borde);
   border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 1px 3px rgb(0 0 0 / 0.06), 0 10px 30px rgb(17 24 39 / 0.05);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.06), 0 10px 30px rgb(0 0 0 / 0.04);
 }
 
 /* ---------- Tarjetas de resumen ---------- */
@@ -77,7 +78,7 @@
   border: 1px solid var(--borde);
   border-radius: 10px;
   padding: 0 12px;
-  color: #374151;
+  color: var(--texto);
   background: #fff;
   font-size: 14px;
   outline: 0;
@@ -89,7 +90,7 @@
 .vista-inventario .toolbar input:focus,
 .vista-inventario .toolbar select:focus {
   border-color: var(--rosa);
-  box-shadow: 0 0 0 3px rgb(233 30 140 / 0.12);
+  box-shadow: 0 0 0 3px rgb(17 17 17 / 0.08);
 }
 
 /* ---------- Tabla ---------- */
@@ -106,7 +107,7 @@
 
 .vista-inventario .table-scroll th {
   padding: 12px 20px;
-  background: #f9fafb;
+  background: var(--fs-crema, #f7f4ef);
   color: var(--texto-suave);
   border-bottom: 1px solid var(--borde);
   text-align: left;
@@ -216,7 +217,7 @@
   border-radius: 8px;
   padding: 6px 14px;
   font-weight: 600;
-  color: #374151;
+  color: var(--texto);
 }
 
 .vista-inventario .paginacion button:hover:not(:disabled) {
@@ -285,7 +286,7 @@
   flex-direction: column;
   gap: 6px;
   margin: 14px 0 0;
-  color: #374151;
+  color: var(--texto);
   font-size: 13px;
   font-weight: 600;
 }
@@ -314,7 +315,7 @@
 .vista-inventario .modal select:focus,
 .vista-inventario .modal textarea:focus {
   border-color: var(--rosa);
-  box-shadow: 0 0 0 3px rgb(233 30 140 / 0.12);
+  box-shadow: 0 0 0 3px rgb(17 17 17 / 0.08);
 }
 
 .vista-inventario .form-row {
@@ -348,7 +349,7 @@
   background: #fff;
   border: 1px solid var(--borde);
 }
-.vista-inventario .button.secondary:hover { background: #f9fafb; }
+.vista-inventario .button.secondary:hover { background: var(--fs-crema, #f7f4ef); }
 
 
 @media (max-width: 900px) {

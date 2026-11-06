@@ -4,6 +4,7 @@ import { Ruler, ShoppingBag, Tag } from 'lucide-vue-next';
 import { usePromociones } from '@/composables/usePromociones';
 import GaleriaProducto from '@/components/escaparate/GaleriaProducto.vue';
 import SelectorTallas from '@/components/escaparate/SelectorTallas.vue';
+import SelectorColores from '@/components/escaparate/SelectorColores.vue';
 import SelectorCantidad from '@/components/escaparate/SelectorCantidad.vue';
 import ModalGuiaMedidas from '@/components/escaparate/ModalGuiaMedidas.vue';
 import { useCarritoStore } from '@/stores/carrito';
@@ -11,7 +12,9 @@ import { useFormatoMoneda } from '@/composables/useFormatoMoneda';
 import { useNotificacion } from '@/composables/useNotificacion';
 
 const props = defineProps({
-  producto: { type: Object, required: true }
+  producto: { type: Object, required: true },
+  // Versiones de la prenda en otros colores: [{ id, color, disponible }]
+  colores: { type: Array, default: () => [] }
 });
 
 const carritoStore = useCarritoStore();
@@ -42,12 +45,12 @@ const precioFinal = computed(() => infoPrecio.value.precioFinal);
 const totalLinea = computed(() => precioFinal.value * cantidadDeseada.value);
 
 const etiquetaCategoria = computed(() => {
-  if (!props.producto) return 'coleccion FashionStyle';
+  if (!props.producto) return 'colección FashionStyle';
   const cat = props.producto.categoria;
   const catalogo = props.producto.catalogo;
   const nombreCat = typeof cat === 'object' ? cat?.nombre : cat;
   const nombreCatalogo = typeof catalogo === 'object' ? catalogo?.nombre : catalogo;
-  return [nombreCat, nombreCatalogo].filter(Boolean).join(' · ') || 'coleccion FashionStyle';
+  return [nombreCat, nombreCatalogo].filter(Boolean).join(' · ') || 'colección FashionStyle';
 });
 
 function reiniciarSeleccion() {
@@ -106,7 +109,7 @@ function agregarAMiSeleccion() {
 
   const agregarItem = carritoStore.agregarItem || carritoStore.agregarPrenda;
   if (typeof agregarItem !== 'function') {
-    notificarError('No se encontró la accion para agregar productos al carrito.');
+    notificarError('No se encontró la acción para agregar productos al carrito.');
     return;
   }
 
@@ -123,7 +126,7 @@ function agregarAMiSeleccion() {
     return;
   }
 
-  notificarExito(`${props.producto.nombre} (${varianteSeleccionada.value.talla}) se Añoadió a tu seleccion.`);
+  notificarExito(`${props.producto.nombre}${props.producto.color ? ` · ${props.producto.color}` : ''} (talla ${varianteSeleccionada.value.talla}) se añadió a tu bolsa.`);
 }
 </script>
 
@@ -157,13 +160,17 @@ function agregarAMiSeleccion() {
         {{ infoPrecio.promocion?.nombre || 'Promocion' }}: ahorras {{ formatearCOP(infoPrecio.ahorro) }} por unidad
       </p>
 
+      <div v-if="colores.length" class="mt-7">
+        <SelectorColores :opciones="colores" :id-actual="producto.id_producto || producto.id" />
+      </div>
+
       <div class="mt-7">
         <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
           <span class="text-sm font-semibold text-gray-800">Talla</span>
           <button type="button"
             class="inline-flex items-center gap-1.5 text-sm font-semibold text-corporativo-rosa hover:underline"
             @click="guiaAbierta = true">
-            <Ruler class="h-4 w-4" /> Guá de medidas
+            <Ruler class="h-4 w-4" /> Guía de medidas
           </button>
         </div>
         <SelectorTallas v-model="varianteSeleccionada" :variantes="variantes" @cambio-talla="alCambiarTalla" />
@@ -184,7 +191,7 @@ function agregarAMiSeleccion() {
 
       <div class="mt-6 rounded-xl bg-gray-50 p-4">
         <div class="flex items-center justify-between gap-4 text-sm">
-          <span class="text-gray-600">Subtotal de la seleccion</span>
+          <span class="text-gray-600">Subtotal de la selección</span>
           <strong class="text-base text-gray-900">{{ formatearCOP(totalLinea) }}</strong>
         </div>
       </div>
@@ -192,7 +199,7 @@ function agregarAMiSeleccion() {
       <button type="button" :disabled="!varianteSeleccionada || stockDisponible < 1"
         class="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-corporativo-rosa px-5 py-3.5 font-bold text-white shadow-md transition hover:bg-corporativo-rosa-hover focus:outline-none focus:ring-2 focus:ring-pink-300 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
         @click="agregarAMiSeleccion">
-        <ShoppingBag class="h-5 w-5" /> Aádir a mi seleccion
+        <ShoppingBag class="h-5 w-5" /> Añadir a mi selección
       </button>
 
       <p class="mt-3 text-xs leading-5 text-gray-500">

@@ -1,4 +1,4 @@
-  import { computed, onMounted, ref } from 'vue';
+﻿  import { computed, onMounted, ref } from 'vue';
   import { useRecargaAutomatica } from '@/composables/useRecargaAutomatica';
   import clienteApi from '@/services/clienteApi';
   import { useAutenticacionStore } from '@/stores/autenticacion';
@@ -12,14 +12,14 @@
   } from '@/utils/validacionPrenda';
 
   const mensajesPorEstado = {
-    400: 'La solicitud no es vlida. Revisa los datos de la prenda e intentalotalo de nuevo.',
-    401: 'Tu sesión termin. Inicia sesión de nuevo para continuar.',
+    400: 'La solicitud no es válida. Revisa los datos de la prenda e inténtalo de nuevo.',
+    401: 'Tu sesión terminó. Inicia sesión de nuevo para continuar.',
     403: 'No tienes permiso para realizar este cambio. Contacta al administrador si necesitas acceso.',
-    404: 'No se encontr la prenda o el recurso solicitado. Actualiza la lista e intentalotalo de nuevo.',
+    404: 'No se encontró la prenda o el recurso solicitado. Actualiza la lista e inténtalo de nuevo.',
     409: 'No se pudo completar el cambio porque la prenda está relacionada con otros registros.',
-    413: 'Las imgenes seleccionadas superan el tamaó permitido.',
-    422: 'No se pudo guardar porque uno o mís datos no tienen el formato esperado. Revísalos e intentalotalo de nuevo.',
-    500: 'El servidor tuvo un problema al procesar la solicitud. Intentalotalo de nuevo mís tarde.'
+    413: 'Las imágenes seleccionadas superan el tamaño permitido.',
+    422: 'No se pudo guardar porque uno o más datos no tienen el formato esperado. Revísalos e inténtalo de nuevo.',
+    500: 'El servidor tuvo un problema al procesar la solicitud. Inténtalo de nuevo más tarde.'
   };
 
   function obtenerMensajeErrorPrenda(error) {
@@ -27,9 +27,9 @@
     if (mensajesPorEstado[status]) return mensajesPorEstado[status];
     if (status >= 500) return mensajesPorEstado[500];
     if (!error?.response && (error?.code === 'ERR_NETWORK' || error?.message === 'Network Error')) {
-      return 'No se pudo conectar con el servidor. Revisa tu conexion e intentalotalo de nuevo.';
+      return 'No se pudo conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.';
     }
-    return 'Ocurri un error al procesar la prenda. Intentalotalo de nuevo.';
+    return 'Ocurrió un error al procesar la prenda. Inténtalo de nuevo.';
   }
 
   function obtenerMensajeErrorEliminacionPrenda(error) {
@@ -38,7 +38,7 @@
     }
     if (error?.response?.status === 403) return mensajesPorEstado[403];
     if (error?.response?.status === 404) return mensajesPorEstado[404];
-    return 'No se pudo eliminar la prenda. Intentalotalo de nuevo o desactvala para retirarla del catálogo.';
+    return 'No se pudo eliminar la prenda. Inténtalo de nuevo o desactívala para retirarla del catálogo.';
   }
 
   export function useGestionPrendas() {
@@ -101,7 +101,7 @@
       );
 
       if (rechazadas) {
-        errorImagenes.value = `No se agregaron ${rechazadas} imagen(es). Usa archivos JPG, PNG o WEBP de mximo 4 MB y no superes 9 fotos por prenda.`;
+        errorImagenes.value = `No se agregaron ${rechazadas} imagen(es). Usa archivos JPG, PNG o WEBP de máximo 4 MB y no superes 9 fotos por prenda.`;
       }
 
       const necesitaPortada = !imagenes.value.some(imagen => imagen.portada);
@@ -258,14 +258,14 @@
       if (!producto) return;
       const idProducto = Number(producto.id_producto || producto.id);
       if (!Number.isSafeInteger(idProducto) || idProducto <= 0) {
-        notificarError('No se pudo identificar la prenda que quieres eliminar. Actualiza la lista e intentalotalo de nuevo.');
+        notificarError('No se pudo identificar la prenda que quieres eliminar. Actualiza la lista e inténtalo de nuevo.');
         return;
       }
       eliminandoProducto.value = true;
       try {
         const confirmado = await confirmarAccion({
           titulo: 'Eliminar prenda',
-          texto: `Éliminar "${producto.nombre}"? Solo se pueden eliminar prendas que nunca se hayan vendido. Si ya tuvo ventas, puedes desactivarla para retirarla del catálogo.`,
+          texto: `¿Eliminar "${producto.nombre}"? Solo se pueden eliminar prendas que nunca se hayan vendido. Si ya tuvo ventas, puedes desactivarla para retirarla del catálogo.`,
           textoBotonConfirmar: 'Eliminar prenda'
         });
         if (!confirmado) return;
@@ -273,7 +273,7 @@
         await clienteApi.delete(`${BASE}/${idProducto}`);
         mostrarModal.value = false;
         await cargarProductos();
-        notificarExito(`Se elimin "${producto.nombre}".`);
+        notificarExito(`Se eliminó "${producto.nombre}".`);
       } catch (error) {
         notificarError(`No se pudo eliminar "${producto.nombre}". ${obtenerMensajeErrorEliminacionPrenda(error, variantes.value)}`);
       } finally {
@@ -285,7 +285,7 @@
       errorFormulario.value = '';
 
       if (!validarCampoPrenda('nombre', formulario.value.nombre)) {
-        errorFormulario.value = 'El nombre es obligatorio y solo admite letras, números y puntuacion comun.';
+        errorFormulario.value = 'El nombre es obligatorio y solo admite letras, números y puntuación común.';
         return false;
       }
 
@@ -295,7 +295,7 @@
       }
 
       if (!validarCampoPrenda('color', formulario.value.color)) {
-        errorFormulario.value = 'El color es obligatorio y debe tener un formato vlido.';
+        errorFormulario.value = 'El color es obligatorio y debe tener un formato válido.';
         return false;
       }
 
@@ -321,7 +321,7 @@
         }
 
         if (!validarPrecio(variante.precio)) {
-          errorFormulario.value = 'El precio no puede ser negativo y admite mximo dos decimales.';
+          errorFormulario.value = 'El precio no puede ser negativo y admite máximo dos decimales.';
           return false;
         }
 
@@ -435,12 +435,12 @@
       }
     }
 
-    function obtenerMensajeError(error, fallback = 'No se pudo completar el cambio porque el servidor tuvo un problema temporal. Intentalotalo nuevamente.') {
+    function obtenerMensajeError(error, fallback = 'No se pudo completar el cambio porque el servidor tuvo un problema temporal. Inténtalo nuevamente.') {
       return obtenerMensajeErrorPrenda(error, variantes.value, fallback);
     }
 
     function obtenerDetalleErrorImagen(error) {
-      return obtenerMensajeError(error, 'No se pudo cargar la imagen. Revisa el archivo e intentalotalo de nuevo.');
+      return obtenerMensajeError(error, 'No se pudo cargar la imagen. Revisa el archivo e inténtalo de nuevo.');
     }
 
     async function guardarImagenes(idProducto) {
@@ -510,7 +510,7 @@
       try {
         const erroresImagenes = await guardarImagenes(idProducto);
         if (erroresImagenes.length) {
-          errorImagenes.value = `No se pudieron guardar todas las imgenes: ${erroresImagenes.join(' ')}`;
+          errorImagenes.value = `No se pudieron guardar todas las imágenes: ${erroresImagenes.join(' ')}`;
           return;
         }
 
@@ -523,7 +523,7 @@
         productoPendienteImagenesId.value = null;
         mostrarModalEditar.value = false;
         errorImagenes.value = '';
-        notificarExito('Imgenes guardadas correctamente.');
+        notificarExito('Imágenes guardadas correctamente.');
       } catch (error) {
         errorImagenes.value = obtenerDetalleErrorImagen(error);
       } finally {
@@ -548,7 +548,6 @@
           const respuesta = await clienteApi.post(BASE, {
             ...datosProducto(),
             activo: true,
-            publicado: false,
             variantes: variantes.value.map(variante => ({
               talla: String(variante.talla).trim(),
               sku: String(variante.sku).trim(),
@@ -560,18 +559,18 @@
           variantesCreadas = dataRes?.variantes || [];
         } else {
           idProducto = productoActual.value?.id_producto;
-          if (!idProducto) throw new Error('No se encontr la prenda que se quiere editar.');
+          if (!idProducto) throw new Error('No se encontró la prenda que se quiere editar.');
 
           await clienteApi.patch(`${BASE}/${idProducto}`, datosProducto());
         }
 
-        if (!idProducto) throw new Error('El servidor no devolvi el ID de la prenda.');
+        if (!idProducto) throw new Error('El servidor no devolvió el ID de la prenda.');
 
         await guardarVariantes(idProducto, variantesCreadas, tareasPendientes);
         const erroresImagenes = await guardarImagenes(idProducto);
         if (erroresImagenes.length) {
           productoPendienteImagenesId.value = idProducto;
-          errorImagenes.value = `La prenda se guardó, pero no todas las imgenes: ${erroresImagenes.join(' ')}`;
+          errorImagenes.value = `La prenda se guardó, pero no todas las imágenes: ${erroresImagenes.join(' ')}`;
           await cargarProductos();
           return;
         }
@@ -586,14 +585,14 @@
         mostrarModal.value = false;
 
         if (tareasPendientes.length) {
-          notificarAdvertencia('La prenda se guardó, pero algunas variantes o movimientos requieren atencion: ' + tareasPendientes.join(' '));
+          notificarAdvertencia('La prenda se guardó, pero algunas variantes o movimientos requieren atención: ' + tareasPendientes.join(' '));
         } else {
           notificarExito(modoFormulario.value === 'crear'
             ? 'Prenda creada correctamente.'
             : 'Prenda actualizada correctamente.');
         }
       } catch (error) {
-        errorFormulario.value = obtenerMensajeError(error, 'No se pudo guardar la prenda porque el servidor tuvo un problema temporal. Intentalotalo nuevamente.');
+        errorFormulario.value = obtenerMensajeError(error, 'No se pudo guardar la prenda porque el servidor tuvo un problema temporal. Inténtalo nuevamente.');
       } finally {
         guardando.value = false;
       }
@@ -632,7 +631,7 @@
 
       } catch (err) {
         productos.value = [];
-        errorCargaProductos.value = obtenerMensajeError(err, 'No se pudieron cargar las prendas. Revisa tu conexion e intentalotalo de nuevo.');
+        errorCargaProductos.value = obtenerMensajeError(err, 'No se pudieron cargar las prendas. Revisa tu conexión e inténtalo de nuevo.');
       } finally {
         cargandoProductos.value = false;
       }
@@ -668,7 +667,7 @@
         categorias.value = datosCategorias;
         catalogos.value = datosCatalogos;
       } catch (err) {
-        errorOpcionesFormulario.value = obtenerMensajeError(err, 'No se pudieron cargar las categorías y colecciones. Intentalotalo de nuevo.');
+        errorOpcionesFormulario.value = obtenerMensajeError(err, 'No se pudieron cargar las categorías y colecciones. Inténtalo de nuevo.');
       }
     }
 
@@ -705,13 +704,13 @@
         }
 
         if (!opcion) {
-          errorFormulario.value = `Se cre ${etiqueta}, pero no apareci en la lista. Actualiza las opciones e intentalotalo de nuevo.`;
+          errorFormulario.value = `Se creó ${etiqueta}, pero no apareció en la lista. Actualiza las opciones e inténtalo de nuevo.`;
           return;
         }
         formulario.value = { ...formulario.value, [campoFormulario]: String(opcion[idCampo]) };
         notificarExito(`${etiqueta.charAt(0).toUpperCase()}${etiqueta.slice(1)} creada correctamente.`);
       } catch (error) {
-        errorFormulario.value = obtenerMensajeError(error, `No se pudo crear ${etiqueta}. Revisa los datos e intentalotalo de nuevo.`);
+        errorFormulario.value = obtenerMensajeError(error, `No se pudo crear ${etiqueta}. Revisa los datos e inténtalo de nuevo.`);
       } finally {
         estadoCreacion.value = false;
       }
@@ -736,7 +735,7 @@
 
         const producto = respuesta.data?.data ?? respuesta.data;
         if (!producto) {
-          notificarError('No encontramos esta prenda. Actualiza la lista e intentalotalo de nuevo.');
+          notificarError('No encontramos esta prenda. Actualiza la lista e inténtalo de nuevo.');
           return;
         }
 

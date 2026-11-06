@@ -85,7 +85,7 @@ function quitarImagen(indice) {
   <!-- Bloque de gestion de fotos -->
   <section class="zona-imagenes-bloque">
     <div class="zona-cabecera">
-      <h3 class="zona-titulo">Fotografás de la prenda</h3>
+      <h3 class="zona-titulo">Fotografías de la prenda</h3>
       <span class="zona-conteo">{{ imagenes.length }} imagen(es)</span>
     </div>
 
@@ -96,7 +96,7 @@ function quitarImagen(indice) {
       @drop.prevent="agregarArchivos($event.dataTransfer.files)"
     >
       <p class="zona-soltar-texto">
-        Arrastra las imágenes aquí o haz clic en el boton para seleccionarlas.
+        Arrastra las imágenes aquí o haz clic en el botón para seleccionarlas.
       </p>
       <p class="zona-soltar-pista">Formatos: JPG, PNG o WEBP (máx. 4 MB).</p>
 
@@ -105,7 +105,7 @@ function quitarImagen(indice) {
         class="btn-seleccionar"
         @click="abrirSelector"
       >
-        Elegir fotografás
+        Elegir fotografías
       </button>
     </div>
 

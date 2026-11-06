@@ -167,7 +167,7 @@ useRecargaAutomatica(() => Promise.all([cargarPedidos(), cargarFacturas()]));
 
       <div class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm flex items-center justify-between">
         <div>
-          <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">En transito</p>
+          <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">En tránsito</p>
           <p class="mt-1 text-2xl font-extrabold text-indigo-600">{{ resumenPedidos.enTransito }}</p>
         </div>
         <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
@@ -227,7 +227,7 @@ useRecargaAutomatica(() => Promise.all([cargarPedidos(), cargarFacturas()]));
               v-model="busquedaPedido"
               type="search"
               maxlength="100"
-              placeholder="Buscar por #pedido, guá o cliente..."
+              placeholder="Buscar por #pedido, guía o cliente..."
               class="w-full rounded-xl border border-gray-300 bg-white pl-9 pr-3 py-2 text-xs sm:text-sm focus:border-corporativo-rosa focus:outline-none focus:ring-2 focus:ring-pink-100"
               @keyup.enter="paginaPedidos = 1; cargarPedidos()"
               @input="(e)=>{ busquedaPedido = String(e.target.value).replace(/[^\p{L}\p{M}\p{N} 0-9_-]/gu,'').slice(0,100); e.target.value = busquedaPedido; }"

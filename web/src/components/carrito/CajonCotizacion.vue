@@ -100,7 +100,7 @@ onUnmounted(() => {
         <div v-if="!carritoStore.items.length"
           class="flex h-full flex-col items-center justify-center gap-3 text-center text-gray-400">
           <ShoppingBag class="h-12 w-12 text-gray-300" />
-          <p class="font-medium text-gray-600">Tu bolsa de compra está vacá.</p>
+          <p class="font-medium text-gray-600">Tu bolsa de compra está vacía.</p>
           <p class="text-xs text-gray-400">Explora el escaparate y agrega tus prendas favoritas.</p>
         </div>
 

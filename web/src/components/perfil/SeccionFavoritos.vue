@@ -47,7 +47,7 @@ onMounted(cargar);
   <section class="space-y-5">
     <div>
       <h2 class="text-lg font-bold text-gray-900">Mis favoritos</h2>
-      <p class="text-xs text-gray-500">Las prendas que guardaste para ver o comprar despuís.</p>
+      <p class="text-xs text-gray-500">Las prendas que guardaste para ver o comprar después.</p>
     </div>
 
     <div v-if="cargando" class="rounded-2xl border border-gray-200 bg-white p-8 text-center text-sm text-gray-500 shadow-sm">
@@ -72,8 +72,8 @@ onMounted(cargar);
       <div v-if="disponibles.length === 0"
         class="rounded-2xl border border-gray-200 bg-white p-10 text-center shadow-sm">
         <Heart class="mx-auto h-10 w-10 text-gray-300" />
-        <h3 class="mt-3 text-base font-bold text-gray-900">Año no tienes favoritos</h3>
-        <p class="mt-1 text-sm text-gray-500">Toca el Corazon en cualquier prenda para guardarla aquí.</p>
+        <h3 class="mt-3 text-base font-bold text-gray-900">Aún no tienes favoritos</h3>
+        <p class="mt-1 text-sm text-gray-500">Toca el Corazón en cualquier prenda para guardarla aquí.</p>
         <RouterLink to="/catalogo"
           class="mt-5 inline-flex rounded-xl bg-corporativo-rosa px-5 py-2.5 text-sm font-bold text-white shadow-md hover:bg-pink-700">
           Explorar el catálogo

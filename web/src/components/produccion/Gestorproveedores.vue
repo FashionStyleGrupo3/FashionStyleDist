@@ -44,7 +44,7 @@ async function alGuardar() {
 }
  
 async function eliminar(p) {
-  if (!window.confirm(`Éliminar al proveedor "${p.nombre}"?`)) return;
+  if (!window.confirm(`¿Eliminar al proveedor "${p.nombre}"?`)) return;
   try {
     await proveedoresApi.eliminar(p.id);
     notificarExito('Proveedor eliminado.');

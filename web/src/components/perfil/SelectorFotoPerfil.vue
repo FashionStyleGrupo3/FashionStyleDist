@@ -49,10 +49,10 @@ function elegirArchivo(evento) {
     return;
   }
   if (archivo.size > MAX_BYTES) {
-    error.value = 'La imagen no puede pesar mís de 2 MB.';
+    error.value = 'La imagen no puede pesar más de 2 MB.';
     return;
   }
-  ejecutar(() => subirFotoPerfil(archivo), 'Tu foto se actualiz.');
+  ejecutar(() => subirFotoPerfil(archivo), 'Tu foto se actualizó.');
 }
 
 function alRecibirCredencialGoogle(credential) {
@@ -103,7 +103,7 @@ function alFallarGoogle(e) {
       </button>
     </div>
 
-    <p class="mt-2 text-[11px] text-gray-400">JPG, PNG o WEBP, mximo 2 MB.</p>
+    <p class="mt-2 text-[11px] text-gray-400">JPG, PNG o WEBP, máximo 2 MB.</p>
 
     <div v-if="mostrandoGoogle" class="mt-4 space-y-2 rounded-xl bg-gray-50 p-3">
       <p class="text-xs text-gray-600">

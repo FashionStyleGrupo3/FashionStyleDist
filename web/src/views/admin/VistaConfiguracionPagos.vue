@@ -174,7 +174,7 @@ onMounted(() => {
                   Cuentas Bancarias Receptoras (Split Payments)
                 </h2>
                 <p class="text-xs text-gray-500">
-                  El recaudo de cada venta se repartirá automáticamente segun estos porcentajes.
+                  El recaudo de cada venta se repartirá automáticamente según estos porcentajes.
                 </p>
               </div>
             </div>
@@ -197,7 +197,7 @@ onMounted(() => {
           >
             <div class="flex items-center gap-2">
               <Percent class="w-4 h-4" />
-              <span>Distribuccion total del pago:</span>
+              <span>Distribución total del pago:</span>
               <strong class="text-sm font-extrabold">{{ totalPorcentajes }}%</strong>
             </div>
             <span>{{ porcentajeValido ? 'Reparto balanceado (100%)' : 'Debe sumar 100%' }}</span>
@@ -297,7 +297,7 @@ onMounted(() => {
 
               <!-- Titular de la cuenta -->
               <div>
-                <label class="block text-[11px] font-bold text-gray-500 uppercase mb-1">Titular / Razon Social</label>
+                <label class="block text-[11px] font-bold text-gray-500 uppercase mb-1">Titular / Razón Social</label>
                 <input
                   v-model="cuenta.titular"
                   type="text"
@@ -352,7 +352,7 @@ onMounted(() => {
             Dispersión automática por Cuenta Destino
           </h2>
           <p class="text-xs text-gray-500">
-            Distribuccion calculada automáticamente sobre cada compra confirmada en el sistema.
+            Distribución calculada automáticamente sobre cada compra confirmada en el sistema.
           </p>
         </div>
       </div>
@@ -387,7 +387,7 @@ onMounted(() => {
 
           <div class="pt-3 border-t border-gray-100 flex items-center gap-2 text-xs text-gray-500">
             <ShieldCheck class="w-4 h-4 text-emerald-600 shrink-0" />
-            <span>Integracion directa con el backend y Kárdex contable.</span>
+            <span>Integración directa con el backend y Kárdex contable.</span>
           </div>
         </div>
       </div>
@@ -398,19 +398,19 @@ onMounted(() => {
       <div class="px-6 py-4 border-b border-gray-100">
         <h3 class="text-base font-bold text-gray-900">Historial de Pagos y Facturación automática</h3>
         <p class="text-xs text-gray-500">
-          Cada pago confirmado genera automáticamente su venta, su factura y su dispersion contable.
+          Cada pago confirmado genera automáticamente su venta, su factura y su dispersión contable.
         </p>
       </div>
 
       <div v-if="!controlParalelo.transacciones.length" class="py-12 text-center text-sm text-gray-500">
-        No hay movimientos de recaudo registrados todavá.
+        No hay movimientos de recaudo registrados todavía.
       </div>
 
       <div class="overflow-x-auto w-full -mx-0">
         <table class="min-w-full text-sm">
           <thead>
             <tr class="border-b border-gray-100 bg-gray-50 text-left text-xs uppercase tracking-wide text-gray-500">
-              <th class="px-5 py-3 font-semibold">Operacion / Ref.</th>
+              <th class="px-5 py-3 font-semibold">Operación / Ref.</th>
               <th class="px-5 py-3 font-semibold">Canal</th>
               <th class="px-5 py-3 font-semibold">Cliente</th>
               <th class="px-5 py-3 font-semibold">Medio de Pago</th>

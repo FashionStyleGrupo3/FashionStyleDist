@@ -1,4 +1,4 @@
-<script setup>
+﻿<script setup>
 import { ref, onMounted, watch } from 'vue';
 import { RouterView, RouterLink, useRouter, useRoute } from 'vue-router';
 import {
@@ -8,20 +8,16 @@ import { useCarritoStore } from '@/stores/carrito';
 import { useAutenticacionStore } from '@/stores/autenticacion';
 import { useFiltrosStore } from '@/stores/filtros';
 import { useFavoritosStore } from '@/stores/favoritos';
-import { useSincronizarPreciosCarrito } from '@/composables/usePromociones';
-import { useRecargaAutomatica } from '@/composables/useRecargaAutomatica';
 import { obtenerCategorias } from '@/services/clasificacionServicio';
 import CajonCotizacion from '@/components/carrito/CajonCotizacion.vue';
 import AvatarUsuario from '@/components/perfil/AvatarUsuario.vue';
+import PieTienda from '@/components/comunes/PieTienda.vue';
 const router = useRouter();
 const route = useRoute();
 const carritoStore = useCarritoStore();
 const authStore = useAutenticacionStore();
 const filtrosStore = useFiltrosStore();
 const favoritosStore = useFavoritosStore();
-useSincronizarPreciosCarrito(carritoStore);
-// Si un admin cambia el rol de esta persona (p. ej. cliente -> empleado), se actualiza solo.
-useRecargaAutomatica(() => authStore.refrescarSesion(), { recursos: ['usuarios'], intervaloSondeo: 30000 });
 const menuUsuarioAbierto = ref(false);
 const categoriasMenu = ref([]);
 
@@ -191,7 +187,8 @@ onMounted(async () => {
       </div>
 
       <div class="fs-anuncio">
-        Pagos seguros con Wompi · Envíos a todo el país
+        Pagos seguros con Wompi · Envíos a todo el país ·
+        <RouterLink :to="{ name: 'contacto' }" class="fs-anuncio__enlace">Visítanos en tienda</RouterLink>
       </div>
     </header>
 
@@ -201,16 +198,6 @@ onMounted(async () => {
 
     <CajonCotizacion />
 
-    <footer class="fs-footer">
-      <div class="fs-contenedor">
-        <span>
-          © 2026 FashionStyle ·
-          <RouterLink to="/terminos">Términos y condiciones</RouterLink> ·
-          <RouterLink :to="{ name: 'catalogo' }">Catálogo</RouterLink> ·
-          <a href="https://github.com/FashionStyleGrupo3/FashionStyleDist/tree/main/mobile" target="_blank" rel="noopener">📱 App Móvil (Flutter)</a>
-        </span>
-        <span>Síguenos: Instagram · TikTok · Pinterest</span>
-      </div>
-    </footer>
+    <PieTienda />
   </div>
 </template>

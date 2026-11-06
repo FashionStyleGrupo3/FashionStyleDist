@@ -80,7 +80,7 @@ async function alGuardar() {
 }
 
 async function eliminar(m) {
-  if (!window.confirm(`Éliminar "${m.nombre}"? Esta accion no se puede deshacer.`)) return;
+  if (!window.confirm(`¿Eliminar "${m.nombre}"? Esta acción no se puede deshacer.`)) return;
   try {
     await materiasPrimasApi.eliminar(m.id_material);
     notificarExito('Materia prima eliminada.');
@@ -146,7 +146,7 @@ async function guardarUnidad() {
 }
 
 async function eliminarUnidad(u) {
-  if (!window.confirm(`Éliminar la unidad "${u.nombre}"?`)) return;
+  if (!window.confirm(`¿Eliminar la unidad "${u.nombre}"?`)) return;
   try {
     await unidadesMedidaApi.eliminar(u.id);
     unidades.value = await unidadesMedidaApi.listar();
@@ -278,7 +278,7 @@ useRecargaAutomatica(cargar);
     >
       <AlertTriangle class="h-4 w-4 shrink-0" />
       <span>
-        {{ cantidadStockBajo }} insumo(s) con stock igual o por debajo del minimoimo.
+        {{ cantidadStockBajo }} insumo(s) con stock igual o por debajo del mínimo.
         <span class="underline">{{ soloStockBajo ? 'Ver todos' : 'Ver solo estos' }}</span>
       </span>
     </button>
@@ -292,7 +292,7 @@ useRecargaAutomatica(cargar);
               <th class="px-4 py-3">Insumo</th>
               <th class="px-4 py-3">Unidad</th>
               <th class="px-4 py-3 text-right">Stock</th>
-              <th class="px-4 py-3 text-right">Minimoimo</th>
+              <th class="px-4 py-3 text-right">Mínimo</th>
               <th class="px-4 py-3 text-right">Costo unitario</th>
               <th class="px-4 py-3">Estado</th>
               <th class="px-4 py-3 text-right">Acciones</th>

@@ -37,7 +37,7 @@ useRecargaAutomatica(cargar);
         <p class="text-xs font-semibold uppercase tracking-[0.2em] text-corporativo-rosa">CONTROL Y TRAZABILIDAD</p>
         <h1 class="mt-1 text-2xl font-extrabold font-titulos text-gray-900">Bitácora de actividad</h1>
         <p class="mt-1 text-sm text-gray-500">
-          Consulta quien hizo cada cambio en la tienda, cuandodo lo hizo y qué datos se modificaron.
+          Consulta quién hizo cada cambio en la tienda, cuándo lo hizo y qué datos se modificaron.
         </p>
       </div>
 

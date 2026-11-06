@@ -75,7 +75,7 @@ const datosFactura = computed(() => {
     documento: p.cliente?.documento || p.telefono || '222222222222',
     correo: p.cliente?.correo || '',
     direccion: p.direccion || '',
-    ciudad: p.ciudad || 'Bogot D.C.'
+    ciudad: p.ciudad || 'Bogotá D.C.'
   };
 
   const detalles = (f.detalles?.length ? f.detalles : p.detalles?.length ? p.detalles : []).map(d => ({
@@ -201,9 +201,9 @@ function imprimirFactura() {
           </div>
           <div>
             <h2 class="text-base font-bold text-gray-900">
-              Factura Electronica <span class="text-corporativo-rosa">{{ datosFactura.numero }}</span>
+              Factura Electrónica <span class="text-corporativo-rosa">{{ datosFactura.numero }}</span>
             </h2>
-            <p class="text-xs text-gray-500">Documento oficial tributario con verificacion Wompi</p>
+            <p class="text-xs text-gray-500">Documento oficial tributario con verificación Wompi</p>
           </div>
         </div>
 
@@ -254,19 +254,19 @@ function imprimirFactura() {
                 </span>
               </div>
               <p class="text-xs font-bold text-gray-800 mt-1">FASHION STYLE S.A.S.</p>
-              <p class="text-[11px] text-gray-600">NIT: 901.849.201-3 · Rgimen comun</p>
-              <p class="text-[11px] text-gray-600">Actividad Econmica: 1410 (confección de prendas de vestir)</p>
-              <p class="text-[11px] text-gray-600">Calle 85 # 14-20, Zona Rosa · Bogot D.C., Colombia</p>
+              <p class="text-[11px] text-gray-600">NIT: 901.849.201-3 · Régimen común</p>
+              <p class="text-[11px] text-gray-600">Actividad Económica: 1410 (confección de prendas de vestir)</p>
+              <p class="text-[11px] text-gray-600">Calle 85 # 14-20, Zona Rosa · Bogotá D.C., Colombia</p>
               <p class="text-[11px] text-gray-600">PBX: (+57) 601 745 8920 · contacto@fashionstyle.com.co</p>
             </div>
 
             <div class="text-right">
               <div class="inline-block rounded-xl bg-pink-50 border border-pink-200 px-3.5 py-1.5 text-center">
-                <p class="text-[10px] font-black uppercase tracking-wider text-corporativo-rosa">Factura Electronica de Venta</p>
+                <p class="text-[10px] font-black uppercase tracking-wider text-corporativo-rosa">Factura Electrónica de Venta</p>
                 <p class="text-lg font-black text-gray-900">{{ datosFactura.numero }}</p>
               </div>
               <p class="mt-2 text-[11px] text-gray-500">
-                <strong>Fecha emision:</strong> {{ formatearFecha(datosFactura.fecha) }}
+                <strong>Fecha emisión:</strong> {{ formatearFecha(datosFactura.fecha) }}
               </p>
               <p class="text-[10px] text-gray-400">
                 Res. DIAN N 18764032198754 · Habilitada
@@ -285,7 +285,7 @@ function imprimirFactura() {
               </div>
               <div>
                 <p class="font-bold text-emerald-900 flex items-center gap-1">
-                  <span>Pago Verificado vá Pasarela Wompi</span>
+                  <span>Pago Verificado vía Pasarela Wompi</span>
                   <span class="rounded bg-emerald-200/80 px-1.5 py-0.2 text-[10px] text-emerald-900 font-extrabold uppercase">Aprobado</span>
                 </p>
                 <p class="text-[11px] text-emerald-700">
@@ -319,13 +319,13 @@ function imprimirFactura() {
                 <MapPin class="h-3 w-3" /> Destino y Despacho
               </p>
               <p class="mt-1 text-gray-800">
-                <strong>Direccion:</strong> {{ datosFactura.cliente.direccion || 'Entrega en tienda / Mostrador' }}
+                <strong>Dirección:</strong> {{ datosFactura.cliente.direccion || 'Entrega en tienda / Mostrador' }}
               </p>
               <p class="text-gray-600">
                 <strong>Ciudad / Destino:</strong> {{ datosFactura.cliente.ciudad }}
               </p>
               <p class="text-gray-600">
-                <strong>Forma de Pago:</strong> Contado / Pasarela Electronica
+                <strong>Forma de Pago:</strong> Contado / Pasarela Electrónica
               </p>
             </div>
           </div>
@@ -346,7 +346,7 @@ function imprimirFactura() {
                 <tr v-for="(item, idx) in datosFactura.detalles" :key="idx" class="hover:bg-gray-50/50">
                   <td class="px-3.5 py-2.5 font-medium text-gray-900">
                     <p class="font-bold">{{ item.descripcion }}</p>
-                    <p class="text-[10px] text-gray-500">Linea de confección exclusiva Fashion Style</p>
+                    <p class="text-[10px] text-gray-500">Línea de confección exclusiva Fashion Style</p>
                   </td>
                   <td class="px-3 py-2.5 text-center font-bold text-corporativo-rosa uppercase">
                     {{ item.talla }}
@@ -417,14 +417,14 @@ function imprimirFactura() {
               <div>
                 <p class="text-[10px] font-bold uppercase tracking-wider text-gray-500">CUFE (Firma Digital DIAN)</p>
                 <p class="font-mono text-[9px] text-gray-600 break-all max-w-sm">{{ cufeCalculado }}</p>
-                <p class="text-[9px] text-gray-400 mt-0.5">Validador de Factura Electronica: https://catalogo-vpfe.dian.gov.co</p>
+                <p class="text-[9px] text-gray-400 mt-0.5">Validador de Factura Electrónica: https://catalogo-vpfe.dian.gov.co</p>
               </div>
             </div>
 
             <div class="text-right text-[9px] text-gray-400 max-w-xs">
-              <p class="font-bold text-gray-500">TITULO VALOR - LEY 1231 DE 2008</p>
-              <p>Esta factura Electronica de venta se asimila para todos sus efectos legales a una letra de cambio segun art. 774 del Cdigo de Comercio.</p>
-              <p class="text-corporativo-rosa font-bold mt-1">Gracias por vestir el estilo y la elegancia de Fashion Style!</p>
+              <p class="font-bold text-gray-500">TÍTULO VALOR - LEY 1231 DE 2008</p>
+              <p>Esta factura Electrónica de venta se asimila para todos sus efectos legales a una letra de cambio según art. 774 del Código de Comercio.</p>
+              <p class="text-corporativo-rosa font-bold mt-1">¡Gracias por vestir el estilo y la elegancia de Fashion Style!</p>
             </div>
           </div>
         </div>

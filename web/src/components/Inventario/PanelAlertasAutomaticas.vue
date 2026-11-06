@@ -45,8 +45,8 @@ function fecha(valor) {
   return valor ? new Date(valor).toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' }) : '—';
 }
 
-async function cargar({ silencioso = false } = {}) {
-  if (!silencioso) cargando.value = true;
+async function cargar() {
+  cargando.value = true;
   try {
     const { data } = await clienteApi.get('/alertas-stock', {
       params: { estado: estado.value || 'todas', nivel: nivel.value || undefined, per_page: 50 },
@@ -55,9 +55,9 @@ async function cargar({ silencioso = false } = {}) {
     resumen.value = data?.meta?.resumen ?? {};
     emit('conteo', totalPendientes.value);
   } catch (error) {
-    if (!silencioso) notificarError(error.response?.data?.message || 'No se pudieron cargar las alertas automáticas.');
+    notificarError(error.response?.data?.message || 'No se pudieron cargar las alertas automáticas.');
   } finally {
-    if (!silencioso) cargando.value = false;
+    cargando.value = false;
   }
 }
 
@@ -130,7 +130,7 @@ onMounted(() => {
   cargar();
   cargarConfiguraciones();
 });
-useRecargaAutomatica(() => cargar({ silencioso: true }), { recursos: ['inventarios', 'ventas', 'pedidos', 'ordenes-produccion', 'materias-primas', 'alertas-stock'], intervaloSondeo: 60000 });
+useRecargaAutomatica(cargar, { recursos: ['inventarios', 'ventas', 'pedidos', 'ordenes-produccion', 'materias-primas', 'alertas-stock'] });
 </script>
 
 <template>

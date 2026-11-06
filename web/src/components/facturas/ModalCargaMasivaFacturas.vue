@@ -108,7 +108,7 @@ async function subirArchivo() {
 
       <div class="space-y-4 px-6 py-5">
         <div class="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-xs text-gray-600">
-          <span>Columnas esperadas: <strong class="font-mono text-gray-800">pedido_id, venta_id, fecha_emision, cliente_documento, notas</strong></span>
+          <span>Columnas esperadas: <strong class="font-mono text-gray-800">pedido_id, venta_id, fecha_emisión, cliente_documento, notas</strong></span>
           <button
             type="button"
             class="inline-flex items-center gap-1.5 font-bold text-corporativo-rosa hover:underline"
@@ -129,7 +129,7 @@ async function subirArchivo() {
             <span v-if="archivoSeleccionado">{{ archivoSeleccionado.name }}</span>
             <span v-else>Haz clic o arrastra aquí tu archivo .xlsx o .csv</span>
           </p>
-          <p class="mt-1 text-xs text-gray-500">Tamaó máximo 5 MB</p>
+          <p class="mt-1 text-xs text-gray-500">Tamaño máximo 5 MB</p>
           <input type="file" accept=".xlsx,.csv" class="hidden" @change="seleccionarArchivo" />
         </label>
 
@@ -151,7 +151,7 @@ async function subirArchivo() {
         >
           <div class="flex items-center gap-2 font-bold text-sm">
             <CheckCircle2 class="h-4 w-4 text-emerald-600" />
-            <span>importacion finalizada: {{ resultado.importadas }} factura(s) procesada(s)</span>
+            <span>importación finalizada: {{ resultado.importadas }} factura(s) procesada(s)</span>
           </div>
           <ul v-if="resultado.errores.length" class="list-disc pl-5 text-amber-800 space-y-0.5">
             <li v-for="(err, idx) in resultado.errores" :key="idx">

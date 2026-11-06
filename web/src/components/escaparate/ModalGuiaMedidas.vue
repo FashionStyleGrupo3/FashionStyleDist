@@ -23,15 +23,15 @@ const medidas = [
       <div>
         <div class="flex items-center gap-2 text-corporativo-rosa">
           <Ruler class="h-5 w-5" />
-          <p class="text-xs font-bold uppercase tracking-widest">Guá de tallas</p>
+          <p class="text-xs font-bold uppercase tracking-widest">Guía de tallas</p>
         </div>
-        <h2 class="mt-2 text-xl font-bold text-gray-900 sm:text-2xl">Guá de medidas corporales</h2>
-        <p class="mt-1 text-sm text-gray-500">Medidas de referencia en centmetros (cm).</p>
+        <h2 class="mt-2 text-xl font-bold text-gray-900 sm:text-2xl">Guía de medidas corporales</h2>
+        <p class="mt-1 text-sm text-gray-500">Medidas de referencia en centímetros (cm).</p>
       </div>
       <button
         type="button"
         class="rounded-full p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-900"
-        aria-label="Cerrar guá de medidas"
+        aria-label="Cerrar guía de medidas"
         @click="emit('cerrar')"
       >
         <X class="h-5 w-5" />
@@ -77,18 +77,18 @@ const medidas = [
           </svg>
         </div>
         <div>
-          <h3 class="font-bold text-gray-900">Cmo tomar tus medidas?</h3>
+          <h3 class="font-bold text-gray-900">¿Cómo tomar tus medidas?</h3>
           <ul class="mt-2 space-y-2 text-sm leading-5 text-gray-700">
-            <li><strong>Busto:</strong> rodea la parte mís amplia del pecho, manteniendo la cinta horizontal.</li>
-            <li><strong>Cintura:</strong> mide alrededor de la parte mís estrecha del torso, sin apretar.</li>
-            <li><strong>Cadera:</strong> rodea la parte mís amplia de la cadera y los glteos.</li>
+            <li><strong>Busto:</strong> rodea la parte más amplia del pecho, manteniendo la cinta horizontal.</li>
+            <li><strong>Cintura:</strong> mide alrededor de la parte más estrecha del torso, sin apretar.</li>
+            <li><strong>Cadera:</strong> rodea la parte más amplia de la cadera y los glúteos.</li>
             <li><strong>Largo:</strong> compara el largo indicado con una prenda que te quede bien.</li>
           </ul>
         </div>
       </div>
 
       <p class="text-xs leading-5 text-gray-500">
-        Estas medidas son orientativas; pueden variar segun el corte, la tela y el modelo. Si estás entre dos tallas, revisa la descripción de la prenda antes de cotizar.
+        Estas medidas son orientativas; pueden variar según el corte, la tela y el modelo. Si estás entre dos tallas, revisa la descripción de la prenda antes de cotizar.
       </p>
     </div>
   </ModalBase>

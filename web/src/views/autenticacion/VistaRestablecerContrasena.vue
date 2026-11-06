@@ -38,7 +38,7 @@ const restablecer = async () => {
     formulario.value.nueva_password !==
     formulario.value.nueva_password_confirmation
   ) {
-    mensajeError.value = 'Las contraseñaas no coinciden.';
+    mensajeError.value = 'Las contraseñas no coinciden.';
     return;
   }
 
@@ -82,7 +82,7 @@ const restablecer = async () => {
     <form @submit.prevent="restablecer" class="space-y-4 text-left">
       <div>
         <label for="email" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-          CORREO Electronico
+          CORREO Electrónico
         </label>
         <input 
           id="email" 
@@ -98,7 +98,7 @@ const restablecer = async () => {
     for="codigo"
     class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5"
   >
-    código DE verificacion
+    código DE verificación
   </label>
 
     <input
@@ -115,7 +115,7 @@ const restablecer = async () => {
 </div>
       <div>
         <label for="nueva_password" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-          NUEVA CONTRASEÁ
+          NUEVA CONTRASEÑA
         </label>
           <input 
             id="nueva_password" 
@@ -124,14 +124,14 @@ const restablecer = async () => {
             required 
             minlength="8"
             maxlength="128"
-            placeholder="Minimoimo 8 caracteres" 
+            placeholder="Mínimo 8 caracteres" 
             class="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm outline-none bg-slate-50 focus:bg-white focus:border-[#e22866] focus:ring-2 focus:ring-[#e22866]/20 transition-all"
           />
       </div>
 
       <div>
         <label for="nueva_password_confirmation" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-          CONFIRMAR CONTRASEÁ
+          CONFIRMAR CONTRASEÑA
         </label>
           <input 
             id="nueva_password_confirmation" 

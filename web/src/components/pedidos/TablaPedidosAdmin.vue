@@ -122,7 +122,7 @@ function pasoActual(estado) {
                 <p class="text-xs font-semibold text-gray-800">{{ pedido.empresaTransportadora || 'Transportadora' }}</p>
                 <p class="font-mono text-[11px] text-gray-500">{{ pedido.numeroGuia }}</p>
               </template>
-              <span v-else class="text-xs text-gray-400">Sin guá asignada</span>
+              <span v-else class="text-xs text-gray-400">Sin guía asignada</span>
             </td>
             <td class="px-5 py-3">
               <div class="flex justify-end items-center gap-2">
@@ -185,7 +185,7 @@ function pasoActual(estado) {
                 <div v-if="pedido.empresaTransportadora || pedido.numeroGuia" class="rounded-xl border border-gray-200 bg-white px-4 py-3 text-xs text-gray-600">
                   <span v-if="pedido.empresaTransportadora" class="font-semibold text-gray-800">{{ pedido.empresaTransportadora }}</span>
                   <span v-if="pedido.empresaTransportadora && pedido.numeroGuia"> · </span>
-                  <span v-if="pedido.numeroGuia">Guá {{ pedido.numeroGuia }}</span>
+                  <span v-if="pedido.numeroGuia">Guía {{ pedido.numeroGuia }}</span>
                 </div>
               </div>
             </td>

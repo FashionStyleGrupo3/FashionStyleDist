@@ -18,6 +18,17 @@ const props = defineProps({
     default: false,
   },
 });
+
+const ETIQUETA_ROL = {
+  admin: 'Administrador',
+  empleado: 'Empleado',
+  cliente: 'Cliente',
+};
+
+function ultimoAcceso(usuario) {
+  if (!usuario.ultimo_acceso) return 'Nunca ha ingresado';
+  return new Date(usuario.ultimo_acceso).toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' });
+}
 const emit = defineEmits(['guardar', 'rol', 'estado']);
 const editando = ref(null);
 const formulario = ref({});
@@ -97,6 +108,7 @@ function cambiarRol(usuario, evento) {
             <th class="px-5 py-3">Contacto</th>
             <th class="px-5 py-3">Rol</th>
             <th class="px-5 py-3">Estado</th>
+            <th class="px-5 py-3">Último acceso</th>
             <th v-if="puedeAdministrar" class="px-5 py-3 text-right">
               Acciones
             </th>
@@ -139,7 +151,7 @@ function cambiarRol(usuario, evento) {
                 v-else
                 class="rounded-full bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-600"
               >
-                {{ nombreRol(usuario) }}
+                {{ ETIQUETA_ROL[nombreRol(usuario)] || nombreRol(usuario) }}
               </span>
             </td>
 
@@ -154,8 +166,13 @@ function cambiarRol(usuario, evento) {
               </span>
             </td>
 
+            <td class="px-5 py-4 text-xs text-gray-600">
+              {{ ultimoAcceso(usuario) }}
+            </td>
+
             <td v-if="puedeAdministrar" class="px-5 py-4 text-right">
               <button
+                v-if="puedeAdministrar"
                 type="button"
                 class="rounded-lg border px-3 py-2 text-xs font-semibold"
                 :class="estaActivo(usuario)

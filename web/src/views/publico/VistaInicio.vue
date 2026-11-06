@@ -7,7 +7,6 @@ import { obtenerProductos } from '@/services/productoServicio';
 import { obtenerCategorias, obtenerCatalogos } from '@/services/clasificacionServicio';
 import { useImagenStorage } from '@/composables/useImagenStorage';
 import TarjetaProducto from '@/components/escaparate/TarjetaProducto.vue';
-import { recargarPromociones } from '@/composables/usePromociones';
 const router = useRouter();
 const { resolverUrlImagen } = useImagenStorage();
 
@@ -55,9 +54,9 @@ const diapositivas = computed(() => {
 
   return [{
     id: null,
-    titulo: `Nueva coleccion ${new Date().getFullYear()}`,
+    titulo: `Nueva colección ${new Date().getFullYear()}`,
     texto: 'Moda minimalista para la nueva temporada.',
-    foto: resolverUrlImagen('img/hero.jpg'),
+    foto: `${import.meta.env.BASE_URL}img/hero.jpg`,
     prendas: productos.value.map(imagenDeProducto).filter(Boolean).slice(0, 3),
     total: productos.value.length
   }];
@@ -137,8 +136,7 @@ async function cargarDatosTienda() {
     const [prods, cats, cols] = await Promise.all([
       obtenerProductos(),
       obtenerCategorias(),
-      obtenerCatalogos(),
-      recargarPromociones()
+      obtenerCatalogos()
     ]);
     productos.value = prods;
     categorias.value = Array.isArray(cats) ? cats : [];
@@ -160,7 +158,7 @@ onBeforeUnmount(detener);
     <section class="fs-hero" @mouseenter="detener" @mouseleave="iniciar">
       <Transition name="fs-fade" mode="out-in">
         <div :key="'t' + actual" class="fs-hero__texto">
-          <span class="fs-hero__etiqueta">coleccion</span>
+          <span class="fs-hero__etiqueta">colección</span>
           <h1>{{ diapositiva.titulo }}</h1>
           <p>{{ diapositiva.texto }}</p>
           <button

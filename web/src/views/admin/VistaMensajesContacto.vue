@@ -39,8 +39,8 @@ const enviando = ref(false);
 
 const puedeResponder = computed(() => respuesta.value.trim().length >= 5 && !enviando.value);
 
-async function cargar({ silencioso = false } = {}) {
-  if (!silencioso) cargando.value = true;
+async function cargar() {
+  cargando.value = true;
   try {
     const respuestaApi = await clienteApi.get('/mensajes-contacto', {
       params: { page: pagina.value, estado: estado.value || undefined, tipo: tipo.value || undefined, buscar: buscar.value.trim() || undefined },
@@ -55,9 +55,9 @@ async function cargar({ silencioso = false } = {}) {
       if (actualizado) seleccionado.value = actualizado;
     }
   } catch (error) {
-    if (!silencioso) notificarError(error.response?.data?.message || 'No se pudieron cargar los mensajes.');
+    notificarError(error.response?.data?.message || 'No se pudieron cargar los mensajes.');
   } finally {
-    if (!silencioso) cargando.value = false;
+    cargando.value = false;
   }
 }
 
@@ -107,7 +107,7 @@ function irAPagina(n) {
 const fecha = (v) => (v ? new Date(v).toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' }) : '—');
 
 onMounted(cargar);
-useRecargaAutomatica(() => cargar({ silencioso: true }), { recursos: ['contacto', 'mensajes-contacto'], intervaloSondeo: 60000 });
+useRecargaAutomatica(cargar, { recursos: ['contacto', 'mensajes-contacto'] });
 </script>
 
 <template>

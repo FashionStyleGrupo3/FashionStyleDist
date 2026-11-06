@@ -92,13 +92,13 @@ function mensajeDe(err, porDefecto) {
 const registrar = async () => {
   errorMessage.value = '';
   if (!/^\S+@\S+\.\S+$/.test(correo.value.trim())) {
-    errorMessage.value = 'Ingresa un correo Electronico vlido.';
+    errorMessage.value = 'Ingresa un correo Electrónico válido.';
     return;
   }
   cargando.value = true;
   try {
     if ((await ciudadExiste(ciudad.value)) === false) {
-      errorMessage.value = 'No encontramos esa ciudad. seleccionala de la lista de sugerencias.';
+      errorMessage.value = 'No encontramos esa ciudad. selecciónala de la lista de sugerencias.';
       notificarError(errorMessage.value);
       return;
     }
@@ -171,7 +171,7 @@ const handleGoogleError = (err) => { errorMessage.value = err.message; };
 
       <div class="fs-auth__fila">
         <div class="fs-auth__campo">
-          <label for="correo">Correo Electronico</label>
+          <label for="correo">Correo Electrónico</label>
           <div class="fs-auth__input">
                 <input
                   id="correo"
@@ -201,7 +201,7 @@ const handleGoogleError = (err) => { errorMessage.value = err.message; };
             />
           </div>
           <p v-if="telefonoInvalido" class="fs-auth__nota mal">
-            Ingresa un celular vlido de 10 dgitos (ej. 3001234567).
+            Ingresa un celular válido de 10 dígitos (ej. 3001234567).
           </p>
         </div>
       </div>
@@ -224,15 +224,15 @@ const handleGoogleError = (err) => { errorMessage.value = err.message; };
             </datalist>
           </div>
           <p v-if="ciudadInvalida" class="fs-auth__nota mal">
-            Ingresa un nombre de ciudad vlido.
+            Ingresa un nombre de ciudad válido.
           </p>
           <p v-else-if="ciudadNoEncontrada" class="fs-auth__nota mal">
-            No encontramos esa ciudad. seleccionala de la lista de sugerencias.
+            No encontramos esa ciudad. selecciónala de la lista de sugerencias.
           </p>
         </div>
 
         <div class="fs-auth__campo">
-          <label for="direccion">Direccion</label>
+          <label for="direccion">Dirección</label>
           <div class="fs-auth__input">
             <input
               id="direccion"
@@ -264,7 +264,7 @@ const handleGoogleError = (err) => { errorMessage.value = err.message; };
             <button
               type="button"
               class="fs-auth__ojo"
-              :aria-label="verPassword ? 'Ocultar contraseá' : 'Mostrar contraseá'"
+              :aria-label="verPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'"
               @click="verPassword = !verPassword"
             >
               <EyeOff v-if="verPassword" class="w-5 h-5" />
@@ -272,13 +272,13 @@ const handleGoogleError = (err) => { errorMessage.value = err.message; };
             </button>
           </div>
           <p v-if="!password" class="fs-auth__nota">
-            Minimoimo 10 caracteres, con mayíscula, miníscula, número y smbolo.
+            Mínimo 10 caracteres, con mayúscula, minúscula, número y símbolo.
           </p>
           <RequisitosPassword v-else :password="password" />
         </div>
 
         <div class="fs-auth__campo">
-          <label for="confirmacion">Confirmar contraseá</label>
+          <label for="confirmacion">Confirmar contraseña</label>
           <div class="fs-auth__input">
             <input
               id="confirmacion"
@@ -292,7 +292,7 @@ const handleGoogleError = (err) => { errorMessage.value = err.message; };
             />
           </div>
           <p v-if="noCoinciden" class="fs-auth__nota mal">
-            Las contraseás no coinciden.
+            Las contraseñas no coinciden.
           </p>
         </div>
       </div>
@@ -301,7 +301,7 @@ const handleGoogleError = (err) => { errorMessage.value = err.message; };
         <input v-model="aceptaTerminos" type="checkbox" />
         <span>
           Acepto los
-          <a href="/terminos" target="_blank">trminos y condiciones</a>
+          <a href="#/terminos" target="_blank">términos y condiciones</a>
           y el tratamiento de mis datos personales.
         </span>
       </label>
@@ -315,7 +315,7 @@ const handleGoogleError = (err) => { errorMessage.value = err.message; };
       </button>
     </form>
 
-    <div class="fs-auth__separador">o continá con</div>
+    <div class="fs-auth__separador">o continúa con</div>
 
     <BotonGoogle
       :deshabilitado="cargando || !aceptaTerminos"
@@ -323,11 +323,11 @@ const handleGoogleError = (err) => { errorMessage.value = err.message; };
       @error="handleGoogleError"
     />
     <p v-if="!aceptaTerminos" class="fs-auth__google-nota">
-      Acepta los trminos para continuar con Google.
+      Acepta los términos para continuar con Google.
     </p>
 
     <p class="fs-auth__pie">
-      Ya tienes cuenta?
+      ¿Ya tienes cuenta?
       <RouterLink :to="{ name: 'login' }">Inicia sesión</RouterLink>
     </p>
   </div>

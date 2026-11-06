@@ -77,7 +77,7 @@ async function cargarBase() {
     ]);
     await cargarFormulas();
   } catch (error) {
-    notificarError(mensajeError(error, 'No se pudieron cargar los datos de produccion.'));
+    notificarError(mensajeError(error, 'No se pudieron cargar los datos de producción.'));
   } finally {
     cargando.value = false;
   }

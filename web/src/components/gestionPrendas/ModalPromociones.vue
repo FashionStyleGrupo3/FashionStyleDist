@@ -1,7 +1,6 @@
 ﻿<script setup>
-
-
 import { computed, ref, watch } from 'vue';
+
 import { X, Tag, Trash2, Pencil, Loader2, Globe, Shirt } from 'lucide-vue-next';
 import {
   listarPromociones,
@@ -88,10 +87,10 @@ async function guardar() {
   try {
     if (editandoId.value) {
       await actualizarPromocion(editandoId.value, form.value);
-      notificarExito('Promocion actualizada.');
+      notificarExito('Promoción actualizada.');
     } else {
       await crearPromocion(form.value);
-      notificarExito('Promocion creada.');
+      notificarExito('Promoción creada.');
     }
     cancelarEdicion();
     await cargar();
@@ -101,7 +100,7 @@ async function guardar() {
     if (backErrores) {
       errores.value = Object.fromEntries(Object.entries(backErrores).map(([k, v]) => [k, [].concat(v)[0]]));
     }
-    notificarError(e?.response?.data?.message || 'No se pudo guardar la Promocion.');
+    notificarError(e?.response?.data?.message || 'No se pudo guardar la Promoción.');
   } finally {
     guardando.value = false;
   }
@@ -130,14 +129,14 @@ function cancelarEdicion() {
 }
 
 async function borrar(promo) {
-  if (!window.confirm(`Éliminar la Promocion "${promo.nombre}"?`)) return;
+  if (!window.confirm(`¿Eliminar la Promoción "${promo.nombre}"?`)) return;
   try {
     await eliminarPromocion(promo.id);
-    notificarExito('Promocion eliminada.');
+    notificarExito('Promoción eliminada.');
     await cargar();
     emit('actualizado');
   } catch (e) {
-    notificarError(e?.response?.data?.message || 'No se pudo eliminar la Promocion.');
+    notificarError(e?.response?.data?.message || 'No se pudo eliminar la Promoción.');
   }
 }
 
@@ -192,7 +191,7 @@ watch(
             <p v-if="errores.nombre" class="mt-1 text-xs text-red-600">{{ errores.nombre }}</p>
           </div>
 
-          <textarea v-model="form.descripcion" rows="2" maxlength="500" placeholder="Descripcion (opcional)"
+          <textarea v-model="form.descripcion" rows="2" maxlength="500" placeholder="Descripción (opcional)"
             class="w-full rounded-xl border border-gray-300 px-3 py-2 text-sm focus:border-corporativo-rosa focus:outline-none"></textarea>
 
           <div class="grid grid-cols-2 gap-2">
