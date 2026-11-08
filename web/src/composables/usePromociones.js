@@ -66,25 +66,6 @@ export async function recargarPromociones() {
   return cargarPromociones(true);
 }
 
-export function productoTienePromocion(producto) {
-  if (!producto) return false;
-  const p = unref(producto);
-  const variantes = Array.isArray(p.variantes) ? p.variantes : [];
-  const precios = variantes
-    .map((v) => Number(v.precio_venta))
-    .filter((n) => Number.isFinite(n) && n > 0);
-  const base = precios.length
-    ? Math.min(...precios)
-    : Number(p.precio_venta ?? p.precio_base ?? 0);
-  if (base <= 0) return false;
-
-  const precioBack = p?.precio_final ?? p?.precio_con_descuento;
-  if (precioBack != null && Number(precioBack) < base) return true;
-
-  const calc = calcularPrecioPromocional(p, base, promocionesVigentes.value);
-  return calc.ahorro > 0;
-}
-
 // Escucha cambios de promociones provenientes del administrador.
 suscribirCambios((cambio) => {
   if (cambio?.recurso !== 'promociones') return;
@@ -141,6 +122,24 @@ function registrarConsumidor() {
       detenerRefresco();
     }
   });
+}
+
+export function productoTienePromocion(producto) {
+  if (!producto) return false;
+  const p = unref(producto);
+  const variantes = Array.isArray(p.variantes) ? p.variantes : [];
+  const precios = variantes
+    .map((v) => Number(v.precio_venta))
+    .filter((n) => Number.isFinite(n) && n > 0);
+  const base = precios.length
+    ? Math.min(...precios)
+    : Number(p.precio_venta ?? p.precio ?? 0);
+
+  const precioBack = p?.precio_final ?? p?.precio_con_descuento;
+  if (precioBack != null && Number(precioBack) < base) return true;
+
+  const calc = calcularPrecioPromocional(p, base, promocionesVigentes.value);
+  return calc.ahorro > 0;
 }
 
 // Composable para calcular el precio de un producto.

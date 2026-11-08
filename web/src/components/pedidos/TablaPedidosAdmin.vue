@@ -124,6 +124,15 @@ async function copiarNumeroGuia(pedido) {
  * Avanza o cambia de estado rápidamente un pedido (ej. Pagado -> En_Preparacion -> Entregado)
  */
 async function cambiarEstadoRapido(pedido, nuevoEstado) {
+  const idxActual = pasoActual(pedido.estado);
+  const idxNuevo = FLUJO_PEDIDO.findIndex((p) => p.valor === nuevoEstado);
+
+  // Regla: no se puede retroceder una vez que ha pasado a una fase
+  if (idxActual !== -1 && idxNuevo !== -1 && idxNuevo < idxActual) {
+    notificarError(`No es posible retroceder el pedido a "${infoEstadoPedido(nuevoEstado).etiqueta}". El flujo ya avanzó a "${infoEstadoPedido(pedido.estado).etiqueta}".`);
+    return;
+  }
+
   // Si quiere mandarlo como enviado, abrimos el formulario de despacho para pedir la guía
   if (nuevoEstado === 'Enviado') {
     alternarFormularioDespacho(pedido, true);
@@ -216,6 +225,15 @@ async function despacharYEnviar(pedido) {
 function alHacerClicPaso(pedido, paso) {
   if (procesandoId.value === pedido.id) return;
   if (paso.valor === pedido.estado) return;
+
+  const idxActual = pasoActual(pedido.estado);
+  const idxNuevo = FLUJO_PEDIDO.findIndex((p) => p.valor === paso.valor);
+
+  // Regla: no se puede retroceder a una fase anterior
+  if (idxActual !== -1 && idxNuevo !== -1 && idxNuevo < idxActual) {
+    notificarError(`No puedes retroceder a "${paso.etiqueta}". El pedido ya avanzó a "${infoEstadoPedido(pedido.estado).etiqueta}".`);
+    return;
+  }
 
   if (paso.valor === 'Enviado') {
     alternarFormularioDespacho(pedido, true);
@@ -439,16 +457,20 @@ function alHacerClicPaso(pedido, paso) {
                           <!-- Nodo / Botón del paso -->
                           <button
                             type="button"
-                            :disabled="procesandoId === pedido.id"
+                            :disabled="procesandoId === pedido.id || index < pasoActual(pedido.estado)"
                             class="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 transition-all duration-300 focus:outline-none"
                             :class="[
                               index < pasoActual(pedido.estado)
-                                ? 'border-corporativo-rosa bg-corporativo-rosa text-white shadow-sm'
+                                ? 'border-corporativo-rosa bg-corporativo-rosa text-white shadow-sm cursor-default'
                                 : index === pasoActual(pedido.estado)
-                                  ? 'border-corporativo-rosa bg-white text-corporativo-rosa ring-4 ring-pink-100 font-bold scale-110 shadow-md'
-                                  : 'border-gray-300 bg-white text-gray-400 hover:border-corporativo-rosa hover:text-corporativo-rosa'
+                                  ? 'border-corporativo-rosa bg-white text-corporativo-rosa ring-4 ring-pink-100 font-bold scale-110 shadow-md cursor-default'
+                                  : 'border-gray-300 bg-white text-gray-400 hover:border-corporativo-rosa hover:text-corporativo-rosa cursor-pointer'
                             ]"
-                            :title="`Cambiar estado a: ${paso.etiqueta}`"
+                            :title="index < pasoActual(pedido.estado)
+                              ? `Fase superada (${paso.etiqueta}). No se puede retroceder.`
+                              : index === pasoActual(pedido.estado)
+                                ? `Fase actual: ${paso.etiqueta}`
+                                : `Avanzar a: ${paso.etiqueta}`"
                           >
                             <Loader2 v-if="procesandoId === pedido.id && paso.valor === pedido.estado" class="h-4 w-4 animate-spin text-corporativo-rosa" />
                             <Check v-else-if="index < pasoActual(pedido.estado)" class="h-5 w-5 stroke-[2.5]" />

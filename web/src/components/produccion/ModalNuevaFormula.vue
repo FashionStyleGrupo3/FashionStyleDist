@@ -72,6 +72,17 @@ function alCambiarMateriaPrima(consumo) {
   }
 }
 
+// --- NUEVO: Filtro para evitar insumos duplicados ---
+const materiasDisponibles = computed(() => {
+  return (indiceActual) => {
+    const idsSeleccionados = consumos.value
+      .filter((c, idx) => idx !== indiceActual && c.materia_prima_id)
+      .map(c => String(c.materia_prima_id));
+
+    return props.materiasPrimas.filter(m => !idsSeleccionados.includes(String(m.id)));
+  };
+});
+
 const costoMateriales = computed(() => {
   return consumos.value.reduce((total, c) => {
     return total + (Number(c.cantidad) || 0) * (Number(c.costo_unitario_estimado) || 0);
@@ -140,7 +151,7 @@ function cerrar() {
         <div>
           <h2 class="text-xl font-extrabold text-gray-900 font-titulos">Nueva frmula de produccion</h2>
           <p class="mt-1 text-sm text-gray-500">
-            Define la prenda y los insumos que requiere. Después podrás calcular sus costos.
+            Define la prenda y los insumos que requiere. Despuís podrís calcular sus costos.
           </p>
         </div>
         <button
@@ -194,7 +205,7 @@ function cerrar() {
             class="inline-flex items-center gap-1.5 rounded-lg bg-corporativo-rosa px-3 py-1.5 text-xs font-bold text-white hover:bg-pink-700 transition"
             @click="agregarConsumo"
           >
-            <Plus class="h-3.5 w-3.5" /> Añadir insumo
+            <Plus class="h-3.5 w-3.5" /> Aádir insumo
           </button>
         </div>
 
@@ -220,7 +231,8 @@ function cerrar() {
                     @change="alCambiarMateriaPrima(consumo)"
                   >
                     <option value="">Selecciona</option>
-                    <option v-for="m in materiasPrimas" :key="m.id" :value="m.id">
+                    <!-- CAMBIO AQUÍ -->
+                    <option v-for="m in materiasDisponibles(idx)" :key="m.id" :value="m.id">
                       {{ m.nombre }}
                     </option>
                   </select>

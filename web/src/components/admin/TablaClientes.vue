@@ -1,45 +1,131 @@
-﻿<script setup>
-import { ref } from 'vue';
-import { Check, Pencil, X } from 'lucide-vue-next';
-import { filtrarCampo, validarCorreo } from '@/utils/validacionCampos';
+<script setup>
+import {
+  Mail,
+  Phone,
+  MapPin,
+  CreditCard,
+  UserX
+} from 'lucide-vue-next';
 
-defineProps({ clientes: { type: Array, default: () => [] }, cargando: { type: Boolean, default: false } });
-const emit = defineEmits(['guardar']);
-const editando = ref(null);
-const formulario = ref({});
-const errorEdicion = ref('');
+const props = defineProps({
+  clientes: {
+    type: Array,
+    default: () => [],
+  },
+  cargando: {
+    type: Boolean,
+    default: false,
+  },
+});
 
-function iniciar(cliente) { editando.value = cliente.id; errorEdicion.value = ''; formulario.value = { nombre_completo: cliente.nombre_completo || '', correo: cliente.correo || '', telefono: cliente.telefono || '', ciudad: cliente.ciudad || '', direccion: cliente.direccion || '', tipo_documento: cliente.tipo_documento || '', numero_documento: cliente.numero_documento || '' }; }
-function guardar(cliente) { if (!/[\p{L}\p{M}]/u.test(formulario.value.nombre_completo.trim())) { errorEdicion.value = 'Escribe un nombre válido.'; return; } if (formulario.value.correo && !validarCorreo(formulario.value.correo)) { errorEdicion.value = 'Ingresa un correo válido.'; return; } emit('guardar', cliente, { ...formulario.value }); editando.value = null; errorEdicion.value = ''; }
-function filtrarEdicion(campo, tipo, limite, evento) { const valor = filtrarCampo(evento.target.value, tipo, limite); formulario.value[campo] = valor; evento.target.value = valor; }
+function obtenerIniciales(nombre) {
+  if (!nombre) return 'CL';
+  const partes = String(nombre).trim().split(/\s+/);
+  if (partes.length === 1) return partes[0].slice(0, 2).toUpperCase();
+  return (partes[0][0] + partes[1][0]).toUpperCase();
+}
 </script>
 
 <template>
-  <div class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
-    <div v-if="cargando" class="p-8 text-center text-sm text-gray-500">
-      Cargando clientes...
+  <div class="overflow-hidden rounded-2xl border border-gray-200/90 bg-white shadow-sm">
+    <!-- Estado de Carga -->
+    <div v-if="cargando" class="flex flex-col items-center justify-center p-12 text-center">
+      <div class="h-8 w-8 animate-spin rounded-full border-2 border-corporativo-rosa border-t-transparent"></div>
+      <p class="mt-3 text-sm font-semibold text-gray-700">Cargando directorio de clientes...</p>
+      <p class="text-xs text-gray-400">Recuperando registros del sistema</p>
     </div>
 
-    <div v-else-if="!clientes.length" class="p-8 text-center text-sm text-gray-500">
-      No hay clientes para mostrar.
+    <!-- Estado Vacío -->
+    <div
+      v-else-if="!clientes.length"
+      class="flex flex-col items-center justify-center p-12 text-center"
+    >
+      <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100 text-gray-400">
+        <UserX class="h-7 w-7" />
+      </div>
+      <p class="mt-3 text-base font-bold text-gray-800">No se encontraron clientes</p>
+      <p class="mt-1 max-w-sm text-xs text-gray-500">
+        No hay registros que coincidan con la búsqueda o todavía no hay clientes registrados.
+      </p>
     </div>
 
+    <!-- Tabla de Clientes (Modo Solo Lectura) -->
     <div v-else class="overflow-x-auto">
       <table class="min-w-full text-left text-sm">
-        <thead class="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
+        <thead class="bg-gray-50/80 text-[11px] font-bold uppercase tracking-wider text-gray-500 border-b border-gray-100">
           <tr>
-            <th class="px-5 py-3">Cliente</th>
-            <th class="px-5 py-3">Contacto</th>
-            <th class="px-5 py-3">Ubicacion</th>
+            <th scope="col" class="px-5 py-3.5">Cliente</th>
+            <th scope="col" class="px-5 py-3.5">Identificación</th>
+            <th scope="col" class="px-5 py-3.5">Contacto</th>
+            <th scope="col" class="px-5 py-3.5">Ubicación</th>
           </tr>
         </thead>
 
-        <tbody class="divide-y divide-gray-100">
-          <tr v-for="cliente in clientes" :key="cliente.id" class="align-top">
-            <td class="px-5 py-4"><template v-if="editando === cliente.id"><input v-model="formulario.nombre_completo" maxlength="100" class="mb-2 w-full rounded-lg border border-gray-300 px-2.5 py-2 text-sm" placeholder="Nombre" @input="filtrarEdicion('nombre_completo', 'persona', 100, $event)" /><div class="flex gap-2"><input v-model="formulario.tipo_documento" maxlength="4" class="w-20 rounded-lg border border-gray-300 px-2.5 py-2 text-sm" placeholder="CC" @input="filtrarEdicion('tipo_documento', 'identificacion', 4, $event)" /><input v-model="formulario.numero_documento" maxlength="20" inputmode="numeric" class="min-w-0 flex-1 rounded-lg border border-gray-300 px-2.5 py-2 text-sm" placeholder="Documento" @input="filtrarEdicion('numero_documento', 'identificacion', 20, $event)" /></div></template><template v-else><p class="font-semibold text-gray-900">{{ cliente.nombre_completo }}</p><p class="text-xs text-gray-500">{{ cliente.tipo_documento || '' }} {{ cliente.numero_documento || 'Sin documento' }}</p></template></td>
-            <td class="px-5 py-4"><template v-if="editando === cliente.id"><input v-model="formulario.correo" type="email" maxlength="254" class="mb-2 w-full rounded-lg border border-gray-300 px-2.5 py-2 text-sm" placeholder="Correo" @input="(e)=>{ formulario.correo = String(e.target.value).replace(/\s+/g,'').slice(0,254); e.target.value = formulario.correo; }" /><input v-model="formulario.telefono" type="tel" inputmode="tel" maxlength="20" class="w-full rounded-lg border border-gray-300 px-2.5 py-2 text-sm" placeholder="teléfono" @input="filtrarEdicion('telefono', 'telefono', 20, $event)" /><p v-if="errorEdicion" class="mt-1 text-xs text-red-600" role="alert">{{ errorEdicion }}</p></template><template v-else><p class="text-gray-700">{{ cliente.correo }}</p><p class="text-xs text-gray-500">{{ cliente.telefono || 'Sin teléfono' }}</p></template></td>
-            <td class="px-5 py-4"><template v-if="editando === cliente.id"><input v-model="formulario.ciudad" maxlength="80" class="mb-2 w-full rounded-lg border border-gray-300 px-2.5 py-2 text-sm" placeholder="Ciudad" @input="filtrarEdicion('ciudad', 'persona', 80, $event)" /><input v-model="formulario.direccion" maxlength="180" class="w-full rounded-lg border border-gray-300 px-2.5 py-2 text-sm" placeholder="Direccion" @input="filtrarEdicion('direccion', 'direccion', 180, $event)" /></template><template v-else><p class="text-gray-700">{{ cliente.ciudad || 'Sin ciudad' }}</p><p class="text-xs text-gray-500">{{ cliente.direccion || 'Sin dirección' }}</p></template></td>
-            <td class="px-5 py-4 text-right"><div class="flex justify-end gap-2"><button v-if="editando !== cliente.id" class="rounded-lg border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50" @click="iniciar(cliente)"><Pencil class="mr-1 inline h-3.5 w-3.5" />Editar</button><template v-else><button class="rounded-lg bg-corporativo-rosa px-3 py-2 text-xs font-bold text-white" @click="guardar(cliente)"><Check class="mr-1 inline h-3.5 w-3.5" />Guardar</button><button class="rounded-lg border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-600" @click="editando = null"><X class="mr-1 inline h-3.5 w-3.5" />Cancelar</button></template></div></td>
+        <tbody class="divide-y divide-gray-100 bg-white">
+          <tr
+            v-for="cliente in clientes"
+            :key="cliente.id"
+            class="group transition-colors hover:bg-gray-50/60"
+          >
+            <!-- Columna Cliente: Avatar y Nombre -->
+            <td class="px-5 py-4">
+              <div class="flex items-center gap-3">
+                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 ring-2 ring-emerald-400/30 text-xs font-black transition-transform group-hover:scale-105">
+                  {{ obtenerIniciales(cliente.nombre_completo) }}
+                </div>
+                <div class="min-w-0">
+                  <p class="font-bold text-gray-900 group-hover:text-corporativo-rosa transition truncate">
+                    {{ cliente.nombre_completo }}
+                  </p>
+                  <span class="inline-block mt-0.5 rounded bg-gray-100 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-gray-600">
+                    ID #{{ cliente.id }}
+                  </span>
+                </div>
+              </div>
+            </td>
+
+            <!-- Columna Documento -->
+            <td class="px-5 py-4">
+              <div v-if="cliente.numero_documento" class="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-gray-50/70 px-2.5 py-1 text-xs font-medium text-gray-700">
+                <CreditCard class="h-3.5 w-3.5 text-gray-400" />
+                <span class="font-bold text-gray-900">{{ cliente.tipo_documento || 'CC' }}</span>
+                <span>{{ cliente.numero_documento }}</span>
+              </div>
+              <span v-else class="text-xs italic text-gray-400">Sin documento</span>
+            </td>
+
+            <!-- Columna Contacto -->
+            <td class="px-5 py-4">
+              <div class="space-y-1">
+                <a
+                  v-if="cliente.correo"
+                  :href="`mailto:${cliente.correo}`"
+                  class="flex items-center gap-1.5 text-xs font-medium text-gray-700 hover:text-corporativo-rosa transition"
+                >
+                  <Mail class="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                  <span class="truncate max-w-[200px]">{{ cliente.correo }}</span>
+                </a>
+                <span v-else class="text-xs text-gray-400">Sin correo</span>
+
+                <p class="flex items-center gap-1.5 text-xs text-gray-500">
+                  <Phone class="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                  <span>{{ cliente.telefono || 'Sin teléfono' }}</span>
+                </p>
+              </div>
+            </td>
+
+            <!-- Columna Ubicación -->
+            <td class="px-5 py-4">
+              <div class="space-y-1">
+                <p class="flex items-center gap-1.5 text-xs font-semibold text-gray-800">
+                  <MapPin class="h-3.5 w-3.5 text-rose-500 shrink-0" />
+                  <span>{{ cliente.ciudad || 'Sin ciudad especificada' }}</span>
+                </p>
+                <p class="text-xs text-gray-500 truncate max-w-[220px]">
+                  {{ cliente.direccion || 'Sin dirección de entrega' }}
+                </p>
+              </div>
+            </td>
           </tr>
         </tbody>
       </table>

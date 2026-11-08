@@ -1044,11 +1044,15 @@ useRecargaAutomatica(refrescarCalculadora, { intervaloSondeo: 0 });
               type="button"
               :disabled="!formulaSeleccionada || cantidadAProducir < 1 || !factibilidad.todosSuficientes"
               @click="abrirModalOrden"
+              :title="!formulaSeleccionada ? 'Selecciona una fórmula de producción' : cantidadAProducir < 1 ? 'Ingresa una cantidad mayor a 0' : !factibilidad.todosSuficientes ? 'Stock de materias primas insuficiente para generar la orden' : 'Generar orden de producción'"
               class="w-full mt-4 sm:mt-5 py-3 px-4 bg-corporativo-rosa hover:bg-pink-700 text-white font-bold text-sm rounded-xl shadow-md transition-all flex items-center justify-center gap-2 disabled:cursor-not-allowed disabled:opacity-40"
             >
               <ClipboardCheck class="w-4 h-4" />
               <span class="truncate">Generar Orden</span>
             </button>
+            <p v-if="formulaSeleccionada && !factibilidad.todosSuficientes" class="mt-2 text-center text-xs text-red-600 font-medium">
+              ⚠️ Insumos insuficientes en bodega para este lote. Revisa la factibilidad abajo.
+            </p>
           </div>
 
           <!-- Rentabilidad -->
@@ -1287,7 +1291,7 @@ useRecargaAutomatica(refrescarCalculadora, { intervaloSondeo: 0 });
           <h3 class="text-xl font-bold text-gray-900">¡Orden programada!</h3>
           <p class="text-sm text-gray-600 max-w-sm mx-auto">
             La orden <strong>{{ numeroOrden || 'registrada' }}</strong> para <strong>{{ resumenOrden.cantidad }} unidades</strong> de {{ resumenOrden.nombre }} ha sido registrada.
-            Los insumos se descontarán de bodega cuando la marques como completada.
+            Los insumos requeridos han sido reservados y descontados de materias primas.
           </p>
           <div class="pt-2">
             <button

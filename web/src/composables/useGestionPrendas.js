@@ -79,7 +79,8 @@
       descripcion: '',
       color: '',
       categoria_id: '',
-      catalogo_id: ''
+      catalogo_id: '',
+      publicado: false
     });
 
     const inputArchivos = ref(null);
@@ -181,7 +182,8 @@
         descripcion: '',
         color: '',
         categoria_id: '',
-        catalogo_id: ''
+        catalogo_id: '',
+        publicado: false
       };
       variantes.value = [];
       imagenes.value.forEach(imagen => {
@@ -220,7 +222,8 @@
         descripcion: producto.descripcion || '',
         color: producto.color || '',
         categoria_id: producto.categoria_id ? String(producto.categoria_id) : '',
-        catalogo_id: producto.catalogo_id ? String(producto.catalogo_id) : ''
+        catalogo_id: producto.catalogo_id ? String(producto.catalogo_id) : '',
+        publicado: estaActivo(producto.publicado)
       };
       variantes.value = (producto.variantes || []).map(variante => ({
         id_variante: variante.id_variante,
@@ -354,7 +357,8 @@
         descripcion: formulario.value.descripcion.trim(),
         color: formulario.value.color.trim(),
         categoria_id: formulario.value.categoria_id ? Number(formulario.value.categoria_id) : null,
-        catalogo_id: formulario.value.catalogo_id ? Number(formulario.value.catalogo_id) : null
+        catalogo_id: formulario.value.catalogo_id ? Number(formulario.value.catalogo_id) : null,
+        publicado: Boolean(formulario.value.publicado)
       };
     }
 
@@ -548,7 +552,7 @@
           const respuesta = await clienteApi.post(BASE, {
             ...datosProducto(),
             activo: true,
-            publicado: true,
+            publicado: Boolean(formulario.value.publicado),
             variantes: variantes.value.map(variante => ({
               talla: String(variante.talla).trim(),
               sku: String(variante.sku).trim(),
@@ -619,9 +623,11 @@
       return precios.length ? Math.min(...precios).toLocaleString('es-CO') : null;
     }
 
-    async function cargarProductos() {
-      cargandoProductos.value = true;
-      errorCargaProductos.value = '';
+    async function cargarProductos({ silencioso = false } = {}) {
+      if (!silencioso) {
+        cargandoProductos.value = true;
+        errorCargaProductos.value = '';
+      }
 
       try {
         const respuesta = await clienteApi.get(BASE);
@@ -629,12 +635,15 @@
         const lista = data?.data ?? (Array.isArray(data) ? data : []);
 
         productos.value = lista;
-
       } catch (err) {
-        productos.value = [];
-        errorCargaProductos.value = obtenerMensajeError(err, 'No se pudieron cargar las prendas. Revisa tu conexion e inténtalo de nuevo.');
+        if (!silencioso) {
+          productos.value = [];
+          errorCargaProductos.value = obtenerMensajeError(err, 'No se pudieron cargar las prendas. Revisa tu conexion e inténtalo de nuevo.');
+        }
       } finally {
-        cargandoProductos.value = false;
+        if (!silencioso) {
+          cargandoProductos.value = false;
+        }
       }
     }
 
@@ -773,7 +782,10 @@
       cargarOpcionesFormulario();
     });
     
-    useRecargaAutomatica(() => Promise.all([cargarProductos(), cargarOpcionesFormulario()]));
+    useRecargaAutomatica(
+      () => cargarProductos({ silencioso: true }),
+      { recursos: ['productos'], intervaloSondeo: 60000 }
+    );
 
     return {
       usuario,

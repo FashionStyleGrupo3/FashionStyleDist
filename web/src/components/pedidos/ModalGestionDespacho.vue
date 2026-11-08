@@ -42,6 +42,22 @@ watch(
   { immediate: true }
 );
 
+const FLUJO_ORDEN = ['Pendiente_Pago', 'Pagado', 'En_Preparacion', 'Enviado', 'Entregado'];
+
+const estadosDisponibles = computed(() => {
+  const estadoActual = props.pedido?.estado;
+  const idxActual = FLUJO_ORDEN.indexOf(estadoActual);
+
+  return ESTADOS_PEDIDO.map((e) => {
+    const idxOpcion = FLUJO_ORDEN.indexOf(e.valor);
+    const esRetroceso = idxActual !== -1 && idxOpcion !== -1 && idxOpcion < idxActual;
+    return {
+      ...e,
+      deshabilitado: esRetroceso
+    };
+  });
+});
+
 const requiereGuia = computed(() => ESTADOS_CON_GUIA.includes(formulario.value.estado));
 
 const huboCambios = computed(() => {
@@ -55,6 +71,11 @@ const huboCambios = computed(() => {
 
 function validar() {
   if (!formulario.value.estado) return 'Selecciona un estado.';
+  const idxActual = FLUJO_ORDEN.indexOf(props.pedido?.estado);
+  const idxNuevo = FLUJO_ORDEN.indexOf(formulario.value.estado);
+  if (idxActual !== -1 && idxNuevo !== -1 && idxNuevo < idxActual) {
+    return `No se puede retroceder a una fase anterior (${infoEstadoPedido(formulario.value.estado).etiqueta}).`;
+  }
   if (requiereGuia.value) {
     if (!formulario.value.empresaTransportadora.trim()) return 'Indica la empresa transportadora para marcar el pedido como enviado.';
     if (!formulario.value.numeroGuia.trim()) return 'Indica el número de guá para marcar el pedido como enviado.';
@@ -163,8 +184,13 @@ async function guardar() {
               v-model="formulario.estado"
               class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm font-medium text-gray-900 focus:border-corporativo-rosa focus:outline-none focus:ring-2 focus:ring-pink-100"
             >
-              <option v-for="estado in ESTADOS_PEDIDO" :key="estado.valor" :value="estado.valor">
-                {{ estado.etiqueta }}
+              <option
+                v-for="estado in estadosDisponibles"
+                :key="estado.valor"
+                :value="estado.valor"
+                :disabled="estado.deshabilitado"
+              >
+                {{ estado.etiqueta }} {{ estado.deshabilitado ? '(fase anterior bloqueada)' : '' }}
               </option>
             </select>
           </div>

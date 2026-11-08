@@ -13,6 +13,7 @@ import { obtenerCategorias } from '@/services/clasificacionServicio';
 import CajonCotizacion from '@/components/carrito/CajonCotizacion.vue';
 import AvatarUsuario from '@/components/perfil/AvatarUsuario.vue';
 import PieTienda from '@/components/comunes/PieTienda.vue';
+
 const router = useRouter();
 const route = useRoute();
 const carritoStore = useCarritoStore();
@@ -160,7 +161,6 @@ onMounted(async () => {
             <User class="w-6 h-6" />
           </RouterLink>
 
-          <!-- boton de apertura de bolsa de compras con contador reactivo -->
           <button
             type="button"
             class="fs-icono-btn"
@@ -200,16 +200,6 @@ onMounted(async () => {
 
     <CajonCotizacion />
 
-    <footer class="fs-footer">
-      <div class="fs-contenedor">
-        <span>
-          © 2026 FashionStyle ·
-          <RouterLink to="/terminos">Términos y condiciones</RouterLink> ·
-          <RouterLink :to="{ name: 'catalogo' }">Catálogo</RouterLink> ·
-          <a href="https://github.com/FashionStyleGrupo3/FashionStyleDist/tree/main/mobile" target="_blank" rel="noopener">📱 App Móvil (Flutter)</a>
-        </span>
-        <span>Síguenos: Instagram · TikTok · Pinterest</span>
-      </div>
-    </footer>
+    <PieTienda />
   </div>
 </template>

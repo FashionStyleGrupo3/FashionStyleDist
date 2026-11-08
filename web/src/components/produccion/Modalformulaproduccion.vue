@@ -4,7 +4,6 @@ import { X, Loader2, ChevronDown } from 'lucide-vue-next';
 import { formulasProduccionApi, unidadDe, mensajeError } from '@/services/Produccionservicio';
 import { useFormatoMoneda } from '@/composables/useFormatoMoneda';
 import { useNotificacion } from '@/composables/useNotificacion';
-import { filtrarNumero } from '@/utils/validacionCampos';
 
 const props = defineProps({
   formula: { type: Object, default: null },
@@ -12,6 +11,7 @@ const props = defineProps({
   materias: { type: Array, default: () => [] },
   proveedores: { type: Array, default: () => [] },
   unidades: { type: Array, default: () => [] },
+  insumosEnReceta: { type: Array, default: () => [] },
 });
 const emit = defineEmits(['cerrar', 'guardado']);
 
@@ -24,11 +24,9 @@ const form = ref(vacio());
 const guardando = ref(false);
 const esEdicion = computed(() => !!props.formula);
 
-// Variables para el dropdown de proveedores
 const dropdownProveedorAbierto = ref(false);
 const dropdownRef = ref(null);
 
-// Cerrar el dropdown si se hace clic afuera
 const cerrarDropdown = (e) => {
   if (dropdownRef.value && !dropdownRef.value.contains(e.target)) {
     dropdownProveedorAbierto.value = false;
@@ -42,6 +40,17 @@ const proveedorSeleccionadoNombre = computed(() => {
   if (!form.value.proveedor_id) return 'Sin proveedor asignado';
   const prov = props.proveedores.find(p => String(p.id) === String(form.value.proveedor_id));
   return prov ? prov.nombre : 'Sin proveedor asignado';
+});
+
+// --- CAMBIO AQUÍ: Validación segura para evitar el error de .some() ---
+const materiasDisponibles = computed(() => {
+  if (esEdicion.value) return props.materias;
+  
+  const receta = Array.isArray(props.insumosEnReceta) ? props.insumosEnReceta : [];
+  
+  return props.materias.filter(m => 
+    !receta.some(c => String(c.materia_prima_id) === String(m.id_material))
+  );
 });
 
 watch(
@@ -92,7 +101,7 @@ async function guardar() {
   };
 
   if (esEdicion.value && !props.formula.id_formula) {
-    notificarError('La fórmula no trae id_formula: agrega ese campo en FormulaProduccionController@index.');
+    notificarError('La fórmula no trae id_formula.');
     return;
   }
 
@@ -100,20 +109,22 @@ async function guardar() {
   try {
     if (esEdicion.value) {
       await formulasProduccionApi.actualizar(props.formula.id_formula, payload);
-      notificarExito('Insumo de la fórmula actualizado.');
+      notificarExito('Insumo actualizado.');
     } else {
       await formulasProduccionApi.crear(payload);
-      notificarExito('Insumo agregado a la fórmula.');
+      notificarExito('Insumo agregado.');
     }
-    
     window.dispatchEvent(new CustomEvent('datos-actualizados'));
-    
     emit('guardado');
   } catch (error) {
-    notificarError(mensajeError(error, 'No se pudo guardar el insumo de la fórmula.'));
+    notificarError(mensajeError(error, 'No se pudo guardar el insumo.'));
   } finally {
     guardando.value = false;
   }
+}
+
+function actualizarCantidad(e) {
+  form.value.cantidad = e.target.value;
 }
 
 const claseInput =
@@ -123,11 +134,7 @@ const claseInput =
 <template>
   <Teleport to="body">
     <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      
-      <form
-        class="w-full max-w-lg rounded-2xl bg-white border border-gray-200 shadow-xl p-6 space-y-4"
-        @submit.prevent="guardar"
-      >
+      <form class="w-full max-w-lg rounded-2xl bg-white border border-gray-200 shadow-xl p-6 space-y-4" @submit.prevent="guardar">
         <div class="flex items-center justify-between">
           <h3 class="text-lg font-semibold text-gray-900">
             {{ esEdicion ? 'Editar insumo de la fórmula' : 'Agregar insumo a la fórmula' }}
@@ -141,7 +148,7 @@ const claseInput =
           <label class="block text-sm font-medium text-gray-700 mb-1">Insumo</label>
           <select v-model="form.materia_prima_id" :class="claseInput">
             <option value="" disabled>Selecciona un insumo</option>
-            <option v-for="m in materias" :key="m.id_material" :value="m.id_material">
+            <option v-for="m in materiasDisponibles" :key="m.id_material" :value="m.id_material">
               {{ m.nombre }} ({{ unidadDe(m, unidades) || 'sin unidad' }})
             </option>
           </select>
@@ -164,44 +171,21 @@ const claseInput =
           </div>
         </div>
 
-        <!-- DROPDOWN PERSONALIZADO DE PROVEEDORES -->
         <div ref="dropdownRef" class="relative">
           <label class="block text-sm font-medium text-gray-700 mb-1">Proveedor (opcional)</label>
-          
-          <button
-            type="button"
-            class="w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-left flex justify-between items-center bg-white focus:outline-none focus:ring-2 focus:ring-corporativo-rosa/40 focus:border-corporativo-rosa"
-            @click="dropdownProveedorAbierto = !dropdownProveedorAbierto"
-          >
-            <span :class="form.proveedor_id ? 'text-gray-900' : 'text-gray-500'">
-              {{ proveedorSeleccionadoNombre }}
-            </span>
+          <button type="button" class="w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-left flex justify-between items-center bg-white focus:outline-none focus:ring-2 focus:ring-corporativo-rosa/40 focus:border-corporativo-rosa" @click="dropdownProveedorAbierto = !dropdownProveedorAbierto">
+            <span :class="form.proveedor_id ? 'text-gray-900' : 'text-gray-500'">{{ proveedorSeleccionadoNombre }}</span>
             <ChevronDown class="h-4 w-4 text-gray-400 transition-transform" :class="{ 'rotate-180': dropdownProveedorAbierto }" />
           </button>
-
-          <!-- Lista flotante de opciones -->
-          <div
-            v-if="dropdownProveedorAbierto"
-            class="absolute z-50 mt-1 w-full max-h-48 overflow-y-auto rounded-xl bg-white border border-gray-200 shadow-lg"
-          >
+          <div v-if="dropdownProveedorAbierto" class="absolute z-50 mt-1 w-full max-h-48 overflow-y-auto rounded-xl bg-white border border-gray-200 shadow-lg">
             <ul class="py-1 text-sm text-gray-700">
               <li>
-                <button
-                  type="button"
-                  class="w-full text-left px-3 py-2 hover:bg-gray-100"
-                  :class="{ 'bg-gray-50 font-medium': !form.proveedor_id }"
-                  @click="form.proveedor_id = ''; dropdownProveedorAbierto = false"
-                >
+                <button type="button" class="w-full text-left px-3 py-2 hover:bg-gray-100" :class="{ 'bg-gray-50 font-medium': !form.proveedor_id }" @click="form.proveedor_id = ''; dropdownProveedorAbierto = false">
                   Sin proveedor asignado
                 </button>
               </li>
               <li v-for="p in proveedores" :key="p.id">
-                <button
-                  type="button"
-                  class="w-full text-left px-3 py-2 hover:bg-gray-100"
-                  :class="{ 'bg-gray-50 font-medium': String(form.proveedor_id) === String(p.id) }"
-                  @click="form.proveedor_id = p.id; dropdownProveedorAbierto = false"
-                >
+                <button type="button" class="w-full text-left px-3 py-2 hover:bg-gray-100" :class="{ 'bg-gray-50 font-medium': String(form.proveedor_id) === String(p.id) }" @click="form.proveedor_id = p.id; dropdownProveedorAbierto = false">
                   {{ p.nombre }}
                 </button>
               </li>
@@ -217,18 +201,10 @@ const claseInput =
         </div>
 
         <div class="flex justify-end gap-2 pt-2">
-          <button
-            type="button"
-            class="rounded-xl border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-            @click="emit('cerrar')"
-          >
+          <button type="button" class="rounded-xl border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50" @click="emit('cerrar')">
             Cancelar
           </button>
-          <button
-            type="submit"
-            :disabled="guardando"
-            class="inline-flex items-center gap-2 rounded-xl bg-corporativo-rosa px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-60"
-          >
+          <button type="submit" :disabled="guardando" class="inline-flex items-center gap-2 rounded-xl bg-corporativo-rosa px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-60">
             <Loader2 v-if="guardando" class="h-4 w-4 animate-spin" />
             {{ esEdicion ? 'Guardar cambios' : 'Agregar' }}
           </button>

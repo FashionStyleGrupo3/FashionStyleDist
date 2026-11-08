@@ -4,10 +4,8 @@ import { useRecargaAutomatica } from '@/composables/useRecargaAutomatica';
 import { Search, RefreshCw, Play, Pause, CheckCircle2, XCircle, ChevronLeft, ChevronRight, Pencil, Trash2, Loader2, AlertTriangle } from 'lucide-vue-next';
 import ModalBase from '@/components/comunes/ModalBase.vue';
 import clienteApi from '@/services/clienteApi';
-
 import { ordenesProduccionApi, materiasPrimasApi, mensajeError } from '@/services/Produccionservicio';
 import { useNotificacion } from '@/composables/useNotificacion';
-import { bloquearNoEnteros, entero } from '@/utils/restriccionesCampos';
 
 const { notificarExito, notificarError, confirmarAccion } = useNotificacion();
 
@@ -37,9 +35,8 @@ const pagina = ref(1);
 const ultimaPagina = ref(1);
 const total = ref(0);
 
-
+// --- Variables para el modal de cancelación ---
 const materiasPrimas = ref([]);
-
 const modalCancelacionAbierto = ref(false);
 const ordenACancelar = ref(null);
 const pasoCancelacion = ref(1); 
@@ -55,22 +52,18 @@ const ordenesFiltradas = computed(() => {
   );
 });
 
-
+// --- Diccionario de materias ---
 const materiasPorId = computed(() => {
   const mapa = {};
-  materiasPrimas.value.forEach(m => {
-    mapa[m.id_material || m.id] = m.nombre;
-  });
+  materiasPrimas.value.forEach(m => { mapa[m.id_material || m.id] = m.nombre; });
   return mapa;
 });
 
 const materialesParaCancelar = computed(() => {
   if (!ordenACancelar.value?.formula) return [];
-  
   let insumos = ordenACancelar.value.formula.consumos || ordenACancelar.value.formula.materia_prima;
   if (!insumos) return [];
   if (!Array.isArray(insumos)) insumos = Object.values(insumos);
-  
   return insumos.filter(c => c !== null && c.materia_prima_id);
 });
 
@@ -91,7 +84,7 @@ function formatoFecha(valor) {
   return new Date(valor).toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' });
 }
 
-
+// --- Función para obtener nombre del material ---
 function obtenerNombreMaterial(consumo) {
   if (consumo.materia_prima?.nombre) return consumo.materia_prima.nombre;
   if (consumo.insumo_nombre) return consumo.insumo_nombre;
@@ -116,7 +109,6 @@ async function cargar({ silencioso = false } = {}) {
   }
 }
 
-// 5. NUEVO: Cargar materias primas al montar
 async function cargarMaterias() {
   try {
     materiasPrimas.value = await materiasPrimasApi.listar();
@@ -137,16 +129,13 @@ function irAPagina(n) {
   cargar();
 }
 
+// --- Funciones de Cancelación ---
 function abrirModalCancelacion(orden) {
   ordenACancelar.value = orden;
   pasoCancelacion.value = 1; 
   usaronMateriales.value = false;
   materialesUsados.value = {};
-  
-  materialesParaCancelar.value.forEach(c => {
-    materialesUsados.value[c.materia_prima_id] = 0;
-  });
-  
+  materialesParaCancelar.value.forEach(c => { materialesUsados.value[c.materia_prima_id] = 0; });
   modalCancelacionAbierto.value = true;
 }
 
@@ -155,31 +144,23 @@ async function cargarMaterialesDeOrden() {
     pasoCancelacion.value = 2;
     return;
   }
-
   cargandoMateriales.value = true;
   pasoCancelacion.value = 2;
-
   try {
     const respuesta = await clienteApi.get('/formulas-produccion', {
       params: { producto_id: ordenACancelar.value.formula.producto_id }
     });
-    
     const datos = respuesta.data?.data ?? respuesta.data;
-    
     let grupo = null;
     if (Array.isArray(datos)) {
       grupo = datos.find(g => String(g.producto_id) === String(ordenACancelar.value.formula.producto_id));
     } else if (datos?.producto_id) {
       grupo = datos;
     }
-
     if (grupo && grupo.consumos && Array.isArray(grupo.consumos)) {
       ordenACancelar.value.formula.consumos = grupo.consumos;
-      
       grupo.consumos.forEach(c => {
-        if (c && c.materia_prima_id) {
-          materialesUsados.value[c.materia_prima_id] = 0;
-        }
+        if (c && c.materia_prima_id) materialesUsados.value[c.materia_prima_id] = 0;
       });
     }
   } catch (error) {
@@ -191,10 +172,8 @@ async function cargarMaterialesDeOrden() {
 
 async function confirmarCancelacion() {
   if (!ordenACancelar.value) return;
-  
   procesandoId.value = ordenACancelar.value.id;
   modalCancelacionAbierto.value = false;
-
   try {
     const payloadMateriales = usaronMateriales.value 
       ? Object.keys(materialesUsados.value).map(id => ({
@@ -202,12 +181,10 @@ async function confirmarCancelacion() {
           cantidad_usada: Number(materialesUsados.value[id]) || 0
         }))
       : [];
-
     await ordenesProduccionApi.actualizar(ordenACancelar.value.id, { 
       estado: 'cancelada',
       materiales_usados: payloadMateriales
     });
-    
     notificarExito(`${ordenACancelar.value.numero} cancelada y stock ajustado.`);
     await cargar();
   } catch (error) {
@@ -219,6 +196,12 @@ async function confirmarCancelacion() {
 }
 
 async function cambiarEstado(orden, nuevoEstado) {
+  // ABRE EL MODAL EN LUGAR DE LA ALERTA
+  if (nuevoEstado === 'cancelada') {
+    abrirModalCancelacion(orden);
+    return;
+  }
+
   if (nuevoEstado === 'completada') {
     abrirCierre(orden);
     return;
@@ -337,20 +320,17 @@ function cerrarEdicion() {
 async function guardarEdicion() {
   const orden = editando.value;
   if (!orden) return;
-
   const cantidad = Math.floor(Number(formEdicion.value.cantidad));
   if (!Number.isFinite(cantidad) || cantidad < 1 || cantidad > 100000) {
     notificarError('La cantidad debe estar entre 1 y 100.000.');
     return;
   }
-
   const payload = { notas: formEdicion.value.notas?.trim() || null };
   if (cantidad !== Number(orden.cantidad)) {
     payload.cantidad = cantidad;
     const costoPorUnidad = Number(orden.costo_total || 0) / (Number(orden.cantidad) || 1);
     payload.costo_total = Math.round(costoPorUnidad * cantidad * 100) / 100;
   }
-
   guardandoEdicion.value = true;
   try {
     await ordenesProduccionApi.actualizar(orden.id, payload);
@@ -364,15 +344,14 @@ async function guardarEdicion() {
   }
 }
 
-
+// --- Eliminación ---
 async function eliminar(orden) {
   const ok = await confirmarAccion({
-    titulo: `¿Eliminar ${orden.numero}?`,
+    titulo: `Eliminar ${orden.numero}?`,
     texto: 'Esta acción no se puede deshacer.',
     textoBotonConfirmar: 'Sí, eliminar',
   });
   if (!ok) return;
-
   procesandoId.value = orden.id;
   try {
     await clienteApi.delete(`/ordenes-produccion/${orden.id}`);
@@ -385,7 +364,6 @@ async function eliminar(orden) {
     procesandoId.value = null;
   }
 }
-
 
 onMounted(() => {
   cargar();
@@ -401,7 +379,6 @@ useRecargaAutomatica(() => cargar({ silencioso: true }), { intervaloSondeo: 6000
         <Search class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
         <input v-model="busqueda" type="text" maxlength="100" placeholder="Buscar por número o prenda..." class="w-full rounded-xl border border-gray-300 py-2 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-corporativo-rosa/40 focus:border-corporativo-rosa" />
       </div>
-
       <div class="flex flex-wrap items-center gap-2">
         <button v-for="e in ESTADOS" :key="e.valor" class="rounded-full border px-3 py-1.5 text-xs font-medium transition-colors" :class="filtroEstado === e.valor ? 'border-corporativo-rosa bg-corporativo-rosa text-white' : 'border-gray-300 text-gray-600 hover:border-gray-400'" @click="cambiarFiltro(e.valor)">
           {{ e.etiqueta }}
@@ -431,13 +408,11 @@ useRecargaAutomatica(() => cargar({ silencioso: true }), { intervaloSondeo: 6000
               <td colspan="7" class="px-4 py-8 text-center text-gray-500">Cargando...</td>
             </tr>
             <tr v-else-if="!ordenesFiltradas.length">
-              <td colspan="7" class="px-4 py-8 text-center text-gray-500">
-                No hay órdenes de producción para mostrar.
-              </td>
+              <td colspan="7" class="px-4 py-8 text-center text-gray-500">No hay órdenes de producción para mostrar.</td>
             </tr>
             <tr v-for="o in ordenesFiltradas" :key="o.id">
               <td class="px-4 py-3 font-semibold text-gray-900">{{ o.numero }}</td>
-              <td class="px-4 py-3 text-gray-700">{{ nombrePrenda(o) }}<p v-if="o.notas" class="max-w-xs truncate text-xs text-gray-400">{{ o.notas }}</p></td>
+              <td class="px-4 py-3 text-gray-700">{{ nombrePrenda(o) }}<p v-if="o.notas" class="max-w-xs truncate text-xs text-gray-400" :title="o.notas">{{ o.notas }}</p></td>
               <td class="px-4 py-3 text-right text-gray-700">{{ o.cantidad }}</td>
               <td class="px-4 py-3 text-right text-gray-700">{{ formatoMoneda(o.costo_total) }}</td>
               <td class="px-4 py-3 text-gray-500">{{ formatoFecha(o.created_at) }}</td>
@@ -513,11 +488,7 @@ useRecargaAutomatica(() => cargar({ silencioso: true }), { intervaloSondeo: 6000
           </tbody>
         </table>
       </div>
-
-      <div
-        v-if="ultimaPagina > 1"
-        class="flex items-center justify-between border-t border-gray-100 px-4 py-3 text-xs text-gray-500"
-      >
+      <div v-if="ultimaPagina > 1" class="flex items-center justify-between border-t border-gray-100 px-4 py-3 text-xs text-gray-500">
         <span>{{ total }} órdenes · página {{ pagina }} de {{ ultimaPagina }}</span>
         <div class="flex gap-1">
           <button class="rounded-lg border border-gray-300 p-1.5 hover:bg-gray-50 disabled:opacity-40" :disabled="pagina <= 1 || cargando" @click="irAPagina(pagina - 1)"><ChevronLeft class="h-4 w-4" /></button>
@@ -545,7 +516,7 @@ useRecargaAutomatica(() => cargar({ silencioso: true }), { intervaloSondeo: 6000
           </div>
           <div>
             <label class="mb-1 block text-sm font-medium text-gray-700">Notas</label>
-            <textarea v-model="formEdicion.notas" rows="3" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-corporativo-rosa focus:outline-none"></textarea>
+            <textarea v-model="formEdicion.notas" rows="3" maxlength="1000" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-corporativo-rosa focus:outline-none focus:ring-2 focus:ring-pink-100"></textarea>
           </div>
         </div>
         <div class="mt-6 flex justify-end gap-3">
@@ -557,75 +528,64 @@ useRecargaAutomatica(() => cargar({ silencioso: true }), { intervaloSondeo: 6000
       </div>
     </ModalBase>
 
-    <ModalBase :abierto="!!cerrando" :titulo="`Completar ${cerrando?.numero ?? ''}`" @cerrar="cerrarCierre">
-      <div v-if="cerrando" class="p-6">
-        <h2 class="text-xl font-extrabold text-gray-900">Completar {{ cerrando.numero }}</h2>
-        <p class="mt-1 text-sm text-gray-500">
-          {{ nombrePrenda(cerrando) }} · {{ cerrando.cantidad }} unidades
-        </p>
-        <p class="mt-3 rounded-xl border border-tienda-borde bg-tienda-arena-suave px-3 py-2 text-xs text-tienda-texto">
-          Al confirmar se descuentan las materias primas de la fórmula y las prendas terminadas
-          entran al kárdex. Después la orden ya no se puede modificar.
-        </p>
-
-        <div class="mt-5">
-          <p class="mb-2 text-sm font-semibold text-gray-700">Reparto del lote por talla</p>
-          <p v-if="cargandoTallas" class="text-sm text-gray-500">Cargando tallas...</p>
-          <p v-else-if="!tallasCierre.length" class="text-sm text-red-600">
-            La prenda no tiene tallas registradas. Créalas en Gestión de Prendas antes de completar.
-          </p>
-          <div v-else class="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            <label
-              v-for="t in tallasCierre"
-              :key="t.variante_id"
-              class="rounded-xl border border-gray-200 p-3 text-sm"
-            >
-              <span class="flex items-center justify-between font-semibold text-gray-800">
-                Talla {{ t.talla }}
-                <span class="text-[11px] font-normal text-gray-400">stock {{ t.stock }}</span>
-              </span>
-              <input
-                v-model.number="t.cantidad"
-                type="number"
-                min="0"
-                :max="cerrando.cantidad"
-                step="1"
-                inputmode="numeric"
-                class="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-corporativo-rosa focus:outline-none focus:ring-2 focus:ring-pink-100"
-                @keydown="bloquearNoEnteros"
-                @input="t.cantidad = entero(t.cantidad, 0, Number(cerrando.cantidad))"
-              />
-            </label>
+    <!-- MODAL DE CANCELACIÓN -->
+    <div v-if="modalCancelacionAbierto" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      <div class="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl p-6 border border-gray-100 overflow-y-auto">
+        
+        <div v-if="pasoCancelacion === 1" class="text-center space-y-4">
+          <div class="w-16 h-16 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto">
+            <AlertTriangle class="w-8 h-8" />
           </div>
-          <p
-            v-if="tallasCierre.length"
-            class="mt-3 text-xs font-semibold"
-            :class="repartoValido ? 'text-emerald-700' : 'text-amber-700'"
-          >
-            Repartidas {{ unidadesRepartidas }} de {{ cerrando.cantidad }} unidades
+          <h3 class="text-xl font-bold text-gray-900">¿Se usaron materiales?</h3>
+          <p class="text-sm text-gray-500">
+            Para cancelar la orden <strong>{{ ordenACancelar?.numero }}</strong>, dinos si se llegó a cortar tela o usar insumos del inventario.
           </p>
+          <div class="flex flex-col gap-2 pt-4">
+            <button type="button" class="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition" @click="usaronMateriales = false; pasoCancelacion = 2">
+              No, no usé nada (Devolver todo)
+            </button>
+            <button type="button" class="w-full rounded-xl bg-red-600 px-4 py-3 text-sm font-bold text-white hover:bg-red-700 shadow-md transition" @click="usaronMateriales = true; cargarMaterialesDeOrden()">
+              Sí, usé materiales (Ajustar stock)
+            </button>
+            <button type="button" class="mt-2 text-xs font-semibold text-gray-400 hover:text-gray-600 transition" @click="modalCancelacionAbierto = false">Cancelar</button>
+          </div>
         </div>
 
-        <div class="mt-6 flex justify-end gap-3">
-          <button
-            type="button"
-            class="rounded-xl bg-gray-100 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-200"
-            :disabled="guardandoCierre"
-            @click="cerrarCierre"
-          >
-            Volver
-          </button>
-          <button
-            type="button"
-            class="inline-flex items-center gap-2 rounded-xl bg-corporativo-rosa px-5 py-2.5 text-sm font-bold text-white hover:bg-corporativo-rosa-hover disabled:opacity-50"
-            :disabled="guardandoCierre || !repartoValido"
-            @click="confirmarCierre"
-          >
-            <Loader2 v-if="guardandoCierre" class="h-4 w-4 animate-spin" />
-            {{ guardandoCierre ? 'Completando...' : 'Completar e ingresar al kárdex' }}
-          </button>
+        <div v-else class="space-y-4">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-full bg-red-100 text-red-600 flex items-center justify-center">
+              <AlertTriangle class="w-5 h-5" />
+            </div>
+            <div>
+              <h3 class="text-lg font-bold text-gray-900">Ajuste de materiales</h3>
+              <p class="text-xs text-gray-500">Ingresa las cantidades realmente usadas.</p>
+            </div>
+          </div>
+          
+          <div v-if="cargandoMateriales" class="flex flex-col items-center justify-center py-8 text-gray-500">
+            <Loader2 class="h-8 w-8 animate-spin text-corporativo-rosa mb-2" />
+            <p class="text-sm">Cargando materiales de la fórmula...</p>
+          </div>
+
+          <div v-else class="max-h-60 overflow-y-auto space-y-3 pr-2">
+            <div v-for="consumo in materialesParaCancelar" :key="consumo.materia_prima_id" class="flex items-center gap-3 bg-gray-50 p-3 rounded-xl border border-gray-100">
+              <div class="flex-1">
+                <p class="text-sm font-semibold text-gray-800">{{ obtenerNombreMaterial(consumo) }}</p>
+                <p class="text-xs text-gray-500">Requerido: {{ consumo.cantidad * (ordenACancelar?.cantidad || 1) }} {{ consumo.unidad || 'und' }}</p>
+              </div>
+              <div class="w-24">
+                <input v-model.number="materialesUsados[consumo.materia_prima_id]" type="number" min="0" step="0.1" class="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm text-center focus:border-corporativo-rosa focus:outline-none" placeholder="0" />
+              </div>
+            </div>
+            <p v-if="materialesParaCancelar.length === 0" class="text-sm text-gray-500 text-center py-4">No se encontraron materiales en la fórmula de esta orden.</p>
+          </div>
+
+          <div class="flex justify-end gap-3 pt-4 border-t border-gray-100">
+            <button type="button" class="rounded-xl px-4 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-100 transition" @click="pasoCancelacion = 1">Atrás</button>
+            <button type="button" class="rounded-xl bg-red-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-red-700 shadow-md transition" @click="confirmarCancelacion">Confirmar Cancelación</button>
+          </div>
         </div>
       </div>
-    </ModalBase>
+    </div>
   </div>
 </template>

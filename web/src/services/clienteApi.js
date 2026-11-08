@@ -5,6 +5,7 @@ import { idSocket } from '@/services/tiempoReal';
 const URL_PRIMARIO = 'https://fashionstyle.api.adsocidm.com/public/api';
 const URL_RESPALDO = 'https://fashionstylebackend-o3hx.onrender.com/api';
 
+
 const clienteApi = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || URL_PRIMARIO,
   headers: {
