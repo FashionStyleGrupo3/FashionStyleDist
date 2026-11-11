@@ -5,15 +5,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../core/theme/fashion_theme.dart';
-import '../../../core/network/change_bus.dart';
-import '../../../core/utils/image_url_resolver.dart';
-import '../../../data/models/product_models.dart';
-import '../../../data/services/product_service.dart';
-import '../../../data/services/promotion_service.dart';
-import '../../layouts/public_shell_layout.dart';
-import '../../providers/filters_provider.dart';
-import '../../widgets/storefront_widgets.dart';
+import 'package:fashion_style_mobile/core/theme/fashion_theme.dart';
+import 'package:fashion_style_mobile/core/network/change_bus.dart';
+import 'package:fashion_style_mobile/core/utils/image_url_resolver.dart';
+import 'package:fashion_style_mobile/data/models/product/category.dart';
+import 'package:fashion_style_mobile/data/models/product/catalog.dart';
+import 'package:fashion_style_mobile/data/models/product/promotion.dart';
+import 'package:fashion_style_mobile/data/models/product/product.dart';
+import 'package:fashion_style_mobile/data/services/product_service.dart';
+import 'package:fashion_style_mobile/data/services/promotion_service.dart';
+import 'package:fashion_style_mobile/presentation/layouts/public_shell_layout.dart';
+import 'package:fashion_style_mobile/presentation/providers/filters_provider.dart';
+import 'package:fashion_style_mobile/presentation/widgets/common/atelier_vector_art.dart';
+import 'package:fashion_style_mobile/presentation/widgets/store/product_card.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -35,6 +39,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _diapositivaActual = 0;
   Timer? _temporizadorCarrusel;
   StreamSubscription<DataChangeEvent>? _busSub;
+
+  int _tabFiltroRapido = 0; // 0: Todos/Imprescindibles, 1: Novedades, 2: Con descuento
 
   @override
   void initState() {
@@ -96,7 +102,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _error = 'No se pudieron cargar los datos de la portada.';
+          _error = 'No se pudieron sincronizar los datos de la portada.';
           _cargando = false;
         });
       }
@@ -133,7 +139,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       final siguiente = (_diapositivaActual + 1) % total;
       _pageController.animateToPage(
         siguiente,
-        duration: const Duration(milliseconds: 600),
+        duration: const Duration(milliseconds: 550),
         curve: Curves.easeInOutCubic,
       );
     });
@@ -156,7 +162,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         return _DiapositivaHero(
           id: col.idCatalogo,
           titulo: col.nombre,
-          texto: col.descripcion.isNotEmpty ? col.descripcion : 'Piezas seleccionadas de nuestra colección.',
+          texto: col.descripcion.isNotEmpty ? col.descripcion : 'Piezas seleccionadas de nuestra colección sartorial.',
           fotoUrl: foto,
           imagenesPrendas: imagenes,
           totalPrendas: prendasCol.length,
@@ -174,7 +180,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       _DiapositivaHero(
         id: null,
         titulo: 'Nueva Colección ${DateTime.now().year}',
-        texto: 'Moda minimalista para la nueva temporada.',
+        texto: 'Moda minimalista y sastrería de alta gama.',
         fotoUrl: imagenesPortadas.isNotEmpty ? imagenesPortadas.first : '',
         imagenesPrendas: imagenesPortadas,
         totalPrendas: _productos.length,
@@ -182,29 +188,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     ];
   }
 
-  List<_CategoriaDestacada> _obtenerCategoriasDestacadas() {
-    return _categorias.map((cat) {
-      final prendasCat = _productos.where((p) => p.categoria?.idCategoria == cat.idCategoria).toList();
-      String imagen = '';
-      if (cat.original['imagen'] != null) {
-        imagen = ImageUrlResolver.resolve(cat.original['imagen']);
-      } else if (prendasCat.isNotEmpty) {
-        imagen = prendasCat.first.primeraImagenUrl;
+  List<Product> _obtenerPrendasFiltradas() {
+    var lista = List<Product>.from(_productos);
+    if (_tabFiltroRapido == 1) {
+      // Novedades (orden descendente por ID)
+      lista.sort((a, b) => b.idProducto.compareTo(a.idProducto));
+    } else if (_tabFiltroRapido == 2) {
+      // Con promoción activa
+      final prodIdsConPromo = _promociones
+          .where((pr) => pr.idProducto != null)
+          .map((pr) => pr.idProducto!)
+          .toSet();
+      lista = lista.where((p) => prodIdsConPromo.contains(p.idProducto) || p.precioFinalBackend != null).toList();
+      if (lista.isEmpty) {
+        lista = List<Product>.from(_productos);
       }
-      return _CategoriaDestacada(
-        id: cat.idCategoria,
-        nombre: cat.nombre,
-        imagenUrl: imagen,
-        totalPrendas: prendasCat.length,
-      );
-    }).toList()
-      ..sort((a, b) => b.totalPrendas.compareTo(a.totalPrendas));
-  }
-
-  List<Product> _obtenerImprescindibles() {
-    final lista = List<Product>.from(_productos);
-    lista.sort((a, b) => b.idProducto.compareTo(a.idProducto));
-    return lista.take(4).toList();
+    }
+    return lista.take(6).toList();
   }
 
   @override
@@ -212,244 +212,513 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return PublicShellLayout(
       currentIndex: 0,
       child: RefreshIndicator(
-        color: FashionColors.rosaCorporativo,
+        color: FashionColors.inkPrimary,
+        backgroundColor: FashionColors.surfaceCard,
+        displacement: 20,
         onRefresh: _cargarDatos,
         child: _cargando
-            ? const Center(
-                child: CircularProgressIndicator(color: FashionColors.rosaCorporativo),
-              )
+            ? _construirSkeletonCarga()
             : _error != null
-                ? Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24.0),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.error_outline, size: 54, color: FashionColors.peligro),
-                          const SizedBox(height: 12),
-                          Text(
-                            _error!,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(fontSize: 16, color: FashionColors.textoOscuro),
-                          ),
-                          const SizedBox(height: 16),
-                          ElevatedButton.icon(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: FashionColors.negroElegante,
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                            ),
-                            onPressed: _cargarDatos,
-                            icon: const Icon(Icons.refresh),
-                            label: const Text('Reintentar'),
-                          )
-                        ],
-                      ),
-                    ),
-                  )
+                ? _construirVistaError()
                 : ListView(
-                    physics: const AlwaysScrollableScrollPhysics(),
+                    physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+                    padding: const EdgeInsets.only(bottom: 96), // Clearance para Floating Pill Dock
                     children: [
-                      // HERO CAROUSEL
-                      _construirHeroSection(),
+                      const SizedBox(height: 12),
+
+                      // 1. HERO BENTO ASIMÉTRICO (DARK CARD + 2 TILES MINERALES)
+                      _construirBentoHero(),
 
                       const SizedBox(height: 24),
 
-                      // CATEGORÍAS DESTACADAS
-                      _construirSeccionCategorias(),
+                      // 2. CATEGORÍAS HORIZONTALES (ESTILO HISTORIAS ATELIER)
+                      _construirCategoriasHistorias(),
+
+                      const SizedBox(height: 24),
+
+                      // 3. PRENDAS DESTACADAS CON CHIPS DE FILTRO RÁPIDO Y LOOKBOOK GRID
+                      _construirSeccionPrendasDestacadas(),
 
                       const SizedBox(height: 32),
 
-                      // IMPRESCINDIBLES DE LA TEMPORADA
-                      _construirSeccionImprescindibles(),
-
-                      const SizedBox(height: 48),
-
-                      // BANNER INFORMATIVO INFERIOR (Envíos, Calidad, Atención)
-                      _construirBannerInformativo(),
-
-                      const SizedBox(height: 32),
+                      // 4. PILARES DE LA MARCA (EXPERIENCIA FASHIONSTYLE)
+                      _construirValoresMarca(),
                     ],
                   ),
       ),
     );
   }
 
-  Widget _construirHeroSection() {
+  /// 1. Asymmetric Editorial Bento Hero: Dark Card `#14161F` + 2 Mineral Highlight Tiles
+  Widget _construirBentoHero() {
     final diapositivas = _obtenerDiapositivas();
 
-    return Container(
-      color: Colors.white,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          SizedBox(
-            height: 380,
-            child: PageView.builder(
-              controller: _pageController,
-              itemCount: diapositivas.length,
-              onPageChanged: (i) {
-                setState(() => _diapositivaActual = i);
-              },
-              itemBuilder: (context, index) {
-                final d = diapositivas[index];
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          FashionColors.cremaSuave.withValues(alpha: 0.5),
-                          FashionColors.fondoClaro,
-                        ],
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
+          // Tarjeta principal Nocturna #14161F con AtelierPatternBackground
+          Container(
+            height: 320,
+            decoration: BoxDecoration(
+              color: FashionColors.inkPrimary,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: FashionColors.borderSubtle.withValues(alpha: 0.15)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.12),
+                  blurRadius: 18,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                // Fondo decorativo con retícula y puntadas sutiles
+                const AtelierPatternBackground(
+                  colorFondo: FashionColors.inkPrimary,
+                  opacidadReticula: 0.08,
+                  child: SizedBox.expand(),
+                ),
+
+                // Carrusel de diapositivas
+                PageView.builder(
+                  controller: _pageController,
+                  itemCount: diapositivas.length,
+                  physics: const BouncingScrollPhysics(),
+                  onPageChanged: (i) => setState(() => _diapositivaActual = i),
+                  itemBuilder: (context, index) {
+                    final d = diapositivas[index];
+
+                    return Stack(
+                      fit: StackFit.expand,
                       children: [
-                        // Imagen de portada
-                        Expanded(
-                          child: ClipRRect(
-                            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                            child: d.fotoUrl.isNotEmpty
-                                ? CachedNetworkImage(
-                                    imageUrl: d.fotoUrl,
-                                    fit: BoxFit.cover,
-                                    width: double.infinity,
-                                    placeholder: (_, __) => Container(
-                                      color: FashionColors.grisBorde,
-                                      child: const Center(
-                                        child: CircularProgressIndicator(color: FashionColors.rosaCorporativo),
-                                      ),
-                                    ),
-                                    errorWidget: (_, __, ___) => Container(
-                                      color: FashionColors.grisBorde,
-                                      child: const Icon(Icons.style, size: 48, color: FashionColors.textoMuted),
-                                    ),
-                                  )
-                                : Container(
-                                    color: FashionColors.rosaSuave,
-                                    child: const Icon(Icons.style, size: 48, color: FashionColors.rosaOscuro),
-                                  ),
+                        // Imagen de portada (a la derecha/fondo con gradiente)
+                        if (d.fotoUrl.isNotEmpty)
+                          Positioned(
+                            right: -20,
+                            top: 0,
+                            bottom: 0,
+                            width: 220,
+                            child: Opacity(
+                              opacity: 0.45,
+                              child: CachedNetworkImage(
+                                imageUrl: d.fotoUrl,
+                                fit: BoxFit.cover,
+                                placeholder: (_, __) => Container(color: Colors.transparent),
+                                errorWidget: (_, __, ___) => const SizedBox.shrink(),
+                              ),
+                            ),
+                          ),
+
+                        // Gradiente de contraste para legibilidad total del texto
+                        Positioned.fill(
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.centerLeft,
+                                end: Alignment.centerRight,
+                                colors: [
+                                  FashionColors.inkPrimary,
+                                  FashionColors.inkPrimary.withValues(alpha: 0.92),
+                                  FashionColors.inkPrimary.withValues(alpha: 0.50),
+                                ],
+                                stops: const [0.45, 0.75, 1.0],
+                              ),
+                            ),
                           ),
                         ),
-                        // Contenido textual y CTA
+
+                        // Contenido textual editorial
                         Padding(
-                          padding: const EdgeInsets.all(16.0),
+                          padding: const EdgeInsets.all(22),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                decoration: BoxDecoration(
-                                  color: FashionColors.rosaSuave,
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: const Text(
-                                  'COLECCIÓN EXCLUSIVA',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                    letterSpacing: 1,
-                                    color: FashionColors.rosaOscuro,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                d.titulo,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: GoogleFonts.poppins(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w800,
-                                  color: FashionColors.textoOscuro,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                d.texto,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  color: FashionColors.textoMuted,
-                                ),
-                              ),
-                              const SizedBox(height: 12),
+                              // Kicker superior con Monograma y Badge de Colección
                               Row(
                                 children: [
-                                  ElevatedButton(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: FashionColors.negroElegante,
-                                      foregroundColor: Colors.white,
-                                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                  const AtelierMonogram(
+                                    size: 32,
+                                    primaryColor: FashionColors.surfaceCard,
+                                    accentColor: FashionColors.brandAccent,
+                                    surfaceColor: FashionColors.inkPrimary,
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3.5),
+                                    decoration: BoxDecoration(
+                                      color: FashionColors.brandAccent.withValues(alpha: 0.18),
+                                      borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(color: FashionColors.brandAccent.withValues(alpha: 0.4)),
                                     ),
-                                    onPressed: () {
+                                    child: Text(
+                                      'NEO-ATELIER',
+                                      style: GoogleFonts.spaceGrotesk(
+                                        fontSize: 9.5,
+                                        fontWeight: FontWeight.w700,
+                                        letterSpacing: 1.4,
+                                        color: FashionColors.brandAccent,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+
+                              // Titular en Space Grotesk y descripción
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    d.titulo,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: GoogleFonts.spaceGrotesk(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.w700,
+                                      color: FashionColors.surfaceCard,
+                                      letterSpacing: -0.4,
+                                      height: 1.15,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    d.texto,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 12.5,
+                                      color: FashionColors.surfaceMuted.withValues(alpha: 0.85),
+                                      height: 1.4,
+                                    ),
+                                  ),
+                                ],
+                              ),
+
+                              // Botón de acción Terracotta (#B83A24) y contador de prendas
+                              Row(
+                                children: [
+                                  InkWell(
+                                    borderRadius: BorderRadius.circular(100),
+                                    onTap: () {
                                       if (d.id != null) {
                                         ref.read(filtersProvider.notifier).establecerCatalogo(d.id);
                                       }
                                       context.go('/catalogo');
                                     },
-                                    child: const Text('Explorar colección', style: TextStyle(fontWeight: FontWeight.bold)),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Text(
-                                      '${d.totalPrendas} prendas · Premium',
-                                      style: const TextStyle(fontSize: 11, color: FashionColors.textoMuted),
-                                      textAlign: TextAlign.end,
-                                      maxLines: 1,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                                      decoration: BoxDecoration(
+                                        color: FashionColors.brandAccent,
+                                        borderRadius: BorderRadius.circular(100),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: FashionColors.brandAccent.withValues(alpha: 0.35),
+                                            blurRadius: 10,
+                                            offset: const Offset(0, 4),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(
+                                            'Explorar Colección',
+                                            style: GoogleFonts.plusJakartaSans(
+                                              fontSize: 12.5,
+                                              fontWeight: FontWeight.w700,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 6),
+                                          const Icon(Icons.arrow_forward_rounded, size: 14, color: Colors.white),
+                                        ],
+                                      ),
                                     ),
                                   ),
+                                  const Spacer(),
+                                  if (d.totalPrendas > 0)
+                                    Text(
+                                      '${d.totalPrendas} piezas',
+                                      style: GoogleFonts.jetBrainsMono(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                        color: FashionColors.surfaceMuted.withValues(alpha: 0.7),
+                                      ),
+                                    ),
                                 ],
                               ),
                             ],
                           ),
                         ),
                       ],
+                    );
+                  },
+                ),
+
+                // Indicadores de diapositiva inferiores discretos
+                if (diapositivas.length > 1)
+                  Positioned(
+                    bottom: 12,
+                    right: 20,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: List.generate(
+                        diapositivas.length,
+                        (index) {
+                          final activa = _diapositivaActual == index;
+                          return AnimatedContainer(
+                            duration: const Duration(milliseconds: 250),
+                            margin: const EdgeInsets.symmetric(horizontal: 2.5),
+                            width: activa ? 18 : 5,
+                            height: 4,
+                            decoration: BoxDecoration(
+                              color: activa ? FashionColors.brandAccent : Colors.white24,
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          );
+                        },
+                      ),
                     ),
                   ),
-                );
-              },
+              ],
             ),
           ),
-          if (diapositivas.length > 1)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(
-                  diapositivas.length,
-                  (index) => Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 4),
-                    width: _diapositivaActual == index ? 20 : 7,
-                    height: 7,
-                    decoration: BoxDecoration(
-                      color: _diapositivaActual == index
-                          ? FashionColors.rosaCorporativo
-                          : FashionColors.grisBorde,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
+
+          const SizedBox(height: 12),
+
+          // 2 Tiles Minerales Complementarios (#FFFFFF / #EBEEF3 con acento Jade #115E59)
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: FashionColors.surfaceCard,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: FashionColors.borderSubtle),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: FashionColors.atelierJade.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(Icons.verified_rounded, size: 20, color: FashionColors.atelierJade),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Atelier Original',
+                              style: GoogleFonts.spaceGrotesk(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: FashionColors.inkPrimary,
+                              ),
+                            ),
+                            Text(
+                              'Confección local fina',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 11,
+                                color: FashionColors.inkSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
-            ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: FashionColors.surfaceCard,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: FashionColors.borderSubtle),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: FashionColors.brandAccent.withValues(alpha: 0.10),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(Icons.shield_outlined, size: 20, color: FashionColors.brandAccent),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Pago Protegido',
+                              style: GoogleFonts.spaceGrotesk(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: FashionColors.inkPrimary,
+                              ),
+                            ),
+                            Text(
+                              'Wompi Bancolombia',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 11,
+                                color: FashionColors.inkSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
   }
 
-  Widget _construirSeccionCategorias() {
-    final categorias = _obtenerCategoriasDestacadas().take(3).toList();
-    if (categorias.isEmpty) return const SizedBox.shrink();
+  /// 2. Categorías en burbujas con scroll horizontal fluido y estética mineral
+  Widget _construirCategoriasHistorias() {
+    if (_categorias.isEmpty) return const SizedBox.shrink();
 
-    return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Líneas de Diseño',
+                style: GoogleFonts.spaceGrotesk(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: FashionColors.inkPrimary,
+                ),
+              ),
+              GestureDetector(
+                onTap: () {
+                  ref.read(filtersProvider.notifier).limpiarFiltros();
+                  context.go('/catalogo');
+                },
+                child: Row(
+                  children: [
+                    Text(
+                      'Ver catálogo',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                        color: FashionColors.brandAccent,
+                      ),
+                    ),
+                    const Icon(Icons.chevron_right_rounded, size: 16, color: FashionColors.brandAccent),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 14),
+        SizedBox(
+          height: 98,
+          child: ListView.separated(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            itemCount: _categorias.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 14),
+            itemBuilder: (context, index) {
+              final cat = _categorias[index];
+              final prendasCat = _productos.where((p) => p.categoria?.idCategoria == cat.idCategoria).toList();
+              String imagen = '';
+              if (cat.original['imagen'] != null) {
+                imagen = ImageUrlResolver.resolve(cat.original['imagen']);
+              } else if (prendasCat.isNotEmpty) {
+                imagen = prendasCat.first.primeraImagenUrl;
+              }
+
+              return GestureDetector(
+                onTap: () {
+                  ref.read(filtersProvider.notifier).establecerCategoria(cat.idCategoria);
+                  context.go('/catalogo');
+                },
+                child: SizedBox(
+                  width: 74,
+                  child: Column(
+                    children: [
+                      Container(
+                        width: 62,
+                        height: 62,
+                        padding: const EdgeInsets.all(2.5),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: FashionColors.borderSubtle, width: 1.5),
+                          color: FashionColors.surfaceCard,
+                        ),
+                        child: ClipOval(
+                          child: imagen.isNotEmpty
+                              ? CachedNetworkImage(
+                                  imageUrl: imagen,
+                                  fit: BoxFit.cover,
+                                  placeholder: (_, __) => Container(color: FashionColors.surfaceMuted),
+                                  errorWidget: (_, __, ___) => const Icon(
+                                    Icons.checkroom_rounded,
+                                    size: 24,
+                                    color: FashionColors.inkSecondary,
+                                  ),
+                                )
+                              : const Icon(Icons.checkroom_rounded, size: 24, color: FashionColors.inkSecondary),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        cat.nombre,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: FashionColors.inkPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// 3. Prendas destacadas con pestañas rápidas y lookbook grid de 2 columnas
+  Widget _construirSeccionPrendasDestacadas() {
+    final prendas = _obtenerPrendasFiltradas();
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -457,228 +726,286 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Categorías destacadas',
-                style: GoogleFonts.poppins(
+                'Prendas Destacadas',
+                style: GoogleFonts.spaceGrotesk(
                   fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                  color: FashionColors.textoOscuro,
+                  fontWeight: FontWeight.w700,
+                  color: FashionColors.inkPrimary,
                 ),
-              ),
-              TextButton.icon(
-                onPressed: () {
-                  ref.read(filtersProvider.notifier).limpiarFiltros();
-                  context.go('/catalogo');
-                },
-                icon: const Icon(Icons.arrow_forward, size: 16, color: FashionColors.rosaCorporativo),
-                label: const Text(
-                  'Ver todo',
-                  style: TextStyle(fontSize: 13, color: FashionColors.rosaCorporativo, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: categorias.map((cat) {
-              return Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(12),
-                    onTap: () {
-                      ref.read(filtersProvider.notifier).establecerCategoria(cat.id);
-                      context.go('/catalogo');
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: FashionColors.fondoClaro,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: FashionColors.grisBorde),
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(10),
-                            child: SizedBox(
-                              width: 52,
-                              height: 52,
-                              child: cat.imagenUrl.isNotEmpty
-                                  ? CachedNetworkImage(
-                                      imageUrl: cat.imagenUrl,
-                                      fit: BoxFit.cover,
-                                      placeholder: (_, __) => Container(color: FashionColors.rosaSuave),
-                                      errorWidget: (_, __, ___) => const Icon(
-                                        Icons.checkroom,
-                                        size: 28,
-                                        color: FashionColors.rosaOscuro,
-                                      ),
-                                    )
-                                  : const Icon(Icons.checkroom, size: 28, color: FashionColors.rosaOscuro),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            cat.nombre,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                          ),
-                          Text(
-                            '${cat.totalPrendas} prendas',
-                            style: const TextStyle(fontSize: 11, color: FashionColors.textoMuted),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _construirSeccionImprescindibles() {
-    final imprescindibles = _obtenerImprescindibles();
-    if (imprescindibles.isEmpty) return const SizedBox.shrink();
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Imprescindibles',
-                    style: GoogleFonts.poppins(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      color: FashionColors.textoOscuro,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  const Text(
-                    'Las piezas más deseadas de la temporada',
-                    style: TextStyle(fontSize: 12, color: FashionColors.textoMuted),
-                  ),
-                ],
               ),
               IconButton(
-                icon: const Icon(Icons.tune, color: FashionColors.textoOscuro),
-                tooltip: 'Filtrar catálogo',
+                icon: const Icon(Icons.tune_rounded, size: 20, color: FashionColors.inkPrimary),
+                tooltip: 'Filtrar',
                 onPressed: () => context.go('/catalogo'),
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: imprescindibles.length,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              mainAxisSpacing: 16,
-              crossAxisSpacing: 12,
-              childAspectRatio: 0.62,
+          const SizedBox(height: 8),
+
+          // Pestañas rápidas táctiles (Chips)
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Row(
+              children: [
+                _chipFiltro('Imprescindibles', 0),
+                const SizedBox(width: 8),
+                _chipFiltro('Novedades', 1),
+                const SizedBox(width: 8),
+                _chipFiltro('Ofertas Especiales', 2),
+              ],
             ),
-            itemBuilder: (context, index) {
-              return ProductCardWidget(
-                producto: imprescindibles[index],
-                promocionesVigentes: _promociones,
-              );
-            },
           ),
+          const SizedBox(height: 16),
+
+          // Cuadrícula 2 columnas
+          if (prendas.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(32),
+              alignment: Alignment.center,
+              child: Text(
+                'No hay prendas en esta selección.',
+                style: GoogleFonts.plusJakartaSans(color: FashionColors.inkSecondary),
+              ),
+            )
+          else
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: prendas.length,
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                mainAxisSpacing: 14,
+                crossAxisSpacing: 12,
+                childAspectRatio: 0.63,
+              ),
+              itemBuilder: (context, index) {
+                return ProductCardWidget(
+                  producto: prendas[index],
+                  promocionesVigentes: _promociones,
+                );
+              },
+            ),
         ],
       ),
     );
   }
 
-  Widget _construirBannerInformativo() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: FashionColors.negroElegante,
-        borderRadius: BorderRadius.circular(16),
+  Widget _chipFiltro(String label, int index) {
+    final activo = _tabFiltroRapido == index;
+    return GestureDetector(
+      onTap: () => setState(() => _tabFiltroRapido = index),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: activo ? FashionColors.inkPrimary : FashionColors.surfaceCard,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: activo ? FashionColors.inkPrimary : FashionColors.borderSubtle,
+          ),
+        ),
+        child: Text(
+          label,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 12,
+            fontWeight: activo ? FontWeight.w700 : FontWeight.w500,
+            color: activo ? Colors.white : FashionColors.inkPrimary,
+          ),
+        ),
       ),
-      child: const Column(
-        children: [
-          Row(
-            children: [
-              Icon(Icons.local_shipping_outlined, color: FashionColors.rosaCorporativo, size: 28),
-              SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+    );
+  }
+
+  /// 4. Pilares de servicio en carrusel horizontal deslizable
+  Widget _construirValoresMarca() {
+    final valores = [
+      _PilarMarca(
+        icono: Icons.local_shipping_outlined,
+        titulo: 'Envíos Nacionales',
+        descripcion: 'Cobertura oficial con rastreo de guía en tiempo real.',
+      ),
+      _PilarMarca(
+        icono: Icons.verified_outlined,
+        titulo: 'Calidad Atelier',
+        descripcion: 'Telas seleccionadas y patronaje de alta costura.',
+      ),
+      _PilarMarca(
+        icono: Icons.lock_outline_rounded,
+        titulo: 'Pagos Protegidos',
+        descripcion: 'Pasarela certificada vía Wompi Bancolombia.',
+      ),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Text(
+            'Experiencia FashionStyle',
+            style: GoogleFonts.spaceGrotesk(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: FashionColors.inkPrimary,
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 110,
+          child: ListView.separated(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            itemCount: valores.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            itemBuilder: (context, index) {
+              final v = valores[index];
+              return Container(
+                width: 250,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: FashionColors.surfaceCard,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: FashionColors.borderSubtle),
+                ),
+                child: Row(
                   children: [
-                    Text(
-                      'Envíos a todo el país',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: FashionColors.surfaceMuted,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(v.icono, color: FashionColors.brandAccent, size: 22),
                     ),
-                    Text(
-                      'Seguimiento en tiempo real con guía oficial',
-                      style: TextStyle(color: Colors.white70, fontSize: 12),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            v.titulo,
+                            style: GoogleFonts.spaceGrotesk(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
+                              color: FashionColors.inkPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            v.descripcion,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11,
+                              color: FashionColors.inkSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
-              ),
-            ],
+              );
+            },
           ),
-          Divider(color: Colors.white24, height: 28),
-          Row(
-            children: [
-              Icon(Icons.verified_outlined, color: FashionColors.rosaCorporativo, size: 28),
-              SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Calidad garantizada',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
-                    ),
-                    Text(
-                      'Telas y confección boutique de alta gama',
-                      style: TextStyle(color: Colors.white70, fontSize: 12),
-                    ),
-                  ],
+        ),
+      ],
+    );
+  }
+
+  Widget _construirSkeletonCarga() {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Container(
+          height: 320,
+          decoration: BoxDecoration(
+            color: FashionColors.surfaceCard,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: FashionColors.borderSubtle),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: Container(
+                height: 64,
+                decoration: BoxDecoration(
+                  color: FashionColors.surfaceCard,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: FashionColors.borderSubtle),
                 ),
               ),
-            ],
-          ),
-          Divider(color: Colors.white24, height: 28),
-          Row(
-            children: [
-              Icon(Icons.lock_outline, color: FashionColors.rosaCorporativo, size: 28),
-              SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Pagos 100% seguros',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
-                    ),
-                    Text(
-                      'Integración protegida vía Wompi Bancolombia',
-                      style: TextStyle(color: Colors.white70, fontSize: 12),
-                    ),
-                  ],
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Container(
+                height: 64,
+                decoration: BoxDecoration(
+                  color: FashionColors.surfaceCard,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: FashionColors.borderSubtle),
                 ),
               ),
-            ],
+            ),
+          ],
+        ),
+        const SizedBox(height: 24),
+        Row(
+          children: List.generate(
+            4,
+            (i) => Expanded(
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                height: 72,
+                decoration: const BoxDecoration(
+                  color: FashionColors.surfaceCard,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
           ),
-        ],
+        ),
+      ],
+    );
+  }
+
+  Widget _construirVistaError() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(28.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.cloud_off_rounded, size: 52, color: FashionColors.statusDanger),
+            const SizedBox(height: 14),
+            Text(
+              _error!,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: FashionColors.inkPrimary,
+              ),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: FashionColors.inkPrimary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              onPressed: _cargarDatos,
+              icon: const Icon(Icons.refresh_rounded, size: 18),
+              label: const Text('Reintentar conexión'),
+            )
+          ],
+        ),
       ),
     );
   }
@@ -702,16 +1029,14 @@ class _DiapositivaHero {
   });
 }
 
-class _CategoriaDestacada {
-  final int id;
-  final String nombre;
-  final String imagenUrl;
-  final int totalPrendas;
+class _PilarMarca {
+  final IconData icono;
+  final String titulo;
+  final String descripcion;
 
-  const _CategoriaDestacada({
-    required this.id,
-    required this.nombre,
-    required this.imagenUrl,
-    required this.totalPrendas,
+  const _PilarMarca({
+    required this.icono,
+    required this.titulo,
+    required this.descripcion,
   });
 }

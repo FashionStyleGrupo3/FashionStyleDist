@@ -1,8 +1,9 @@
 // @source-mirror: src/services/promocionServicio.js, src/composables/usePromociones.js
-import '../../core/network/api_client.dart';
-import '../../core/network/api_response_parser.dart';
-import '../models/product_models.dart';
-
+import 'package:fashion_style_mobile/core/network/api_client.dart';
+import 'package:fashion_style_mobile/core/network/api_response_parser.dart';
+import 'package:fashion_style_mobile/data/models/product/promotion.dart';
+import 'package:fashion_style_mobile/data/models/product/price_info.dart';
+import 'package:fashion_style_mobile/data/models/product/product.dart';
 class PromotionService {
   static final PromotionService _instance = PromotionService._internal();
   static PromotionService get instance => _instance;
