@@ -26,7 +26,7 @@ Future<void> loadAppFontsZeroAhem() async {
     'assets/fonts/SpaceGrotesk-SemiBold.ttf',
     'assets/fonts/SpaceGrotesk-Bold.ttf',
   ];
-  for (final family in ['Space Grotesk', 'SpaceGrotesk', 'Space_Grotesk']) {
+  for (final family in ['Space Grotesk', 'SpaceGrotesk', 'Space_Grotesk', 'Montserrat', 'montserrat']) {
     final loader = FontLoader(family);
     for (final p in sgFiles) {
       if (File(p).existsSync()) {
@@ -44,7 +44,7 @@ Future<void> loadAppFontsZeroAhem() async {
     'assets/fonts/PlusJakartaSans-SemiBold.ttf',
     'assets/fonts/PlusJakartaSans-Bold.ttf',
   ];
-  for (final family in ['Plus Jakarta Sans', 'PlusJakartaSans', 'Plus_Jakarta_Sans', 'Roboto', '.AppleSystemUIFont']) {
+  for (final family in ['Plus Jakarta Sans', 'PlusJakartaSans', 'Plus_Jakarta_Sans', 'Roboto', 'Poppins', 'poppins', '.AppleSystemUIFont']) {
     final loader = FontLoader(family);
     for (final p in pjsFiles) {
       if (File(p).existsSync()) {

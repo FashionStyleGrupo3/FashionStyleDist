@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fashion_style_mobile/core/theme/fashion_theme.dart';
+import 'package:fashion_style_mobile/core/utils/image_url_resolver.dart';
 import 'package:fashion_style_mobile/presentation/layouts/public_shell_layout.dart';
 import 'package:fashion_style_mobile/presentation/providers/auth_provider.dart';
 import 'package:fashion_style_mobile/presentation/providers/auth_state.dart';
@@ -127,7 +128,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
                       child: ClipOval(
                         child: (authState.fotoUsuario != null && authState.fotoUsuario!.isNotEmpty)
                             ? Image.network(
-                                authState.fotoUsuario!,
+                                ImageUrlResolver.resolve(authState.fotoUsuario!),
+                                key: ValueKey(authState.fotoUsuario),
                                 fit: BoxFit.cover,
                                 errorBuilder: (_, __, ___) => _avatarFallback(authState),
                               )
@@ -170,23 +172,23 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
                                 decoration: BoxDecoration(
                                   color: authState.tieneAccesoAdmin
                                       ? FashionColors.editorialGoldDark.withValues(alpha: 0.18)
-                                      : FashionColors.atelierJade.withValues(alpha: 0.18),
+                                      : FashionColors.slateAccent.withValues(alpha: 0.18),
                                   borderRadius: BorderRadius.circular(6),
                                   border: Border.all(
                                     color: authState.tieneAccesoAdmin
                                         ? FashionColors.editorialGoldDark.withValues(alpha: 0.4)
-                                        : FashionColors.atelierJade.withValues(alpha: 0.4),
+                                        : FashionColors.slateAccent.withValues(alpha: 0.4),
                                   ),
                                 ),
                                 child: Text(
-                                  authState.tieneAccesoAdmin ? 'STAFF / ADMIN' : 'CLIENTE ATELIER',
+                                  authState.tieneAccesoAdmin ? 'STAFF / ADMIN' : 'CLIENTE',
                                   style: GoogleFonts.spaceGrotesk(
                                     fontSize: 9.5,
                                     fontWeight: FontWeight.w700,
                                     letterSpacing: 1.1,
                                     color: authState.tieneAccesoAdmin
                                         ? FashionColors.editorialGoldDark
-                                        : FashionColors.atelierJade,
+                                        : FashionColors.slateAccent,
                                   ),
                                 ),
                               ),

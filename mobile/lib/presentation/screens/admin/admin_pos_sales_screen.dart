@@ -6,7 +6,9 @@ import 'package:fashion_style_mobile/core/network/api_client.dart';
 import 'package:fashion_style_mobile/core/network/api_response_parser.dart';
 import 'package:fashion_style_mobile/core/theme/fashion_theme.dart';
 import 'package:fashion_style_mobile/core/utils/currency_formatter.dart';
+import 'package:fashion_style_mobile/core/utils/admin_export_dialog.dart';
 import 'package:fashion_style_mobile/data/models/pos/pos_sale_model.dart';
+import 'package:fashion_style_mobile/data/models/pos/pos_sales_summary.dart';
 import 'package:fashion_style_mobile/data/services/invoice_pdf_service.dart';
 import 'package:fashion_style_mobile/data/services/pos_sale_service.dart';
 import 'package:fashion_style_mobile/presentation/layouts/admin_shell_layout.dart';
@@ -24,7 +26,7 @@ class _AdminPosSalesScreenState extends ConsumerState<AdminPosSalesScreen> {
   bool _cargando = true;
   String? _error;
   List<PosSaleModel> _ventas = [];
-  Map<String, dynamic> _resumen = {};
+  PosSalesSummary? _resumen;
   String _filtroMedioPago = '';
   final int _pagina = 1;
 
@@ -47,9 +49,15 @@ class _AdminPosSalesScreenState extends ConsumerState<AdminPosSalesScreen> {
       ]);
 
       if (mounted) {
+        final dynamic rawRes = resultados[0];
+        final PosSalesSummary res = rawRes is PosSalesSummary
+            ? rawRes
+            : (rawRes is Map<String, dynamic>
+                ? PosSalesSummary.fromJson(rawRes)
+                : PosSalesSummary.fromJson(const {}));
         final pag = resultados[1] as PaginatedResponse<PosSaleModel>;
         setState(() {
-          _resumen = resultados[0] as Map<String, dynamic>;
+          _resumen = res;
           _ventas = pag.lista;
           _cargando = false;
         });
@@ -101,12 +109,42 @@ class _AdminPosSalesScreenState extends ConsumerState<AdminPosSalesScreen> {
     }
   }
 
+  void _exportarVentasPos() {
+    if (_ventas.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No hay ventas registradas para exportar')),
+      );
+      return;
+    }
+
+    final encabezados = ['Código', 'Fecha', 'Cliente', 'Doc', 'Medio Pago', 'Total', 'Cajero'];
+    final filas = _ventas.map((v) {
+      return [
+        v.codigo,
+        v.fecha,
+        v.clienteNombre,
+        v.clienteDocumento,
+        v.medioPago.toUpperCase(),
+        CurrencyFormatter.formatearCOP(v.total),
+        v.usuarioNombre,
+      ];
+    }).toList();
+
+    AdminExportDialog.mostrarDialogoExportacion(
+      context,
+      titulo: 'Reporte de Ventas POS de Mostrador',
+      encabezados: encabezados,
+      filas: filas,
+      nombreArchivo: 'ventas_pos_${DateTime.now().millisecondsSinceEpoch}',
+    );
+  }
+
   void _abrirModalNuevaVenta() {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
       builder: (ctx) => ModalNuevaVentaPos(onCobrada: _cargarVentas),
     );
   }
@@ -125,11 +163,11 @@ class _AdminPosSalesScreenState extends ConsumerState<AdminPosSalesScreen> {
               children: [
                 Row(
                   children: [
-                    _cardResumen('Ventas Hoy', '${_resumen['ventasHoy'] ?? 0}', FashionColors.rosaCorporativo),
+                    _cardResumen('Ventas Hoy', '${_resumen?.ventasHoy ?? 0}', FashionColors.rosaCorporativo),
                     const SizedBox(width: 8),
-                    _cardResumen('Ingreso Hoy', CurrencyFormatter.formatearCOP(JsonParser.toDouble(_resumen['montoHoy'])), FashionColors.verdeExito),
+                    _cardResumen('Ingreso Hoy', CurrencyFormatter.formatearCOP(_resumen?.montoHoy ?? 0), FashionColors.verdeExito),
                     const SizedBox(width: 8),
-                    _cardResumen('Caja Activa', CurrencyFormatter.formatearCOP(JsonParser.toDouble(_resumen['montoActivas'])), const Color(0xFF2563EB)),
+                    _cardResumen('Caja Activa', CurrencyFormatter.formatearCOP(_resumen?.montoActivas ?? 0), const Color(0xFF2563EB)),
                   ],
                 ),
                 const SizedBox(height: 12),
@@ -147,15 +185,21 @@ class _AdminPosSalesScreenState extends ConsumerState<AdminPosSalesScreen> {
                       ),
                     ),
                     const SizedBox(width: 8),
+                    IconButton(
+                      icon: const Icon(Icons.file_download_outlined),
+                      tooltip: 'Exportar Reporte (PDF / Excel)',
+                      onPressed: _exportarVentasPos,
+                    ),
+                    const SizedBox(width: 4),
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: FashionColors.brandAccent,
+                        backgroundColor: FashionColors.primaryCorporate,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
                       onPressed: _abrirModalNuevaVenta,
                       icon: const Icon(Icons.point_of_sale, size: 16),
-                      label: Text('Nueva Venta', style: GoogleFonts.spaceGrotesk(fontSize: 12, fontWeight: FontWeight.w700)),
+                      label: Text('Nueva Venta', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700)),
                     ),
                   ],
                 ),

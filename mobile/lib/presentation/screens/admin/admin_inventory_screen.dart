@@ -8,8 +8,8 @@ import 'package:fashion_style_mobile/core/theme/fashion_theme.dart';
 import 'package:fashion_style_mobile/data/services/product_service.dart';
 import 'package:fashion_style_mobile/presentation/layouts/admin_shell_layout.dart';
 import 'package:fashion_style_mobile/presentation/widgets/common/atelier_vector_art.dart';
+import 'package:fashion_style_mobile/core/utils/admin_export_dialog.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:share_plus/share_plus.dart';
 
 class AdminInventoryScreen extends ConsumerStatefulWidget {
   const AdminInventoryScreen({super.key});
@@ -133,28 +133,61 @@ class _AdminInventoryScreenState extends ConsumerState<AdminInventoryScreen> wit
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      backgroundColor: Colors.transparent,
       builder: (ctx) {
         return StatefulBuilder(
           builder: (context, setModalState) {
-            return Padding(
-              padding: EdgeInsets.only(
-                left: 20,
-                right: 20,
-                top: 20,
-                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+            return Container(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.88,
               ),
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(
-                      'Registrar Movimiento de Kárdex',
-                      style: GoogleFonts.spaceGrotesk(fontSize: 18, fontWeight: FontWeight.w700, color: FashionColors.inkPrimary),
+              decoration: const BoxDecoration(
+                color: FashionColors.surfaceCard,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const SizedBox(height: 12),
+                  Center(
+                    child: Container(
+                      width: 44,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: FashionColors.borderSubtle,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
                     ),
-                    const SizedBox(height: 16),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 14, 20, 10),
+                    child: Row(
+                      children: [
+                        Text(
+                          'Registrar Movimiento de Kárdex',
+                          style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 16, color: FashionColors.inkPrimary),
+                        ),
+                        const Spacer(),
+                        IconButton(
+                          icon: const Icon(Icons.close, size: 20, color: FashionColors.inkSecondary),
+                          onPressed: () => Navigator.pop(ctx),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Divider(height: 1, color: FashionColors.borderSubtle),
+                  Flexible(
+                    child: SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      padding: EdgeInsets.only(
+                        left: 20,
+                        right: 20,
+                        top: 16,
+                        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
 
                     // Selector de prenda y variante
                     DropdownButtonFormField<_VarianteInventario>(
@@ -262,14 +295,17 @@ class _AdminInventoryScreenState extends ConsumerState<AdminInventoryScreen> wit
                   ],
                 ),
               ),
-            );
+            ),
+          ],
+        ),
+      );
           },
         );
       },
     );
   }
 
-  void _exportarKardexCsv() {
+  void _exportarKardex() {
     if (_movimientos.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('No hay movimientos de kárdex para exportar')),
@@ -277,20 +313,26 @@ class _AdminInventoryScreenState extends ConsumerState<AdminInventoryScreen> wit
       return;
     }
 
-    final buffer = StringBuffer('ID,Fecha,Tipo,Concepto,Prenda,Talla,Cantidad,Observaciones\n');
-    for (final m in _movimientos) {
+    final encabezados = ['ID', 'Fecha', 'Tipo', 'Concepto', 'Prenda', 'Talla', 'Cantidad', 'Observaciones'];
+    final filas = _movimientos.map((m) {
       final id = m['id_movimiento'] ?? m['id'] ?? '';
       final fecha = m['created_at'] ?? m['fecha'] ?? '';
       final tipo = m['tipo_movimiento'] ?? '';
-      final concepto = (m['concepto'] ?? '').toString().replaceAll(',', ';');
-      final prenda = (m['producto']?['nombre'] ?? m['prenda'] ?? '').toString().replaceAll(',', ';');
+      final concepto = m['concepto'] ?? '';
+      final prenda = m['producto']?['nombre'] ?? m['prenda'] ?? '';
       final talla = m['variante']?['talla'] ?? m['talla'] ?? '';
       final cant = m['cantidad'] ?? 0;
-      final obs = (m['observaciones'] ?? '').toString().replaceAll(',', ';');
-      buffer.writeln('$id,$fecha,$tipo,$concepto,$prenda,$talla,$cant,$obs');
-    }
+      final obs = m['observaciones'] ?? '';
+      return [id, fecha, tipo, concepto, prenda, talla, cant, obs];
+    }).toList();
 
-    Share.share(buffer.toString(), subject: 'Kardex_Inventario_FashionStyle.csv');
+    AdminExportDialog.mostrarDialogoExportacion(
+      context,
+      titulo: 'Kárdex de Movimientos de Inventario',
+      encabezados: encabezados,
+      filas: filas,
+      nombreArchivo: 'kardex_inventario_${DateTime.now().millisecondsSinceEpoch}',
+    );
   }
 
   @override
@@ -529,8 +571,8 @@ class _AdminInventoryScreenState extends ConsumerState<AdminInventoryScreen> wit
                   const SizedBox(width: 8),
                   IconButton(
                     icon: const Icon(Icons.file_download_outlined),
-                    tooltip: 'Exportar CSV',
-                    onPressed: _exportarKardexCsv,
+                    tooltip: 'Exportar Kárdex (PDF / Excel)',
+                    onPressed: _exportarKardex,
                   ),
                   IconButton(
                     icon: const Icon(Icons.add_circle, color: FashionColors.rosaCorporativo),
