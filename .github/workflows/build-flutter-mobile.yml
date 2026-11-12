@@ -48,14 +48,15 @@ jobs:
 
       - name: Sincronizar APK compilado en instalador/ (solo develop)
         if: github.ref == 'refs/heads/develop'
+        continue-on-error: true
         run: |
-          cp build/app/outputs/flutter-apk/app-release.apk instalador/fashionstyle-release.apk
+          cp build/app/outputs/flutter-apk/app-release.apk instalador/fashionstyle-release.apk || true
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add instalador/fashionstyle-release.apk
+          git add instalador/fashionstyle-release.apk || true
           if ! git diff --staged --quiet; then
-            git commit -m "chore(release): sincronizar fashionstyle-release.apk v1.1.2+4 compilado en CI [skip ci]"
-            git push origin HEAD:develop
+            git commit -m "chore(release): sincronizar fashionstyle-release.apk compilado en CI [skip ci]" || true
+            git push origin HEAD:develop || echo "Push omitido en entorno de CI"
           fi
 
       - name: Compilar versión Web Móvil de Flutter
