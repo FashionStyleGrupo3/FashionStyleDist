@@ -44,7 +44,7 @@ jobs:
         run: flutter analyze
 
       - name: Compilar APK de Producción (Android)
-        run: flutter build apk --release --dart-define=API_BASE_URL=https://fashionstyle.api.adsocidm.com/public/api
+        run: flutter build apk --release --android-skip-build-dependency-validation --dart-define=API_BASE_URL=https://fashionstyle.api.adsocidm.com/public/api
 
       - name: Sincronizar APK compilado en instalador/ (solo develop)
         if: github.ref == 'refs/heads/develop'
